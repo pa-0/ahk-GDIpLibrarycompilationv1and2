@@ -4011,7 +4011,7 @@ Gdip_DisposeEffect(pEffect) {
 }
 
 
-GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1) {
+GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0,chnBdec:=0) {
 ; parameters ranges / intervals:
 ; bright:     [0.001 - 20.0]
 ; contrast:   [-20.0 - 1.00]
@@ -4026,6 +4026,9 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1) {
 ; 4 - grayscale G channel
 ; 5 - grayscale B channel
 ; 6 - negative / invert image
+;
+; chnRdec, chnGdec, chnBdec only apply in modus=1
+; these represent offsets for the RGB channels
 
 ; in modus=0 the parameters have other ranges:
 ; bright:     [-5.00 - 5.00]
@@ -4086,15 +4089,15 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1) {
              sL := 0.98
 
           y := z*(1 - sL)
-          mA := z*(y*NTSCr + sL + bLa + chnRdecalage)
+          mA := z*(y*NTSCr + sL + bLa + chnRdec)
           mB := z*(y*NTSCr)
           mC := z*(y*NTSCr)
           mD := z*(y*NTSCg)
-          mE := z*(y*NTSCg + sL + bLa + chnGdecalage)
+          mE := z*(y*NTSCg + sL + bLa + chnGdec)
           mF := z*(y*NTSCg)
           mG := z*(y*NTSCb)
           mH := z*(y*NTSCb)
-          mI := z*(y*NTSCb + sL + bLa + chnBdecalage)
+          mI := z*(y*NTSCb + sL + bLa + chnBdec)
           mtrx = %mA%|%mB%|%mC%|0   |0
                 |%mD%|%mE%|%mF%|0   |0
                 |%mG%|%mH%|%mI%|0   |0
@@ -4106,9 +4109,9 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1) {
           tR := NTSCr - 0.5 + bL/2
           tG := NTSCg - 0.5 + bL/2
           tB := NTSCb - 0.5 + bL/2
-          rB := z*(tR*sLi+bL*(1 - sLi) + chnRdecalage)
-          gB := z*(tG*sLi+bL*(1 - sLi) + chnGdecalage)
-          bB := z*(tB*sLi+bL*(1 - sLi) + chnBdecalage)     ; Formula used: A*w + B*(1 – w)
+          rB := z*(tR*sLi+bL*(1 - sLi) + chnRdec)
+          gB := z*(tG*sLi+bL*(1 - sLi) + chnGdec)
+          bB := z*(tB*sLi+bL*(1 - sLi) + chnBdec)     ; Formula used: A*w + B*(1 – w)
           rF := z*(NTSCr*sLi + (bL/2 - 0.5)*sLi)
           gF := z*(NTSCg*sLi + (bL/2 - 0.5)*sLi)
           bF := z*(NTSCb*sLi + (bL/2 - 0.5)*sLi)
