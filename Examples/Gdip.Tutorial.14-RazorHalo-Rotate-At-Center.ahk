@@ -1,11 +1,10 @@
 ;Tested on A_AhkVersion  U64 1.1.27.06 - Windows 10 Home x64 1809
-#NoEnv
 #SingleInstance Force
 SetWorkingDir %A_ScriptDir%
 SetBatchLines -1
 
 ;Need to include your path to Gdip or have in the same directory as script
-#Include Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 OnMessage(0x200, "OnWM_MOUSEMOVE")
 OnMessage(0x20A, "OnWM_MOUSEWHEEL")

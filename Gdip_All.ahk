@@ -1,4 +1,9 @@
-﻿; Gdip standard library v1.56 on 08/21/2019
+﻿; Gdip_All.ahk - GDI+ library compilation of user contributed GDI+ functions
+; a fork from https://github.com/mmikeww/AHKv2-Gdip
+; made by Marius Șucan
+;
+; Gdip standard library v1.57 on 08/23/2019
+; Gdip standard library v1.56 on 08/21/2019
 ; Gdip standard library v1.55 on 08/14/2019
 ; Gdip standard library v1.54 on 11/15/2017
 ; Gdip standard library v1.53 on 06/19/2017
@@ -7,8 +12,9 @@
 ; Gdip standard library v1.50 on 11/20/2016
 ; Gdip standard library v1.45 by tic (Tariq Porter) 07/09/11
 ; Modified by Rseding91 using fincs 64 bit compatible Gdip library 5/1/2013
-; Supports: Basic, _L ANSi, _L Unicode x86 and _L Unicode x64
+; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 
 ;
+; Updated 08/23/2019 - Added Gdip_FillRoundedRectangle2() and Gdip_DrawRoundedRectangle2(); extracted from Gdip2 by Tariq [tic] and corrected functions names
 ; Updated 08/21/2019 - Added GenerateColorMatrix()
 ; Updated 08/19/2019 - Added twelve functions. Extracted from a class wrapper for GDI+ written by nnnik in 2017.
 ; Updated 08/18/2019 - Added Gdip_AddPathRectangle() and eight PathGradient related functions by JustMe
@@ -732,15 +738,15 @@ Gdip_LibraryVersion() {
 
 ;#####################################################################################
 
-; Function           Gdip_LibrarySubVersion
-; Description        Get the current library sub version
+; Function        Gdip_LibrarySubVersion
+; Description     Get the current library sub version
 ;
 ; return          the library sub version
 ;
 ; notes           This is the sub-version currently maintained by Rseding91
 ;                 Updated by guest3456 preliminary AHK v2 support
 Gdip_LibrarySubVersion() {
-   return 1.56
+   return 1.57
 }
 
 ;#####################################################################################
@@ -880,6 +886,39 @@ Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r) {
    Gdip_DrawEllipse(pGraphics, pPen, x, y+h-(2*r), 2*r, 2*r)
    Gdip_DrawEllipse(pGraphics, pPen, x+w-(2*r), y+h-(2*r), 2*r, 2*r)
    Gdip_ResetClip(pGraphics)
+   return _E
+}
+
+Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r) {
+; extracted from: https://github.com/tariqporter/Gdip2/blob/master/lib/Object.ahk
+; and adapted by Marius Șucan
+
+   penWidth := Gdip_GetPenWidth(pPen)
+   pw := penWidth / 2
+   if (w <= h && (r + pw > w / 2))
+   {
+      r := (w / 2 > pw) ? w / 2 - pw : 0
+   } else if (h < w && r + pw > h / 2)
+   {
+      r := (h / 2 > pw) ? h / 2 - pw : 0
+   } else if (r < pw / 2)
+   {
+      r := pw / 2
+   }
+
+   r2 := r * 2
+   path1 := Gdip_CreatePath(0)
+   Gdip_AddPathArc(path1, x + pw, y + pw, r2, r2, 180, 90)
+   Gdip_AddPathLine(path1, x + pw + r, y + pw, x + w - r - pw, y + pw)
+   Gdip_AddPathArc(path1, x + w - r2 - pw, y + pw, r2, r2, 270, 90)
+   Gdip_AddPathLine(path1, x + w - pw, y + r + pw, x + w - pw, y + h - r - pw)
+   Gdip_AddPathArc(path1, x + w - r2 - pw, y + h - r2 - pw, r2, r2, 0, 90)
+   Gdip_AddPathLine(path1, x + w - r - pw, y + h - pw, x + r + pw, y + h - pw)
+   Gdip_AddPathArc(path1, x + pw, y + h - r2 - pw, r2, r2, 90, 90)
+   Gdip_AddPathLine(path1, x + pw, y + h - r - pw, x + pw, y + r + pw)
+   Gdip_ClosePathFigure(path1)
+   _E := Gdip_DrawPath(pGraphics, pPen, path1)
+   Gdip_DeletePath(path1)
    return _E
 }
 
@@ -1112,14 +1151,34 @@ Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h) {
 ; Description        This function uses a brush to fill a rounded rectangle in the Graphics of a bitmap
 ;
 ; pGraphics          Pointer to the Graphics of a bitmap
-; pBrush          Pointer to a brush
+; pBrush             Pointer to a brush
 ; x                  x-coordinate of the top left of the rounded rectangle
 ; y                  y-coordinate of the top left of the rounded rectangle
 ; w                  width of the rectanlge
 ; h                  height of the rectangle
 ; r                  radius of the rounded corners
 ;
-; return          status enumeration. 0 = success
+; return             status enumeration. 0 = success
+
+Gdip_FillRoundedRectangle2(pGraphics, pBrush, x, y, w, h, r) {
+; extracted from: https://github.com/tariqporter/Gdip2/blob/master/lib/Object.ahk
+; and adapted by Marius Șucan
+
+   r := (w <= h) ? (r < w // 2) ? r : w // 2 : (r < h // 2) ? r : h // 2
+   path1 := Gdip_CreatePath(0)
+   Gdip_AddPathRectangle(path1, x+r, y, w-(2*r), r)
+   Gdip_AddPathRectangle(path1, x+r, y+h-r, w-(2*r), r)
+   Gdip_AddPathRectangle(path1, x, y+r, r, h-(2*r))
+   Gdip_AddPathRectangle(path1, x+w-r, y+r, r, h-(2*r))
+   Gdip_AddPathRectangle(path1, x+r, y+r, w-(2*r), h-(2*r))
+   Gdip_AddPathPie(path1, x, y, 2*r, 2*r, 180, 90)
+   Gdip_AddPathPie(path1, x+w-(2*r), y, 2*r, 2*r, 270, 90)
+   Gdip_AddPathPie(path1, x, y+h-(2*r), 2*r, 2*r, 90, 90)
+   Gdip_AddPathPie(path1, x+w-(2*r), y+h-(2*r), 2*r, 2*r, 0, 90)
+   E := Gdip_FillPath(pGraphics, pBrush, path1)
+   Gdip_DeletePath(path1)
+   return E
+}
 
 Gdip_FillRoundedRectangle(pGraphics, pBrush, x, y, w, h, r) {
    Region := Gdip_GetClipRegion(pGraphics)
@@ -1499,10 +1558,10 @@ Gdip_ReleaseDC(pGraphics, hdc) {
 ; pGraphics          Pointer to the graphics of a bitmap
 ; ARGB               The colour to clear the graphics to
 ;
-; return          status enumeration. 0 = success
+; return             status enumeration. 0 = success
 ;
 ; notes              By default this will make the background invisible
-;                 Using clipping regions you can clear a particular area on the graphics rather than clearing the entire graphics
+;                    Using clipping regions you can clear a particular area on the graphics rather than clearing the entire graphics
 
 Gdip_GraphicsClear(pGraphics, ARGB:=0x00ffffff) {
    return DllCall("gdiplus\GdipGraphicsClear", A_PtrSize ? "UPtr" : "UInt", pGraphics, "int", ARGB)
@@ -1973,25 +2032,25 @@ Gdip_CreatePen(ARGB, w) {
 }
 
       
-Gdip_GdipSetPenWidth(pPen, width) {
+Gdip_SetPenWidth(pPen, width) {
    return DllCall("gdiplus\GdipSetPenWidth", "UPtr", pPen, "float", width)
 }
 
-Gdip_GdipGetPenWidth(pPen) {
+Gdip_GetPenWidth(pPen) {
    DllCall("gdiplus\GdipGetPenWidth", "UPtr", pPen, "float*", width)
    return width
 }
 
-Gdip_GdipSetPenColor(pPen, ARGB) {
+Gdip_SetPenColor(pPen, ARGB) {
    return DllCall("gdiplus\GdipSetPenColor", "UPtr", pPen, "UInt", ARGB)
 }
 
-Gdip_GdipGetPenColor() {
+Gdip_GetPenColor() {
    DllCall("gdiplus\GdipGetPenColor", "UPtr", pPen, "UInt*", ARGB)
    return ARGB
 }
 
-Gdip_GdipSetPenBrushFill(pPen, pBrush) {
+Gdip_SetPenBrushFill(pPen, pBrush) {
    return DllCall("gdiplus\GdipSetPenBrushFill", "UPtr", pPen, "UPtr", pBrush)
 }
 
@@ -2004,7 +2063,7 @@ Gdip_CreatePenFromBrush(pBrush, w) {
    return pPen
 }
 
-Gdip_GdipClonePen(pPen) {
+Gdip_ClonePen(pPen) {
    r := DllCall("gdiplus\GdipClonePen", "UPtr", pPen, "UPtr*", newPen)
    Return newPen
 }
@@ -2018,12 +2077,12 @@ Gdip_BrushCreateSolid(ARGB:=0xff000000) {
    return pBrush
 }
 
-Gdip_GdipSetSolidFillColor(pBrush, ARGB) {
+Gdip_SetSolidFillColor(pBrush, ARGB) {
    r := DllCall("gdiplus\GdipSetSolidFillColor", "UPtr", pBrush, "UInt", ARGB)
    return r
 }
 
-Gdip_GdipGetSolidFillColorgetColor(pBrush) {
+Gdip_GetSolidFillColorgetColor(pBrush) {
    r := DllCall("gdiplus\GdipGetSolidFillColor", "UPtr", pBrush, "UInt*", ARGB)
    return ARGB
 }
@@ -2120,12 +2179,12 @@ Gdip_CreateLineBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode:=1) {
    return LGpBrush
 }
 
-Gdip_GdipSetLineColors(LGpBrush, ARGB1, ARGB2) {
+Gdip_SetLineColors(LGpBrush, ARGB1, ARGB2) {
    r := DllCall("gdiplus\GdipSetLineColors", "UPtr", LGpBrush, "UInt", ARGB1, "UInt", ARGB2)
    return r
 }
 
-Gdip_GdipGetLineColors(LGpBrush, ByRef ARGB1, ByRef ARGB2) {
+Gdip_GetLineColors(LGpBrush, ByRef ARGB1, ByRef ARGB2) {
    VarSetCapacity(colors, 8, 0)
    r := DllCall("gdiplus\GdipGetLineColors", "UPtr", LGpBrush, "Ptr", &colors)
    ARGB1 := NumGet(colors, 0, "UInt")
@@ -2397,7 +2456,7 @@ Gdip_FontFamilyCreate(Font) {
    return hFamily
 }
 
-Gdip_GdipCreateFontFromDC(hDC) {
+Gdip_CreateFontFromDC(hDC) {
    ; a font must be selected in the hDC for this function to work
    ; function extracted from a class based wrapper around the GDI+ API made by nnnik
 
@@ -2999,8 +3058,11 @@ Gdip_GetPropertyIdList(pImage) {
       ErrorLevel := R
       Return False
    }
+
    PropArray := {Count: PropNum}
-   Loop, % PropNum {
+
+   Loop %PropNum%
+   {
       PropID := NumGet(PropIDList, (A_Index - 1) << 2, "UInt")
       PropArray[PropID] := Gdip_GetPropertyTagName(PropID)
    }
@@ -3085,7 +3147,9 @@ Gdip_GetAllPropertyItems(pImage) {
    }
    PropsObj := {Count: PropNum}
    PropSize := 8 + (2 * A_PtrSize)
-   Loop, % PropNum {
+
+   Loop %PropNum%
+   {
       OffSet := PropSize * (A_Index - 1)
       PropID := NumGet(Buffer, OffSet, "UInt")
       PropLen := NumGet(Buffer, OffSet + 4, "UInt")
@@ -3096,9 +3160,11 @@ Gdip_GetAllPropertyItems(pImage) {
       PropsObj[PropID, "Length"] := PropLen
       PropsObj[PropID, "Type"] := PropType
       PropsObj[PropID, "Value"] := PropVal
-      If (PropLen > 0) {
+      If (PropLen > 0)
+      {
          Gdip_GetPropertyItemValue(PropVal, PropLen, PropType, PropAddr)
-         If (PropType = 1) || (PropType = 7) {
+         If (PropType = 1) || (PropType = 7)
+         {
             PropsObj[PropID].SetCapacity("Value", PropLen)
             ValAddr := PropsObj[PropID].GetAddress("Value")
             DllCall("Kernel32.dll\RtlMoveMemory", "Ptr", ValAddr, "Ptr", PropAddr, "Ptr", PropLen)
@@ -3127,10 +3193,12 @@ Gdip_GetPropertyTagName(PropID) {
 ; I commented the tags I personally find irrelevant...
 ; and made the names more human friendly, readable
 
-   Static PropTags
-   Static Init := Gdip_GetPropertyTagName("*INIT*")
-   If (PropID == "*INIT*") {
-      PropTags := {}
+   Static PropTags := []
+        , Init := Gdip_GetPropertyTagName("*INIT*")
+
+   If (PropID="*INIT*")
+   {
+      ; PropTags := {}
       ; PropTags[0x0000] := "GpsVer"
       PropTags[0x0001] := "GPS LatitudeRef"
       PropTags[0x0002] := "GPS Latitude"
@@ -3315,7 +3383,7 @@ Gdip_GetPropertyTagName(PropID) {
       ; PropTags[0x8825] := "GpsIFD"
       PropTags[0x8827] := "EXIF ISO Speed"
       ; PropTags[0x8828] := "ExifOECF"
-      PropTags[0x9000] := "ExifVer"
+      ; PropTags[0x9000] := "ExifVer"
       PropTags[0x9003] := "EXIF DTOrig"                ; Date & time of original
       PropTags[0x9004] := "EXIF DTDigitized"           ; Date & time of digital data generation
       ; PropTags[0x9101] := "EXIF CompConfig"
@@ -3388,29 +3456,41 @@ Gdip_GetPropertyTagType(PropType) {
 Gdip_GetPropertyItemValue(ByRef PropVal, PropLen, PropType, PropAddr) {
 ; Gdip_GetPropertyItemValue() - Reserved for internal use
    PropVal := ""
-   If (PropType = 2) {
+   If (PropType = 2)
+   {
       PropVal := StrGet(PropAddr, PropLen, "CP0")
       Return True
    }
-   If (PropType = 3) {
-      Loop, % (PropLen // 2)
+
+   If (PropType = 3)
+   {
+      PropyLen := PropLen // 2
+      Loop %PropyLen%
          PropVal .= (A_Index > 1 ? " " : "") . NumGet(PropAddr + 0, (A_Index - 1) << 1, "Short")
       Return True
    }
-   If (PropType = 4) || (PropType = 9) {
+
+   If (PropType = 4) || (PropType = 9)
+   {
       NumType := PropType = 4 ? "UInt" : "Int"
-      Loop, % (PropLen // 4)
+      PropyLen := PropLen // 4
+      Loop %PropyLen%
          PropVal .= (A_Index > 1 ? " " : "") . NumGet(PropAddr + 0, (A_Index - 1) << 2, NumType)
       Return True
    }
-   If (PropType = 5) || (PropType = 10) {
+
+   If (PropType = 5) || (PropType = 10)
+   {
       NumType := PropType = 5 ? "UInt" : "Int"
-      Loop, % (PropLen // 8)
+      PropyLen := PropLen // 8
+      Loop %PropyLen%
          PropVal .= (A_Index > 1 ? " " : "") . NumGet(PropAddr + 0, (A_Index - 1) << 2, NumType)
                  .  "/" . NumGet(PropAddr + 4, (A_Index - 1) << 2, NumType)
       Return True
    }
-   If (PropType = 1) || (PropType = 7) {
+
+   If (PropType = 1) || (PropType = 7)
+   {
       VarSetCapacity(PropVal, PropLen, 0)
       DllCall("Kernel32.dll\RtlMoveMemory", "Ptr", &PropVal, "Ptr", PropAddr, "Ptr", PropLen)
       Return True
@@ -3587,7 +3667,7 @@ Gdip_AddPathLines(pPath, Points) {
     NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
     NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
   }
-  return DllCall("gdiplus\GdipAddPathLine2", Ptr, pPath, Ptr, &PointF, "int", Points0)
+  return DllCall("gdiplus\GdipAddPathLine2", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
 }
 
 Gdip_AddPathLine(pPath, x1, y1, x2, y2) {
@@ -3692,7 +3772,7 @@ Gdip_PathGradientSetSurroundColors(pBrush, SurroundColors) {
    tColors := Colors.Length()
    VarSetCapacity(ColorArray, 4 * tColors, 0)
 
-   Loop, % tColors {
+   Loop %tColors% {
       NumPut(Colors[A_Index], ColorArray, 4 * (A_Index - 1), "UInt")
    }
 
@@ -3700,7 +3780,7 @@ Gdip_PathGradientSetSurroundColors(pBrush, SurroundColors) {
                 , "IntP", tColors)
 }
 
-Gdip_PathGradientSetSigmaBlend(pBrush, Focus, Scale = 1) {
+Gdip_PathGradientSetSigmaBlend(pBrush, Focus, Scale:=1) {
    ; Sets the blend shape of this path gradient brush to bell shape.
    ; pBrush             Brush object returned from Gdip_PathGradientCreateFromPath().
    ; Focus              Number that specifies where the center color will be at its highest intensity.
@@ -3711,7 +3791,7 @@ Gdip_PathGradientSetSigmaBlend(pBrush, Focus, Scale = 1) {
    Return DllCall("gdiplus\GdipSetPathGradientSigmaBlend", "Ptr", pBrush, "Float", Focus, "Float", Scale)
 }
 
-Gdip_PathGradientSetLinearBlend(pBrush, Focus, Scale = 1) {
+Gdip_PathGradientSetLinearBlend(pBrush, Focus, Scale:=1) {
    ; Sets the blend shape of this path gradient brush to triangular shape.
    ; pBrush             Brush object returned from Gdip_PathGradientCreateFromPath()
    ; Focus              Number that specifies where the center color will be at its highest intensity.
@@ -3783,7 +3863,7 @@ Gdip_GetHistogram(pBitmap, whichFormat, ByRef newArrayA, ByRef newArrayB, ByRef 
    Else If (whichFormat=3)
       r:= DllCall("gdiplus\GdipBitmapGetHistogram", "Ptr", pBitmap, "UInt", whichFormat, "UInt", numEntries, "Ptr", &ch0, "Ptr", 0, "Ptr", 0, "Ptr", 0)
 
-   Loop % numEntries
+   Loop %numEntries%
    {
       i := A_Index - 1
       r := NumGet(&ch0+0, i * sizeofUInt, "UInt")
@@ -4098,11 +4178,11 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
           mG := z*(y*NTSCb)
           mH := z*(y*NTSCb)
           mI := z*(y*NTSCb + sL + bLa + chnBdec)
-          mtrx = %mA%|%mB%|%mC%|0   |0
-                |%mD%|%mE%|%mF%|0   |0
-                |%mG%|%mH%|%mI%|0   |0
-                |0   |0   |0   |%aL%|0
-                |%G% |%G% |%G% |0   |1
+          mtrx:= mA "|" mB "|" mC "|  0   |0"
+           . "|" mD "|" mE "|" mF "|  0   |0"
+           . "|" mG "|" mH "|" mI "|  0   |0"
+           . "|  0   |  0   |  0   |" aL "|0"
+           . "|" G  "|" G  "|" G  "|  0   |1"
        } Else
        {
           z := (bL<1) ? bL : 1
@@ -4135,11 +4215,11 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
              bF := 0
 
           ; ToolTip, % rB " - " rF " --- " gB " - " gF
-          mtrx = %rB%|%rF%|%rF%|0   |0
-                |%gF%|%gB%|%gF%|0   |0
-                |%bF%|%bF%|%bB%|0   |0
-                |0   |0   |0   |%aL%|0
-                |%G% |%G% |%G% |0   |1
+          mtrx:= rB "|" rF "|" rF "|  0   |0"
+           . "|" gF "|" gB "|" gF "|  0   |0"
+           . "|" bF "|" bF "|" bB "|  0   |0"
+           . "|  0   |  0   |  0   |" aL "|0"
+           . "|" G  "|" G  "|" G  "|  0   |1"
           ; matrix adjusted for lisibility
        }
        matrix := StrReplace(mtrx, A_Space)
@@ -4159,11 +4239,11 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
        rB := r+s2+3*s1
        gB := g+s2+3*s1
        bB := b+s2+3*s1
-       mtrx = %rB%|%r% |%r% |0   |0
-             |%g% |%gB%|%g% |0   |0
-             |%b% |%b% |%bB%|0   |0
-             |0   |0   |0   |%aL%|0
-             |%s3%|%s3%|%s3%|0   |1
+       mtrx :=   rB "|" r  "|" r  "|  0   |0"
+           . "|" g  "|" gB "|" g  "|  0   |0"
+           . "|" b  "|" b  "|" bB "|  0   |0"
+           . "|  0   |  0   |  0   |" aL "|0"
+           . "|" s3 "|" s3 "|" s3 "|  0   |1"
        matrix := StrReplace(mtrx, A_Space)
     }
     Return matrix

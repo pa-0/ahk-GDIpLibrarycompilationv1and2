@@ -1,5 +1,4 @@
-#Include Gdip_All.ahk
-#NoEnv
+#Include ../Gdip_All.ahk
 
 ;=== Create Gui, OnMessage ===
 Gui 1: -Caption +E0x80000 +LastFound +AlwaysOnTop +ToolWindow +OwnDialogs

@@ -1,4 +1,4 @@
-# AHK GDIp library compilation.
+# AHK GDI+ library compilation.
 This is a compilation of user contributed functions for the GDIp library wrapper 
 made by Tariq Porter [tic] that never made into it.
 
@@ -38,11 +38,15 @@ with this new version.
 - Gdip_GetClipRegion()
 
 
-## 66 NEW FUNCTIONS:
+## 68 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
   - GetIconDimensions()     
+
+- by Tariq Porter [tic]:
+  - Gdip_FillRoundedRectangle2()
+  - Gdip_DrawRoundedRectangle2()
 
 - by DevX and Rabiator:
   - Gdip_DrawRoundedLine()
@@ -127,4 +131,4 @@ with this new version.
 ## NOTES:
   - GetProperty() functions yield incorrect results for some meta-data/properties.
   - Gdip_PixelateBitmap() seems to not work.
-  - awaiting pull requests to have it entirely compatible with AHK v1.1 and v2, for the newly added functions
+  - awaiting pull requests for bug fixes or to have it entirely compatible with AHK v2 as well, for the newly added functions,

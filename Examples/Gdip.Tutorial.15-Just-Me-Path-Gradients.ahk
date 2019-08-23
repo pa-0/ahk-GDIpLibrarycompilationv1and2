@@ -1,8 +1,7 @@
 ; https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-65
 ; by just_me 
 
-#NoEnv
-#Include Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 SS_BITMAP    := 0xE
 SS_ICON      := 0x3
