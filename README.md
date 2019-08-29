@@ -1,11 +1,9 @@
 # AHK GDI+ library compilation.
-This is a compilation of user contributed functions for the GDIp library wrapper 
-made by Tariq Porter [tic] that never made into it.
+This is a compilation of user contributed functions for the GDI+ library wrapper made by Tariq Porter [tic] that never made it into.
 
-This repository is a fork of https://github.com/mmikeww/AHKv2-Gdip/ .
-Unfortunately, some of the newly added functions are likely not
-AHK v2 compatible, however I updated several functions to better
-suit to it.
+This repository is a fork of https://github.com/mmikeww/AHKv2-Gdip/ . Some of the newly added functions are possibly not AHK v2 compatible.
+
+The Tutorials/Examples are left untouched. They are the same as in the repository of @mmikeww. I added several new examples that showcase the newly supported GDI+ APIs. These are example scripts initially provided by those that coded the new functions.
 
 # History
 - @tic created the original [Gdip.ahk](https://github.com/tariqporter/Gdip/) library
@@ -15,9 +13,7 @@ suit to it.
 
 # Comparisions
 
-The following list is comparing Gdip_All.ahk
-by Tariq Porter and Rseding91 modifications
-with this new version.
+The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
 ## 16 MODIFIED FUNCTIONS:
 - Gdip_CreateBitmapFromClipboard()
@@ -38,7 +34,7 @@ with this new version.
 - Gdip_GetClipRegion()
 
 
-## 68 NEW FUNCTIONS:
+## 69 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -84,6 +80,7 @@ with this new version.
   - Gdip_PathGradientSetLinearBlend()
   - Gdip_PathGradientSetFocusScales()
   - Gdip_AddPathGradient()
+  - Gdip_LoadImageFromFile()
   - Gdip_GetPropertyCount()
   - Gdip_GetPropertyIdList()
   - Gdip_GetPropertyItem()
@@ -91,10 +88,10 @@ with this new version.
   - Gdip_GetPropertyTagName()
   - Gdip_GetPropertyTagType()
   - Gdip_GetPropertyItemValue()
-  - GetMonitorCount
-  - GetMonitorInfo
-  - GetPrimaryMonitor
   - Multiple Display Monitors Functions by "Just me":
+    - GetMonitorCount
+    - GetMonitorInfo
+    - GetPrimaryMonitor
     - MDMF_Enum
     - MDMF_EnumProc
     - MDMF_FromHWND
@@ -130,5 +127,7 @@ with this new version.
 
 ## NOTES:
   - GetProperty() functions yield incorrect results for some meta-data/properties.
-  - Gdip_PixelateBitmap() seems to not work.
-  - awaiting pull requests for bug fixes or to have it entirely compatible with AHK v2 as well, for the newly added functions,
+  - Gdip_PixelateBitmap() seems to not work for me [in any GDI+ library edition].
+  - the newly added examples are not AHK v2 compatible
+  - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
+  - awaiting pull requests for bug fixes
