@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.59 on 09/01/2019
 ; - v1.58 on 08/29/2019
 ; - v1.57 on 08/23/2019
 ; - v1.56 on 08/21/2019
@@ -20,6 +21,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/01/2019 = Added Gdip_GetImageFramesCount() by SBC
 ; - 08/29/2019 = Fixed Gdip_GetPropertyTagName() [on AHK v2], Gdip_GetPenColor() and Gdip_GetSolidFillColor(), added Gdip_LoadImageFromFile()
 ; - 08/23/2019 = Added Gdip_FillRoundedRectangle2() and Gdip_DrawRoundedRectangle2(); extracted from Gdip2 by Tariq [tic] and corrected functions names
 ; - 08/21/2019 = Added GenerateColorMatrix()
@@ -739,8 +741,10 @@ Gdip_LibraryVersion() {
 ;
 ; notes           This is the sub-version currently maintained by Rseding91
 ;                 Updated by guest3456 preliminary AHK v2 support
+;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
+
 Gdip_LibrarySubVersion() {
-   return 1.58
+   return 1.59
 }
 
 ;#####################################################################################
@@ -1358,7 +1362,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ;
 ; return          status enumeration. 0 = success
 ;
-; notes           if sx,sy,sw,sh are missed then the entire source bitmap will be used
+; notes           When sx,sy,sw,sh are omitted the entire source bitmap will be used
 ;                 Gdip_DrawImage performs faster
 ;                 Matrix can be omitted to just draw with no alteration to ARGB
 ;                 Matrix may be passed as a digit from 0.0 - 1.0 to change just transparency
@@ -3915,5 +3919,21 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
        matrix := StrReplace(mtrx, A_Space)
     }
     Return matrix
+}
+
+
+Gdip_GetImageFramesCount(pBitmap) {
+; The function returns the number of frames or pages a given pBitmap has
+; For GDI+ only GIFs and TIFFs can have multiple frames/pages.
+; Function written by SBC in September 2010 and
+; extracted from his «Picture Viewer» script.
+; https://autohotkey.com/board/topic/58226-ahk-picture-viewer/
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    DllCall("gdiplus\GdipImageGetFrameDimensionsCount", Ptr, pBitmap, "UInt*", Countu)
+    VarSetCapacity(dIDs,16,0)
+    DllCall("gdiplus\GdipImageGetFrameDimensionsList", Ptr, pBitmap, "Uint", &dIDs, "UInt", Countu)
+    DllCall("gdiplus\GdipImageGetFrameCount", Ptr, pBitmap, "Uint", &dIDs, "UInt*", CountFrames)
+    Return CountFrames
 }
 

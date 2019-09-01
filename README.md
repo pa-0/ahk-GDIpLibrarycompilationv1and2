@@ -47,6 +47,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - by DevX and Rabiator:
   - Gdip_DrawRoundedLine()
 
+- by SBC:
+  - Gdip_GetImageFramesCount()
+
 - By RazorHalo:
   - RotateAtCenter()
   - Gdip_ResetMatrix()
@@ -93,7 +96,6 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - GetMonitorInfo
     - GetPrimaryMonitor
     - MDMF_Enum
-    - MDMF_EnumProc
     - MDMF_FromHWND
     - MDMF_FromPoint
     - MDMF_FromRect
