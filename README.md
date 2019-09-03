@@ -15,7 +15,7 @@ The Tutorials/Examples are left untouched. They are the same as in the repositor
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## 16 MODIFIED FUNCTIONS:
+## 17 MODIFIED FUNCTIONS:
 - Gdip_CreateBitmapFromClipboard()
 - Gdip_SetBitmapToClipboard()
 - UpdateLayeredWindow()
@@ -32,9 +32,10 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateBitmapFromFile()
 - Gdip_TextToGraphics()
 - Gdip_GetClipRegion()
+- Gdip_CreateTextureBrush()
 
 
-## 69 NEW FUNCTIONS:
+## 106 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -68,11 +69,14 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_AddPathLine()
   - Gdip_AddPathArc()
   - Gdip_AddPathPie()
+  - Gdip_SetPathFillMode()
   - Gdip_StartPathFigure()
   - Gdip_ClosePathFigure()
   - Gdip_DrawPath()
   - Gdip_WidenPath()
   - Gdip_ClonePath()
+  - Gdip_CombineRegionRegion()
+  - Gdip_CreateRegionPath()
 
 - By "Just Me":
   - Gdip_PathGradientCreateFromPath()
@@ -103,6 +107,43 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 
 - By Marius Șucan [robodesign]:
   - *Gdip_GetHistogram()
+  - Gdip_CreateRegionRect()
+  - Gdip_GetWorldTransform()
+  - Gdip_CloneRegion()
+  - Gdip_SetTextureWrapMode()
+  - Gdip_GetTextureWrapMode()
+  - Gdip_ScaleTextureTransform()
+  - Gdip_RotateTextureTransform()
+  - Gdip_ResetTextureTransform()
+  - Gdip_ResetTextureTransform()
+  - Gdip_TranslateRegion()
+  - Gdip_TranslateClip()
+  - Gdip_IsEmptyRegion()
+  - Gdip_IsEqualRegion()
+  - Gdip_IsInfiniteRegion()
+  - Gdip_IsVisibleRegionPoint()
+  - Gdip_IsVisibleRegionRect()
+  - Gdip_SetEmptyRegion()
+  - Gdip_SetInfiniteRegion()
+  - Gdip_GetRegionBounds()
+  - Gdip_GraphicsFlush()
+  - Gdip_GetImageBounds()
+  - Gdip_GetImageDimension()
+  - Gdip_CloneBitmap()
+  - Gdip_SetCompositingQuality()
+  - Gdip_SetPageScale()
+  - Gdip_SetPageUnit()
+  - Gdip_SetPixelOffsetMode()
+  - Gdip_SetRenderingOrigin()
+  - Gdip_SetTextContrast()
+  - Gdip_GetCompositingMode()
+  - Gdip_GetCompositingQuality()
+  - Gdip_GetInterpolationMode()
+  - Gdip_GetPageScale()
+  - Gdip_GetPageUnit()
+  - Gdip_GetPixelOffsetMode()
+  - Gdip_GetRenderingOrigin()
+  - Gdip_GetTextRenderingHint()
   - Gdip_CreateDIBitmap()
   - Gdip_GetDIBits()
   - Gdip_DrawImageFX()
