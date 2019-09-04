@@ -35,7 +35,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 
 
-## 106 NEW FUNCTIONS:
+## 142 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -106,6 +106,42 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_GetInfo
 
 - By Marius Șucan [robodesign]:
+  - Gdip_GetTextureImage()
+  - Gdip_IsOutlineVisiblePathPoint()
+  - Gdip_GetLineGammaCorrection()
+  - Gdip_SetLineGammaCorrection()
+  - Gdip_GetLineRect()
+  - Gdip_ResetLineTransform()
+  - Gdip_ScaleLineTransform()
+  - Gdip_RotateLineTransform()
+  - Gdip_TranslateLineTransform()
+  - Gdip_IsClipEmpty()
+  - Gdip_IsVisibleClipEmpty()
+  - Gdip_IsVisibleGraphPoint()
+  - Gdip_IsVisibleGraphRectEntirely()
+  - Gdip_IsVisibleGraphRect()
+  - Gdip_SetClipFromGraphics()
+  - Gdip_GetClipBounds()
+  - Gdip_GetVisibleClipBounds()
+  - Gdip_GetTextContrast()
+  - Gdip_GetPathGradientGammaCorrection()
+  - Gdip_GetPathGradientPointCount()
+  - Gdip_GetPathGradientRect()
+  - Gdip_ResetPathGradientTransform()
+  - Gdip_RotatePathGradientTransform()
+  - Gdip_ScalePathGradientTransform()
+  - Gdip_SetPathGradientGammaCorrection()
+  - Gdip_SetPathGradientWrapMode()
+  - Gdip_GetPathGradientWrapMode()
+  - Gdip_GetPathFillMode()
+  - Gdip_GetPathLastPoint()
+  - Gdip_GetPathPointsCount()
+  - Gdip_ResetPath()
+  - Gdip_ReversePath()
+  - Gdip_GetHatchBackgroundColor()
+  - Gdip_GetHatchForegroundColor()
+  - Gdip_GetHatchStyle()
+  - Gdip_IsVisibleRegionRectEntirely()
   - *Gdip_GetHistogram()
   - Gdip_CreateRegionRect()
   - Gdip_GetWorldTransform()

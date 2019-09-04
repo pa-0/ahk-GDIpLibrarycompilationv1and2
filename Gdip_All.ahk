@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.61 on 09/04/2019
 ; - v1.60 on 09/03/2019
 ; - v1.59 on 09/01/2019
 ; - v1.58 on 08/29/2019
@@ -22,7 +23,8 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
-; - 09/03/2019 = Added about 37 new GDI+ functions
+; - 09/04/2019 = Added about 36 new GDI+ functions [ Marius Șucan ]
+; - 09/03/2019 = Added about 37 new GDI+ functions [ Marius Șucan ]
 ; - 08/29/2019 = Fixed Gdip_GetPropertyTagName() [on AHK v2], Gdip_GetPenColor() and Gdip_GetSolidFillColor(), added Gdip_LoadImageFromFile()
 ; - 08/23/2019 = Added Gdip_FillRoundedRectangle2() and Gdip_DrawRoundedRectangle2(); extracted from Gdip2 by Tariq [tic] and corrected functions names
 ; - 08/21/2019 = Added GenerateColorMatrix()
@@ -745,7 +747,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.60
+   return 1.61
 }
 
 ;#####################################################################################
@@ -1222,7 +1224,6 @@ Gdip_FillPolygon(pGraphics, pBrush, Points, FillMode:=0) {
 
 Gdip_FillPie(pGraphics, pBrush, x, y, w, h, StartAngle, SweepAngle) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipFillPie"
                , Ptr, pGraphics
                , Ptr, pBrush
@@ -1248,7 +1249,6 @@ Gdip_FillPie(pGraphics, pBrush, x, y, w, h, StartAngle, SweepAngle) {
 
 Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipFillEllipse", Ptr, pGraphics, Ptr, pBrush, "float", x, "float", y, "float", w, "float", h)
 }
 
@@ -1267,7 +1267,6 @@ Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h) {
 
 Gdip_FillRegion(pGraphics, pBrush, Region) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipFillRegion", Ptr, pGraphics, Ptr, pBrush, Ptr, Region)
 }
 
@@ -1284,7 +1283,6 @@ Gdip_FillRegion(pGraphics, pBrush, Region) {
 
 Gdip_FillPath(pGraphics, pBrush, pPath) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipFillPath", Ptr, pGraphics, Ptr, pBrush, Ptr, pPath)
 }
 
@@ -1305,7 +1303,7 @@ Gdip_FillPath(pGraphics, pBrush, pPath) {
 ; notes           if sx,sy,sw,sh are missed then the entire source bitmap will be used
 ;                 Matrix can be omitted to just draw with no alteration to ARGB
 ;                 Matrix may be passed as a digit from 0 - 1 to change just transparency
-;                 Matrix can be passed as a matrix with any delimiter
+;                 Matrix can be passed as a matrix with "|" delimiter
 
 Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -1367,7 +1365,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ;                 Gdip_DrawImage performs faster
 ;                 Matrix can be omitted to just draw with no alteration to ARGB
 ;                 Matrix may be passed as a digit from 0.0 - 1.0 to change just transparency
-;                 Matrix can be passed as a matrix with any delimiter. For example:
+;                 Matrix can be passed as a matrix with "|" as delimiter. For example:
 ;                 MatrixBright=
 ;                 (
 ;                 1.5   |0    |0    |0    |0
@@ -1431,7 +1429,7 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
 ; Description     This function creates an image matrix ready for drawing
 ;
 ; Matrix          a matrix used to alter image attributes when drawing
-;                 passed with any delimeter
+;                 passed with "|" as delimeter
 ;
 ; return          returns an image matrix on sucess or 0 if it fails
 ;
@@ -1441,6 +1439,8 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
 
 Gdip_SetImageAttributesColorMatrix(Matrix) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
+   If StrLen(matrix)<5
+      Return
 
    VarSetCapacity(ColourMatrix, 100, 0)
    Matrix := RegExReplace(RegExReplace(Matrix, "^[^\d-\.]+([\d\.])", "$1", , 1), "[^\d-\.]+", "|")
@@ -1753,8 +1753,7 @@ Gdip_GetImageHeight(pBitmap) {
 ; Width              ByRef variable. This variable will be set to the width of the bitmap
 ; Height             ByRef variable. This variable will be set to the height of the bitmap
 ;
-; return             No return value
-;                    Gdip_GetImageDimensions(pBitmap, ThisWidth, ThisHeight) will set ThisWidth to the width and ThisHeight to the height
+; return             GDI+ status enumeration return value
 
 Gdip_GetImageDimensions(pBitmap, ByRef Width, ByRef Height) {
    Width := 0, Height := 0
@@ -1925,7 +1924,6 @@ Gdip_CreateBitmap(Width, Height, Format:=0x26200A) {
 
 Gdip_CreateBitmapFromClipboard() {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    if !DllCall("IsClipboardFormatAvailable", "uint", 8)
       return -2
    if !DllCall("OpenClipboard", Ptr, 0)
@@ -1936,6 +1934,7 @@ Gdip_CreateBitmapFromClipboard() {
       return -4
    if !DllCall("CloseClipboard")
       return -5
+
    DeleteObject(hBitmap)
    return pBitmap
 }
@@ -1989,8 +1988,6 @@ Gdip_CloneBitmapArea(pBitmap, x, y, w, h, Format:=0x26200A) {
                , "int", Format
                , A_PtrSize ? "UPtr" : "UInt", pBitmap
                , A_PtrSize ? "UPtr*" : "UInt*", pBitmapDest)
-   If E
-      return -1
    return pBitmapDest
 }
 
@@ -1998,9 +1995,29 @@ Gdip_CloneBitmap(pBitmap) {
    E := DllCall("gdiplus\GdipCloneImage"
                , A_PtrSize ? "UPtr" : "UInt", pBitmap
                , A_PtrSize ? "UPtr*" : "UInt*", pBitmapDest)
-   If E
-      return -1
    return pBitmapDest
+}
+
+Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1) {
+; RotateFlipType options:
+; RotateNoneFlipNone   = 0
+; Rotate90FlipNone     = 1
+; Rotate180FlipNone    = 2
+; Rotate270FlipNone    = 3
+; RotateNoneFlipX      = 4
+; Rotate90FlipX        = 5
+; Rotate180FlipX       = 6
+; Rotate270FlipX       = 7
+; RotateNoneFlipY      = Rotate180FlipX
+; Rotate90FlipY        = Rotate270FlipX
+; Rotate180FlipY       = RotateNoneFlipX
+; Rotate270FlipY       = Rotate90FlipX
+; RotateNoneFlipXY     = Rotate180FlipNone
+; Rotate90FlipXY       = Rotate270FlipNone
+; Rotate180FlipXY      = RotateNoneFlipNone
+; Rotate270FlipXY      = Rotate90FlipNone
+
+   return DllCall("gdiplus\GdipImageRotateFlip", A_PtrSize ? "UPtr" : "UInt", pBitmap, "int", RotateFlipType)
 }
 
 ;#####################################################################################
@@ -2127,6 +2144,30 @@ Gdip_BrushCreateHatch(ARGBfront, ARGBback, HatchStyle:=0) {
    return pBrush
 }
 
+Gdip_GetHatchBackgroundColor(pHatchBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetHatchBackgroundColor", Ptr, pHatchBrush, "uint*", ARGB)
+   If E 
+      Return -1
+   Return ARGB
+}
+
+Gdip_GetHatchForegroundColor(pHatchBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetHatchForegroundColor", Ptr, pHatchBrush, "uint*", ARGB)
+   If E 
+      Return -1
+   Return ARGB
+}
+
+Gdip_GetHatchStyle(pHatchBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetHatchStyle", Ptr, pHatchBrush, "int*", result)
+   If E 
+      Return -1
+   Return result
+}
+
 ;#####################################################################################
 
 ; Function:             Gdip_CreateTextureBrush
@@ -2150,9 +2191,8 @@ Gdip_BrushCreateHatch(ARGBfront, ARGBback, HatchStyle:=0) {
 ; notes                 If w and h are omitted, the entire pBitmap is used
 ;                       Matrix can be omitted to just draw with no alteration to the ARGB channels
 ;                       Matrix may be passed as a digit from 0.0 - 1.0 to change just transparency
-;                       Matrix can be passed as a matrix with any delimiter. For example:
+;                       Matrix can be passed as a matrix with "|" as delimiter. 
 ; Function modified by Marius Șucan, to allow color matrix.
-;#####################################################################################
 
 Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:="", ScaleX:="", scaleY:="", angle:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -2189,7 +2229,6 @@ Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:=
    return pBrush
 }
 
-
 Gdip_RotateTextureTransform(pTexBrush, Angle, MatrixOrder:=0) {
 ; MatrixOrder options:
 ; Prepend = 0; The new operation is applied before the old operation.
@@ -2224,6 +2263,17 @@ Gdip_GetTextureWrapMode(pTexBrush) {
    Return result
 }
 
+Gdip_GetTextureImage(pTexBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetTextureImage", Ptr, pTexBrush
+               , A_PtrSize ? "UPtr*" : "UInt*", pBitmapDest)
+   Return pBitmapDest
+}
+
+;#####################################################################################
+; LinearGradientBrush functions
+;#####################################################################################
+
 Gdip_CreateLineBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode:=1) {
 ; Linear gradient brush.
 ; WrapMode specifies how the pattern is repeated once it exceeds the defined space
@@ -2233,21 +2283,21 @@ Gdip_CreateLineBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode:=1) {
 ; WrapModeTileFlipXY = 3
 ; WrapModeClamp = 4
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-   CreatePointF(PointF1, x1, y1), CreatePointF(PointF2, x2, y2)
-   DllCall("gdiplus\GdipCreateLineBrush", Ptr, &PointF1, Ptr, &PointF2, "Uint", ARGB1, "Uint", ARGB2, "int", WrapMode, A_PtrSize ? "UPtr*" : "UInt*", LGpBrush)
-   return LGpBrush
+   CreatePointF(PointF1, x1, y1)
+   CreatePointF(PointF2, x2, y2)
+   DllCall("gdiplus\GdipCreateLineBrush", Ptr, &PointF1, Ptr, &PointF2, "Uint", ARGB1, "Uint", ARGB2, "int", WrapMode, A_PtrSize ? "UPtr*" : "UInt*", pLinearGradientBrush)
+   return pLinearGradientBrush
 }
 
-Gdip_SetLineColors(LGpBrush, ARGB1, ARGB2) {
+Gdip_SetLineColors(pLinearGradientBrush, ARGB1, ARGB2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipSetLineColors", Ptr, LGpBrush, "UInt", ARGB1, "UInt", ARGB2)
+   return DllCall("gdiplus\GdipSetLineColors", Ptr, pLinearGradientBrush, "UInt", ARGB1, "UInt", ARGB2)
 }
 
-Gdip_GetLineColors(LGpBrush, ByRef ARGB1, ByRef ARGB2) {
+Gdip_GetLineColors(pLinearGradientBrush, ByRef ARGB1, ByRef ARGB2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    VarSetCapacity(colors, 8, 0)
-   E := DllCall("gdiplus\GdipGetLineColors", Ptr, LGpBrush, "Ptr", &colors)
+   E := DllCall("gdiplus\GdipGetLineColors", Ptr, pLinearGradientBrush, "Ptr", &colors)
    ARGB1 := NumGet(colors, 0, "UInt")
    ARGB2 := NumGet(colors, 4, "UInt")
    return E
@@ -2260,8 +2310,59 @@ Gdip_CreateLineBrushFromRect(x, y, w, h, ARGB1, ARGB2, LinearGradientMode:=1, Wr
 ; ForwardDiagonal = 2
 ; BackwardDiagonal = 3
    CreateRectF(RectF, x, y, w, h)
-   E := DllCall("gdiplus\GdipCreateLineBrushFromRect", A_PtrSize ? "UPtr" : "UInt", &RectF, "int", ARGB1, "int", ARGB2, "int", LinearGradientMode, "int", WrapMode, A_PtrSize ? "UPtr*" : "UInt*", LGpBrush)
-   return LGpBrush
+   E := DllCall("gdiplus\GdipCreateLineBrushFromRect", A_PtrSize ? "UPtr" : "UInt", &RectF, "int", ARGB1, "int", ARGB2, "int", LinearGradientMode, "int", WrapMode, A_PtrSize ? "UPtr*" : "UInt*", pLinearGradientBrush)
+   return pLinearGradientBrush
+}
+
+Gdip_GetLineGammaCorrection(pLinearGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetLineGammaCorrection", Ptr, pLinearGradientBrush, "int*", result)
+   If E 
+      Return -1
+   Return result
+}
+
+Gdip_SetLineGammaCorrection(pLinearGradientBrush, UseGammaCorrection) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetLineGammaCorrection", Ptr, pLinearGradientBrush, "int", UseGammaCorrection)
+}
+
+Gdip_GetLineRect(pLinearGradientBrush) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  rData := {}
+  VarSetCapacity(RectF, 16, 0)
+  status := DllCall("gdiplus\GdipGetLineRect", Ptr, pLinearGradientBrush, Ptr, &RectF)
+
+  If (!status) {
+        rData.x := NumGet(RectF, 0, "float")
+      , rData.y := NumGet(RectF, 4, "float")
+      , rData.w := NumGet(RectF, 8, "float")
+      , rData.h := NumGet(RectF, 12, "float")
+  } Else {
+    Return status
+  }
+
+  return rData
+}
+
+Gdip_ResetLineTransform(pLinearGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipResetLineTransform", Ptr, pLinearGradientBrush)
+}
+
+Gdip_ScaleLineTransform(pLinearGradientBrush, ScaleX, ScaleY, matrixOrder:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipScaleLineTransform", Ptr, pLinearGradientBrush, "float", ScaleX, "float", ScaleY, "int", matrixOrder)
+}
+
+Gdip_TranslateLineTransform(pLinearGradientBrush, X, Y, matrixOrder:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipTranslateLineTransform", Ptr, pLinearGradientBrush, "float", X, "float", Y, "int", matrixOrder)
+}
+
+Gdip_RotateLineTransform(pLinearGradientBrush, Angle, matrixOrder:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipRotateLineTransform", Ptr, pLinearGradientBrush, "float", Angle, "int", matrixOrder)
 }
 
 Gdip_CloneBrush(pBrush) {
@@ -2525,6 +2626,13 @@ Gdip_CreateMatrix() {
 
 ;#####################################################################################
 ; GraphicsPath functions
+; pPath objects are rendered/drawn by pGraphics object using:
+; - a) Gdip_FillPath() with an associated pBrush created with Gdip_BrushCreateSolid()
+; - b) Gdip_DrawPath() with an associated pPen created with Gdip_CreatePen()
+;
+; A pPath object can be converted using:
+; - a) Gdip_PathGradientCreateFromPath() to a PathGradient brush object
+; - b) Gdip_CreateRegionPath() to a region object
 ;#####################################################################################
 
 Gdip_CreatePath(BrushMode:=0) {
@@ -2558,11 +2666,66 @@ Gdip_AddPathPolygon(pPath, Points) {
 
 Gdip_SetPathFillMode(pPath, FillMode) {
 ; Parameters ....: pPath      - Pointer to a GraphicsPath object
-;                  FillMode - Path fill mode:
+;                  FillMode   - Path fill mode:
 ;                  0 - The areas are filled according to the even-odd parity rule
 ;                  1 - The areas are filled according to the non-zero winding rule
 
    return DllCall("gdiplus\GdipSetPathFillMode", A_PtrSize ? "UPtr" : "UInt", pPath, "int", FillMode)
+}
+
+Gdip_GetPathFillMode(pPath) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPathFillMode", Ptr, pPath, "int*", result)
+   If E 
+      Return -1
+   Return result
+}
+
+Gdip_GetPathLastPoint(pPath, ByRef X, ByRef Y) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   VarSetCapacity(PointF, 8, 0)
+   E := DllCall("gdiplus\GdipGetPathLastPoint", Ptr, pPath, "UPtr", &PointF)
+   If !E
+   {
+      x := NumGet(PointF, 0, "float")
+      y := NumGet(PointF, 4, "float")
+   }
+
+   Return E
+}
+
+Gdip_GetPathPointsCount(pPath) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPointCount", Ptr, pPath, "int*", result)
+   If E 
+      Return -1
+   Return result
+}
+
+Gdip_ResetPath(pPath) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipResetPath", Ptr, pPath)
+}
+
+Gdip_ReversePath(pPath) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipReversePath", Ptr, pPath)
+}
+
+Gdip_IsOutlineVisiblePathPoint(pGraphics, pPath, pPen, X, Y) {
+   E := DllCall("gdiplus\GdipIsOutlineVisiblePathPoint", Ptr, pPath, "float", X, "float", Y, Ptr, pPen, Ptr, pGraphics, "int*", result)
+   If E 
+      Return -1
+   Return result
+}
+
+Gdip_IsVisiblePathPoint(pPath, x, y, pGraphics) {
+; Function by RazorHalo, modified by Marius Șucan
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  E := DllCall("gdiplus\GdipIsVisiblePathPoint", Ptr, pPath, "float", x, "float", y, Ptr, pGraphics, A_PtrSize ? "UPtr*" : "UInt*", result)
+  If E
+     return -1
+  return result
 }
 
 Gdip_DeletePath(pPath) {
@@ -2672,6 +2835,14 @@ Gdip_SetTextContrast(pGraphics, Contrast) {
    return DllCall("gdiplus\GdipSetTextContrast", Ptr, pGraphics, "uint", Contrast)
 }
 
+Gdip_GetTextContrast(pGraphics) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetTextContrast", Ptr, pGraphics, "uint*", result)
+   If E
+      return -1
+   Return result
+}
+
 Gdip_GetCompositingMode(pGraphics) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    E := DllCall("gdiplus\GdipGetCompositingMode", Ptr, pGraphics, "int*", result)
@@ -2734,28 +2905,8 @@ Gdip_GetTextRenderingHint(pGraphics) {
 }
 
 ;#####################################################################################
-; Extra functions
+; More pGraphics functions
 ;#####################################################################################
-
-Gdip_Startup() {
-   Ptr := A_PtrSize ? "UPtr" : "UInt"
-   pToken := 0
-
-   if !DllCall("GetModuleHandle", "str", "gdiplus", Ptr)
-      DllCall("LoadLibrary", "str", "gdiplus")
-   VarSetCapacity(si, A_PtrSize = 8 ? 24 : 16, 0), si := Chr(1)
-   DllCall("gdiplus\GdiplusStartup", A_PtrSize ? "UPtr*" : "uint*", pToken, Ptr, &si, Ptr, 0)
-   return pToken
-}
-
-Gdip_Shutdown(pToken) {
-   Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-   DllCall("gdiplus\GdiplusShutdown", Ptr, pToken)
-   if hModule := DllCall("GetModuleHandle", "str", "gdiplus", Ptr)
-      DllCall("FreeLibrary", Ptr, hModule)
-   return 0
-}
 
 Gdip_RotateWorldTransform(pGraphics, Angle, MatrixOrder:=0) {
 ; MatrixOrder options:
@@ -2813,47 +2964,136 @@ Gdip_GetWorldTransform(pGraphics) {
    Return pMatrix
 }
 
-Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1) {
-; RotateFlipType options:
-; RotateNoneFlipNone   = 0
-; Rotate90FlipNone     = 1
-; Rotate180FlipNone    = 2
-; Rotate270FlipNone    = 3
-; RotateNoneFlipX      = 4
-; Rotate90FlipX        = 5
-; Rotate180FlipX       = 6
-; Rotate270FlipX       = 7
-; RotateNoneFlipY      = Rotate180FlipX
-; Rotate90FlipY        = Rotate270FlipX
-; Rotate180FlipY       = RotateNoneFlipX
-; Rotate270FlipY       = Rotate90FlipX
-; RotateNoneFlipXY     = Rotate180FlipNone
-; Rotate90FlipXY       = Rotate270FlipNone
-; Rotate180FlipXY      = RotateNoneFlipNone
-; Rotate270FlipXY      = Rotate90FlipNone
 
-   return DllCall("gdiplus\GdipImageRotateFlip", A_PtrSize ? "UPtr" : "UInt", pBitmap, "int", RotateFlipType)
-}
-
-;#####################################################################################
-; Region functions
-;#####################################################################################
-
-Gdip_SetClipRect(pGraphics, x, y, w, h, CombineMode:=0) {
-; CombineMode options:
-; Replace = 0
-; Intersect = 1
-; Union = 2
-; Xor = 3
-; Exclude = 4
-; Complement = 5
-
-   return DllCall("gdiplus\GdipSetClipRect", A_PtrSize ? "UPtr" : "UInt", pGraphics, "float", x, "float", y, "float", w, "float", h, "int", CombineMode)
-}
-
-Gdip_SetClipPath(pGraphics, pPath, CombineMode:=0) {
+Gdip_IsVisibleGraphPoint(pGraphics, X, Y) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipSetClipPath", Ptr, pGraphics, Ptr, pPath, "int", CombineMode)
+   E := DllCall("gdiplus\GdipIsVisiblePoint", Ptr, pGraphics, "float", X, "float", Y, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_IsVisibleGraphRect(pGraphics, X, Y, Width, Height) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsVisibleRect", Ptr, pGraphics, "float", X, "float", Y, "float", Width, "float", Height, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_IsVisibleGraphRectEntirely(pGraphics, X, Y, Width, Height) {
+    a := Gdip_IsVisibleGraphPoint(pGraphics, X, Y)
+    b := Gdip_IsVisibleGraphPoint(pGraphics, X + Width, Y)
+    c := Gdip_IsVisibleGraphPoint(pGraphics, X + Width, Y + Height)
+    d := Gdip_IsVisibleGraphPoint(pGraphics, X, Y + Height)
+    If (a=1 && b=1 && c=1 && d=1)
+       Return 1
+    Else If (a=-1 || b=-1 || c=-1 || d=-1)
+       Return -1
+    Else
+       Return 0
+}
+
+;#####################################################################################
+; Region and clip functions [pGraphics related]
+;
+; One of the properties of the pGraphics class is the clip region.
+; All drawing done in a given pGraphics object can be restricted
+; to the clip region of that pGraphics object. 
+
+; The GDI+ Region class allows you to define a custom shape.
+; The shape[s] can be made up of lines, polygons, and curves.
+;
+; Two common uses for regions are hit testing and clipping. 
+; Hit testing is determining whether the mouse was clicked
+; in a certain region of the screen.
+;
+; Clipping is restricting drawing to a certain region in
+; a given pGraphics object.
+;
+;#####################################################################################
+
+Gdip_IsClipEmpty(pGraphics) {
+; Determines whether the clipping region of a pGraphics object is empty
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsClipEmpty", Ptr, pGraphics, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_IsVisibleClipEmpty(pGraphics) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsVisibleClipEmpty", Ptr, pGraphics, "uint*", result)
+   If E
+      Return -1
+   Return result
+}
+
+;#####################################################################################
+
+; Name............. Gdip_SetClipFromGraphics
+;
+; Parameters:
+; pGraphicsA        Pointer to a pGraphics object
+; pGrahpicsB        Pointer to a pGraphics object that contains the clipping region to be combined with
+;                   the clipping region of the pGraphicsA object
+; CombineMode       Regions combination mode:
+;                   0 - The existing region is replaced by the new region
+;                   1 - The existing region is replaced by the intersection of itself and the new region
+;                   2 - The existing region is replaced by the union of itself and the new region
+;                   3 - The existing region is replaced by the result of performing an XOR on the two regions
+;                   4 - The existing region is replaced by the portion of itself that is outside of the new region
+;                   5 - The existing region is replaced by the portion of the new region that is outside of the existing region
+; return            Status enumeration value
+
+Gdip_SetClipFromGraphics(pGraphics, pGraphicsSrc, CombineMode:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetClipGraphics", Ptr, pGraphics, Ptr, pGraphicsSrc, "int", CombineMode)
+}
+
+Gdip_GetClipBounds(pGraphics) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  rData := {}
+
+  VarSetCapacity(RectF, 16, 0)
+  status := DllCall("gdiplus\GdipGetClipBounds", Ptr, pGraphics, Ptr, &RectF)
+
+  If (!status) {
+        rData.x := NumGet(RectF, 0, "float")
+      , rData.y := NumGet(RectF, 4, "float")
+      , rData.w := NumGet(RectF, 8, "float")
+      , rData.h := NumGet(RectF, 12, "float")
+  } Else {
+    Return status
+  }
+
+  return rData
+}
+
+Gdip_GetVisibleClipBounds(pGraphics) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  rData := {}
+
+  VarSetCapacity(RectF, 16, 0)
+  status := DllCall("gdiplus\GdipGetVisibleClipBounds", Ptr, pGraphics, Ptr, &RectF)
+
+  If (!status) {
+        rData.x := NumGet(RectF, 0, "float")
+      , rData.y := NumGet(RectF, 4, "float")
+      , rData.w := NumGet(RectF, 8, "float")
+      , rData.h := NumGet(RectF, 12, "float")
+  } Else {
+    Return status
+  }
+
+  return rData
+}
+
+Gdip_TranslateClip(pGraphics, dX, dY) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipTranslateClip", Ptr, pGraphics, "float", dX, "float", dY)
 }
 
 Gdip_ResetClip(pGraphics) {
@@ -2873,6 +3113,23 @@ Gdip_SetClipRegion(pGraphics, Region, CombineMode:=0) {
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipSetClipRegion", Ptr, pGraphics, Ptr, Region, "int", CombineMode)
+}
+
+Gdip_SetClipRect(pGraphics, x, y, w, h, CombineMode:=0) {
+; CombineMode options:
+; Replace = 0
+; Intersect = 1
+; Union = 2
+; Xor = 3
+; Exclude = 4
+; Complement = 5
+
+   return DllCall("gdiplus\GdipSetClipRect", A_PtrSize ? "UPtr" : "UInt", pGraphics, "float", x, "float", y, "float", w, "float", h, "int", CombineMode)
+}
+
+Gdip_SetClipPath(pGraphics, pPath, CombineMode:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetClipPath", Ptr, pGraphics, Ptr, pPath, "int", CombineMode)
 }
 
 Gdip_CreateRegion() {
@@ -2946,6 +3203,19 @@ Gdip_IsVisibleRegionRect(pGraphics, Region, x, y, width, height) {
    Return result
 }
 
+Gdip_IsVisibleRegionRectEntirely(pGraphics, Region, x, y, width, height) {
+    a := Gdip_IsVisibleRegionPoint(pGraphics, Region, X, Y)
+    b := Gdip_IsVisibleRegionPoint(pGraphics, Region, X + Width, Y)
+    c := Gdip_IsVisibleRegionPoint(pGraphics, Region, X + Width, Y + Height)
+    d := Gdip_IsVisibleRegionPoint(pGraphics, Region, X, Y + Height)
+    If (a=1 && b=1 && c=1 && d=1)
+       Return 1
+    Else If (a=-1 || b=-1 || c=-1 || d=-1)
+       Return -1
+    Else
+       Return 0
+}
+
 Gdip_SetEmptyRegion(Region) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipSetEmpty", Ptr, Region)
@@ -2978,11 +3248,6 @@ Gdip_GetRegionBounds(pGraphics, Region) {
 Gdip_TranslateRegion(Region, dX, dY) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipTranslateRegion", Ptr, Region, "float", dX, "float", dY)
-}
-
-Gdip_TranslateClip(pGraphics, dX, dY) {
-   Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipTranslateClip", Ptr, pGraphics, "float", dX, "float", dY)
 }
 
 Gdip_CloneRegion(Region) {
@@ -3188,6 +3453,25 @@ StrGetB(Address, Length:=-1, Encoding:=0) {
    return String
 }
 
+Gdip_Startup() {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   pToken := 0
+
+   if !DllCall("GetModuleHandle", "str", "gdiplus", Ptr)
+      DllCall("LoadLibrary", "str", "gdiplus")
+   VarSetCapacity(si, A_PtrSize = 8 ? 24 : 16, 0), si := Chr(1)
+   DllCall("gdiplus\GdiplusStartup", A_PtrSize ? "UPtr*" : "uint*", pToken, Ptr, &si, Ptr, 0)
+   return pToken
+}
+
+Gdip_Shutdown(pToken) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+
+   DllCall("gdiplus\GdiplusShutdown", Ptr, pToken)
+   if hModule := DllCall("GetModuleHandle", "str", "gdiplus", Ptr)
+      DllCall("FreeLibrary", Ptr, hModule)
+   return 0
+}
 
 ;#####################################################################################
 ; in AHK v1: uses normal 'if var is' command
@@ -3564,14 +3848,6 @@ Gdip_GetPropertyItemValue(ByRef PropVal, PropLen, PropType, PropAddr) {
    Return False
 }
 
-Gdip_IsVisiblePathPoint(pPath, x, y, pGraphics) {
-; HitTest Function by RazorHalo
-  Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-  DllCall("gdiplus\GdipIsVisiblePathPoint", Ptr, pPath, "float", x, "float", y, Ptr, pGraphics, A_PtrSize ? "UPtr*" : "UInt*", result)
-  return result
-}
-
 ;#####################################################################################
 ; RotateAtCenter() and related Functions by RazorHalo
 ; from https://www.autohotkey.com/boards/viewtopic.php?f=6&t=6517&start=260
@@ -3605,7 +3881,6 @@ RotateAtCenter(pPath, Angle, MatrixOrder:=1) {
   
   ; Reset Matrix?  Delete Matrix?  Do I still need it for future rotations?
   GDip_DeleteMatrix(pMatrix)
-
 }
 
 ;#####################################################################################
@@ -3686,12 +3961,12 @@ Gdip_GetLastStatus(pMatrix) {
 ; Function Gdip_AddPathBeziers
 ; Description Adds a sequence of connected Bézier splines to the current figure of this path.
 ;
-; pPath Pointer to the GraphicsPath
-; Points the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
+; pPath: Pointer to the GraphicsPath
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
 ;
 ; return status enumeration. 0 = success
-
-; Notes The first spline is constructed from the first point through the fourth point in the array and uses the second and third points as control points. Each subsequent spline in the sequence needs exactly three more points: the ending point of the previous spline is used as the starting point, the next two points in the sequence are control points, and the third point is the ending point.
+;
+; Notes: The first spline is constructed from the first point through the fourth point in the array and uses the second and third points as control points. Each subsequent spline in the sequence needs exactly three more points: the ending point of the previous spline is used as the starting point, the next two points in the sequence are control points, and the third point is the ending point.
 
 Gdip_AddPathBeziers(pPath, Points) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -3718,8 +3993,8 @@ Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4) {
 ; Function Gdip_AddPathLines
 ; Description Adds a sequence of connected lines to the current figure of this path.
 ;
-; pPath Pointer to the GraphicsPath
-; Points the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
+; pPath: Pointer to the GraphicsPath
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
 ;
 ; return status enumeration. 0 = success
 
@@ -3738,19 +4013,16 @@ Gdip_AddPathLines(pPath, Points) {
 
 Gdip_AddPathLine(pPath, x1, y1, x2, y2) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  
   return DllCall("gdiplus\GdipAddPathLine", Ptr, pPath, "float", x1, "float", y1, "float", x2, "float", y2)
 }
 
 Gdip_AddPathArc(pPath, x, y, w, h, StartAngle, SweepAngle) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-
   return DllCall("gdiplus\GdipAddPathArc", Ptr, pPath, "float", x, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
 }
 
 Gdip_AddPathPie(pPath, x, y, w, h, StartAngle, SweepAngle) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-
   return DllCall("gdiplus\GdipAddPathPie", Ptr, pPath, "float", x, "float", y, "float", w, "float", h, "float", StartAngle, "float", SweepAngle)
 }
 
@@ -3780,7 +4052,6 @@ Gdip_ClosePathFigure(pPath) {
 
 Gdip_DrawPath(pGraphics, pPen, pPath) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-
   return DllCall("gdiplus\GdipDrawPath", Ptr, pGraphics, Ptr, pPen, Ptr, pPath)
 }
 
@@ -3813,8 +4084,7 @@ Gdip_PathGradientCreateFromPath(pPath) {
 Gdip_PathGradientSetCenterPoint(pBrush, X, Y) {
    ; Sets the center point of this path gradient brush.
    ; pBrush             Brush object returned from Gdip_PathGradientCreateFromPath().
-   ; X                  X-position (pixel).
-   ; Y                  Y-position (pixel).
+   ; X, Y               X, y coordinates in pixels
    VarSetCapacity(POINTF, 8)
    NumPut(X, POINTF, 0, "Float")
    NumPut(Y, POINTF, 4, "Float")
@@ -3895,6 +4165,7 @@ Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, Scal
    Else
       Gdip_AddPathEllipse(pPath, x, y, W, H)
    zBrush := Gdip_PathGradientCreateFromPath(pPath)
+
    Gdip_PathGradientSetCenterPoint(zBrush, cX, cY)
    Gdip_PathGradientSetCenterColor(zBrush, cClr)
    Gdip_PathGradientSetSurroundColors(zBrush, sClr)
@@ -3905,6 +4176,83 @@ Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, Scal
    Gdip_DeleteBrush(zBrush)
    Gdip_DeletePath(pPath)
 }
+
+Gdip_GetPathGradientGammaCorrection(pPathGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPathGradientGammaCorrection", Ptr, pPathGradientBrush, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
+Gdip_GetPathGradientPointCount(pPathGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPathGradientPointCount", Ptr, pPathGradientBrush, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
+Gdip_GetPathGradientWrapMode(pPathGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPathGradientWrapMode", Ptr, pPathGradientBrush, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
+Gdip_GetPathGradientRect(pPathGradientBrush) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  rData := {}
+
+  VarSetCapacity(RectF, 16, 0)
+  status := DllCall("gdiplus\GdipGetPathGradientRect", Ptr, pPathGradientBrush, Ptr, &RectF)
+
+  If (!status) {
+        rData.x := NumGet(RectF, 0, "float")
+      , rData.y := NumGet(RectF, 4, "float")
+      , rData.w := NumGet(RectF, 8, "float")
+      , rData.h := NumGet(RectF, 12, "float")
+  } Else {
+    Return status
+  }
+
+  return rData
+}
+
+Gdip_ResetPathGradientTransform(pPathGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipResetPathGradientTransform", Ptr, pPathGradientBrush)
+}
+
+Gdip_RotatePathGradientTransform(pPathGradientBrush, Angle, matrixOrder:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipRotatePathGradientTransform", Ptr, pPathGradientBrush, "float", Angle, "int", matrixOrder)
+}
+
+Gdip_ScalePathGradientTransform(pPathGradientBrush, ScaleX, ScaleY, matrixOrder:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipScalePathGradientTransform", Ptr, pPathGradientBrush, "float", ScaleX, "float", ScaleY, "int", matrixOrder)
+}
+
+Gdip_SetPathGradientGammaCorrection(pPathGradientBrush, UseGammaCorrection) {
+; Specifies whether gamma correction is enabled for a path gradient brush
+; UseGammaCorrection: 1 or 0.
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetPathGradientGammaCorrection", Ptr, pPathGradientBrush, "int", UseGammaCorrection)
+}
+
+Gdip_SetPathGradientWrapMode(pPathGradientBrush, WrapMode) {
+; WrapMode: specifies how an area is tiled when it is painted with a brush:
+; 0 - Tiling without flipping
+; 1 - Tiles are flipped horizontally as you move from one tile to the next in a row
+; 2 - Tiles are flipped vertically as you move from one tile to the next in a column
+; 3 - Tiles are flipped horizontally as you move along a row and flipped vertically as you move along a column
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetPathGradientWrapMode", Ptr, pPathGradientBrush, "int", WrapMode)
+}
+
 
 ;######################################################################################################################################
 ; Function written by swagfag in July 2019
