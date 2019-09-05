@@ -40,7 +40,7 @@ pPen := Gdip_CreatePen(0xff000000, 5)
 ;Rotate the graphic until exit
 Loop {
   Gdip_GraphicsClear(G)            ; Clear the graphics
-  RotateAtCenter(pPath, 5)          ; Rotate the path by 5deg on its center
+  Gdip_RotatePathAtCenter(pPath, 5)          ; Rotate the path by 5deg on its center
   Gdip_DrawPath(G, pPen, pPath)        ; draw rectangle
   UpdateLayeredWindow(hGui, hdc, 0, 0, w, h)  ; Update the layred window
   Sleep 100
@@ -62,8 +62,8 @@ ExitApp
 OnWM_MOUSEMOVE(wParam, lParam, msg, hWnd) {
   Global
   
-    mX := lParam & 0xFFFF  ;get low order
-    mY := lParam >> 16    ;get high order
+  mX := lParam & 0xFFFF  ;get low order
+  mY := lParam >> 16    ;get high order
 
   hit := Gdip_IsVisiblePathPoint(pPath, mX, mY, G)
   Tooltip % "Hit= " hit
@@ -74,28 +74,28 @@ OnWM_MOUSEWHEEL(wParam, lParam, msg, hWnd) {
   Global
 
   mX := lParam & 0xFFFF  ;get low order
-    mY := lParam >> 16    ;get high order
+  mY := lParam >> 16    ;get high order
   delta := wParam >> 16   ;120 for zoom in, 65416 for zoom out
   
   Scale := Delta = 120 ? 0.9 : 1.1  ;Adjust scale factor
-  ;TODO - Factor in the mouse coords to zoom in and out at that point
+  ;TODO - Factor in the mouse coords to zoom in/out at that point
 
   Gdip_GraphicsClear(G)
   pMatrix := Gdip_CreateMatrix()
   
-  ;Calcualte center of Window which will be the center of the graphics path
+  ; Calculate center of Window which will be the center of the graphics path
   cX := w / 2
   cY := h / 2
   
-  ;Move Centre point of square to origin of graphics object, then scale and then move back to original center point of square
+  ; Move Centre point of square to origin of graphics object, then scale and then move back to original center point of square
   GDip_TranslateMatrix(pMatrix, -cX, -cY, 1)
   Gdip_ScaleMatrix(pMatrix, Scale, Scale, 1)
   GDip_TranslateMatrix(pMatrix, cX, cY, 1)
   
-  ;Apply the transformations
+  ; Apply the transformations
   Gdip_TransformPath(pPath, pMatrix)
   
-  ;Redraw the path and update the window
+  ; Redraw the path and update the window
   Gdip_DrawPath(G, pPen, pPath)
   UpdateLayeredWindow(hGui, hdc, 0, 0, w, h)
 }
