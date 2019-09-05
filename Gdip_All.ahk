@@ -996,23 +996,23 @@ Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4) {
 ; a class based wrapper around the GDI+ API made by nnnik.
 ; Source: https://github.com/nnnik/classGDIp
 ;
-; Example points array:
-; Points := "x1,y1|x2,y2|x3,y3" [and so on]
+; Points array format:
+; Points := "x1,y1|x2,y2|x3,y3|x4,y4" [... and so on]
 
 Gdip_DrawBezierCurve(pGraphics, pPen, Points) {
    Points := StrSplit(Points, "|")
    VarSetCapacity(PointF, 8*Points.Length(), 0)
    for eachPoint, Point in Points
    {
-     Coord := StrSplit(Point, ",")
-     NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-     NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
+       Coord := StrSplit(Point, ",")
+       NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
+       NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
    }
 
-   return DllCall("gdiplus\GdipDrawBeziers", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", Points.Length())
+   return DllCall("gdiplus\GdipDrawBeziers", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointF, "UInt", Points.Length())
 }
 
-Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension) {
+Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1) {
 ; Draws a closed cardinal spline on a pGraphics object using a pPen object.
 ; A cardinal spline is a curve that passes through each point in the array.
 
@@ -1026,12 +1026,12 @@ Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension) {
    VarSetCapacity(PointF, 8*Points.Length(), 0)
    for eachPoint, Point in Points
    {
-     Coord := StrSplit(Point, ",")
-     NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-     NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
+       Coord := StrSplit(Point, ",")
+       NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
+       NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
    }
 
-   return DllCall("gdiplus\GdipDrawClosedCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", Points.Length(), "float", Tension)
+   return DllCall("gdiplus\GdipDrawClosedCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointF, "UInt", Points.Length(), "float", Tension)
 }
 
 ;#####################################################################################
@@ -2881,7 +2881,7 @@ Gdip_AddPathClosedCurve(pPath, Points) {
   return DllCall("gdiplus\GdipAddPathClosedCurve", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
 }
 
-Gdip_AddPathClosedCurve2(pPath, Points, Tension) {
+Gdip_AddPathClosedCurve2(pPath, Points, Tension:=1) {
 ; Adds a closed cardinal spline to a path.
 ; A cardinal spline is a curve that passes through each point in the array.
 ;
@@ -2923,7 +2923,7 @@ Gdip_AddPathCurve(pPath, Points) {
   return DllCall("gdiplus\GdipAddPathCurve", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
 }
 
-Gdip_AddPathCurve2(pPath, Points, Tension) {
+Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
 ; Adds a cardinal spline to the current figure of a path
 ; A cardinal spline is a curve that passes through each point in the array.
 ;
