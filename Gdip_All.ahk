@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.63 on 09/06/2019
 ; - v1.62 on 09/05/2019
 ; - v1.61 on 09/04/2019
 ; - v1.60 on 09/03/2019
@@ -24,6 +25,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/06/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
 ; - 09/05/2019 = Added 27 new GDI+ functions [ Marius Șucan ]
 ; - 09/04/2019 = Added 36 new GDI+ functions [ Marius Șucan ]
 ; - 09/03/2019 = Added about 37 new GDI+ functions [ Marius Șucan ]
@@ -749,7 +751,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.62
+   return 1.63
 }
 
 ;#####################################################################################
@@ -1000,16 +1002,8 @@ Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4) {
 ; Points := "x1,y1|x2,y2|x3,y3|x4,y4" [... and so on]
 
 Gdip_DrawBezierCurve(pGraphics, pPen, Points) {
-   Points := StrSplit(Points, "|")
-   VarSetCapacity(PointF, 8*Points.Length(), 0)
-   for eachPoint, Point in Points
-   {
-       Coord := StrSplit(Point, ",")
-       NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-       NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-   }
-
-   return DllCall("gdiplus\GdipDrawBeziers", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointF, "UInt", Points.Length())
+   iCount := CreatePointsF(PointsF, Points)
+   return DllCall("gdiplus\GdipDrawBeziers", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount)
 }
 
 Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1) {
@@ -1018,20 +1012,13 @@ Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1) {
 
 ; Tension: Non-negative real number that controls the length of the curve and how the curve bends. A value of
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
+; Number that specifies how tightly the curve bends through the coordinates of the closed cardinal spline.
 
 ; Example points array:
 ; Points := "x1,y1|x2,y2|x3,y3" [and so on]
 
-   Points := StrSplit(Points, "|")
-   VarSetCapacity(PointF, 8*Points.Length(), 0)
-   for eachPoint, Point in Points
-   {
-       Coord := StrSplit(Point, ",")
-       NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-       NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-   }
-
-   return DllCall("gdiplus\GdipDrawClosedCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointF, "UInt", Points.Length(), "float", Tension)
+   iCount := CreatePointsF(PointsF, Points)
+   return DllCall("gdiplus\GdipDrawClosedCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount, "float", Tension)
 }
 
 ;#####################################################################################
@@ -1052,7 +1039,6 @@ Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1) {
 
 Gdip_DrawArc(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipDrawArc"
                , Ptr, pGraphics
                , Ptr, pPen
@@ -1123,14 +1109,8 @@ Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2) {
 
 Gdip_DrawLines(pGraphics, pPen, Points) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   Points := StrSplit(Points, "|")
-   VarSetCapacity(PointF, 8*Points.Length())
-   for eachPoint, Point in Points
-   {
-      Coord := StrSplit(Point, ",")
-      NumPut(Coord[1], PointF, 8*(A_Index-1), "float"), NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-   }
-   return DllCall("gdiplus\GdipDrawLines", Ptr, pGraphics, Ptr, pPen, Ptr, &PointF, "int", Points.Length())
+   iCount := CreatePointsF(PointsF, Points)
+   return DllCall("gdiplus\GdipDrawLines", Ptr, pGraphics, Ptr, pPen, Ptr, &PointsF, "int", iCount)
 }
 
 ;#####################################################################################
@@ -1226,15 +1206,8 @@ Gdip_FillRoundedRectangle(pGraphics, pBrush, x, y, w, h, r) {
 
 Gdip_FillPolygon(pGraphics, pBrush, Points, FillMode:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-   Points := StrSplit(Points, "|")
-   VarSetCapacity(PointF, 8*Points.Length())
-   For eachPoint, Point in Points
-   {
-      Coord := StrSplit(Point, ",")
-      NumPut(Coord[1], PointF, 8*(A_Index-1), "float"), NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-   }
-   return DllCall("gdiplus\GdipFillPolygon", Ptr, pGraphics, Ptr, pBrush, Ptr, &PointF, "int", Points.Length(), "int", FillMode)
+   iCount := CreatePointsF(PointsF, Points)
+   return DllCall("gdiplus\GdipFillPolygon", Ptr, pGraphics, Ptr, pBrush, Ptr, &PointsF, "int", iCount, "int", FillMode)
 }
 
 ;#####################################################################################
@@ -1314,6 +1287,33 @@ Gdip_FillPath(pGraphics, pBrush, pPath) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipFillPath", Ptr, pGraphics, Ptr, pBrush, Ptr, pPath)
 }
+;#####################################################################################
+
+; Function        Gdip_FillClosedCurve2
+; Description     This function fills a closed cardinal spline on a pGraphics object
+;                 using a pBrush object.
+;                 A cardinal spline is a curve that passes through each point in the array.
+;
+; pGraphics       Pointer to the Graphics of a bitmap
+; pBrush          Pointer to a brush
+;
+; Points array format:
+; Points := "x1,y1|x2,y2|x3,y3|x4,y4" [... and so on]
+;
+; Tension         Non-negative real number that controls the length of the curve and how the curve bends. A value of
+;                 zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
+;                 Number that specifies how tightly the curve bends through the coordinates of the closed cardinal spline.
+;
+; Fill mode:      0 - [Alternate] The areas are filled according to the even-odd parity rule
+;                 1 - [Winding] The areas are filled according to the non-zero winding rule
+;
+; return          status enumeration. 0 = success
+
+Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   iCount := CreatePointsF(PointsF, Points)
+   Return DllCall("gdiplus\GdipFillClosedCurve2", Ptr, pGraphics, Ptr, pBrush, "UPtr", &PointsF, "int", iCount, "float", Tension, "int", FillMode)
+}
 
 ;#####################################################################################
 
@@ -1337,14 +1337,7 @@ Gdip_FillPath(pGraphics, pBrush, pPath) {
 Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
 
-   Points := StrSplit(Points, "|")
-   VarSetCapacity(PointF, 8*Points.Length())
-   For eachPoint, Point in Points
-   {
-      Coord := StrSplit(Point, ",")
-      NumPut(Coord[1], PointF, 8*(A_Index-1), "float"), NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-   }
-
+   iCount := CreatePointsF(PointsF, Points)
    if !IsNumber(Matrix)
       ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
    else if (Matrix != 1)
@@ -1352,16 +1345,15 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 
    if (sx = "" && sy = "" && sw = "" && sh = "")
    {
-      sx := 0, sy := 0
-      sw := Gdip_GetImageWidth(pBitmap)
-      sh := Gdip_GetImageHeight(pBitmap)
+      sx := sy := 0
+      Gdip_GetImageDimensions(pBitmap, sw, sh)
    }
 
    _E := DllCall("gdiplus\GdipDrawImagePointsRect"
             , Ptr, pGraphics
             , Ptr, pBitmap
-            , Ptr, &PointF
-            , "int", Points.Length()
+            , Ptr, &PointsF
+            , "int", iCount
             , "float", sX
             , "float", sY
             , "float", sW
@@ -1544,7 +1536,6 @@ Gdip_GetDC(pGraphics) {
 
 Gdip_ReleaseDC(pGraphics, hdc) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipReleaseDC", Ptr, pGraphics, Ptr, hdc)
 }
 
@@ -1860,7 +1851,6 @@ Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="") {
       For eachSize, Size in StrSplit( Sizes, "|" )
       {
          DllCall("PrivateExtractIcons", "str", sFile, "int", IconNumber-1, "int", Size, "int", Size, PtrA, hIcon, PtrA, 0, "uint", 1, "uint", 0)
-
          if !hIcon
             continue
 
@@ -2072,8 +2062,8 @@ Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1) {
 
 ;#####################################################################################
 ; pPen functions
-; With Gdip_SetPenBrushFill() or Gdip_CreatePenFromBrush() functions, pPen objects
-; can have gradients or textures.
+; With Gdip_SetPenBrushFill() or Gdip_CreatePenFromBrush() functions,
+; pPen objects can have gradients or textures.
 ;#####################################################################################
 
 Gdip_CreatePen(ARGB, w) {
@@ -2206,6 +2196,140 @@ Gdip_SetPenLineCaps(pPen, StartCap, EndCap, DashCap) {
 Gdip_SetPenStartCap(pPen, LineCap) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    Return DllCall("gdiplus\GdipSetPenStartCap", Ptr, pPen, "int", LineCap)
+}
+
+Gdip_GetPenCompoundCount(pPen) {
+    E := DllCall("gdiplus\GdipGetPenCompoundCount", Ptr, pPen, "int*", result)
+    If E
+       Return -1
+    Return result
+}
+
+Gdip_SetPenCompoundArray(pPen, inCompounds) {
+; Description    - Sets the compound array currently set for a Pen object
+; Parameters     - pPen        - Pointer to a pPen object
+;                  inCompounds - A string of compound values:
+;                  "value1|value2|value3" [and so on]
+; Remarks        - The elements in the string array must be in increasing order, between 0 and not greater than 1.
+;                  Suppose you want a pen to draw two parallel lines where the width of the first line is 20 percent of the pen's
+;                  width, the width of the space that separates the two lines is 50 percent of the pen' s width, and the width
+;                  of the second line is 30 percent of the pen's width. Start by creating a pPen object and an array of compound
+;                  values. For this, you can then set the compound array by passing the array with the values "0.0|0.2|0.7|1.0".
+; Return status enumeration
+
+   arrCompounds := StrSplit(inCompounds, "|")
+   totalCompounds := arrCompounds.Length()
+   VarSetCapacity(pCompounds, 4 * totalCompounds, 0)
+   Loop %totalCompounds% {
+      NumPut(arrCompounds[A_Index], pCompounds, 4 * (A_Index - 1), "float")
+   }
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetPenCompoundArray", Ptr, pPen, "uptr", &pCompounds, "int", totalCompounds)
+}
+
+Gdip_SetPenDashArray(pPen, Dashes) {
+; Description     Gets an array of custom dashes and spaces currently set for a Pen object
+;
+; Parameters      pPen   - Pointer to a Pen object
+;                 Dashes - The string that specifies the length of the custom dashes and spaces:
+;                 Format: "dL1,sL1|dL2,sL2|dL3,sL3" ... [and so on]
+;                   dLn - Dash N length
+;                   sLn - Space N length
+;                 ExampleDashesArgument := "3,6|8,4|2,1"
+;
+; Remarks         This function will set the dash style for the Pen object to DashStyleCustom (6)
+; Return status enumeration
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    iCount := CreatePointsF(pDashes, Dashes)
+    Return DllCall("gdiplus\GdipSetPenDashArray", Ptr, pPen, Ptr, &pDashes, "int", iCount)
+}
+
+Gdip_SetPenDashOffset(pPen, Offset) {
+; Sets the distance from the start of the line to the start of the first space in a dashed line
+; Offset - Real number that specifies the number of times to shift the spaces in a dashed line. Each shift is
+; equal to the length of a space in the dashed line
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    Return DllCall("gdiplus\GdipSetPenDashOffset", Ptr, pPen, "float", Offset)
+}
+
+Gdip_SetPenLineJoin(pPen, LineJoin) {
+; LineJoin - Line join style:
+; 0 - a sharp corner or a clipped corner
+; 1 - a diagonal corner.
+; 2 - a smooth, circular arc between the lines.
+; 3 - a sharp corner or a clipped corner
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    Return DllCall("gdiplus\GdipSetPenLineJoin", Ptr, pPen, "int", LineJoin)
+}
+
+Gdip_SetPenMiterLimit(pPen, MiterLimit) {
+; MiterLimit - Real number that specifies the miter limit of the Pen object. A real number value that is less
+; than 1.0 will be replaced with 1.0,
+;
+; Remarks
+; The miter length is the distance from the intersection of the line walls on the inside of the join to the
+; intersection of the line walls outside of the join. The miter length can be large when the angle between two
+; lines is small. The miter limit is the maximum allowed ratio of miter length to stroke width. The default
+; value is 10.0.
+; If the miter length of the join of the intersection exceeds the limit of the join, then the join will be
+; beveled to keep it within the limit of the join of the intersection
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    Return DllCall("gdiplus\GdipSetPenMiterLimit", Ptr, pPen, "float", MiterLimit)
+}
+
+Gdip_SetPenUnit(pPen, Unit) {
+; Sets the unit of measurement for a pPen object.
+; Unit - New unit of measurement for the pen:
+; 0 - World coordinates, a non-physical unit
+; 1 - Display units
+; 2 - A unit is 1 pixel
+; 3 - A unit is 1 point or 1/72 inch
+; 4 - A unit is 1 inch
+; 5 - A unit is 1/300 inch
+; 6 - A unit is 1 millimeter
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    Return DllCall("gdiplus\GdipSetPenUnit", Ptr, pPen, "int", Unit)
+}
+
+Gdip_GetPenDashCount(pPen) {
+    E := DllCall("gdiplus\GdipGetPenDashCount", Ptr, pPen, "int*", result)
+    If E
+       Return -1
+    Return result
+}
+
+Gdip_GetPenDashOffset(pPen) {
+    E := DllCall("gdiplus\GdipGetPenDashOffset", Ptr, pPen, "float*", result)
+    If E
+       Return -1
+    Return result
+}
+
+Gdip_GetPenLineJoin(pPen) {
+    E := DllCall("gdiplus\GdipGetPenLineJoin", Ptr, pPen, "int*", result)
+    If E
+       Return -1
+    Return result
+}
+
+Gdip_GetPenMiterLimit(pPen) {
+    E := DllCall("gdiplus\GdipGetPenMiterLimit", Ptr, pPen, "float*", result)
+    If E
+       Return -1
+    Return result
+}
+
+Gdip_GetPenUnit(pPen) {
+    E := DllCall("gdiplus\GdipGetPenUnit", Ptr, pPen, "int*", result)
+    If E
+       Return -1
+    Return result
 }
 
 Gdip_ClonePen(pPen) {
@@ -2849,16 +2973,8 @@ Gdip_AddPathRectangle(pPath, x, y, w, h) {
 
 Gdip_AddPathPolygon(pPath, Points) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-   Points := StrSplit(Points, "|")
-   VarSetCapacity(PointF, 8*Points.Length())
-   for eachPoint, Point in Points
-   {
-      Coord := StrSplit(Point, ",")
-      NumPut(Coord[1], PointF, 8*(A_Index-1), "float"), NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-   }
-
-   return DllCall("gdiplus\GdipAddPathPolygon", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
+   iCount := CreatePointsF(PointsF, Points)
+   return DllCall("gdiplus\GdipAddPathPolygon", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
 Gdip_AddPathClosedCurve(pPath, Points) {
@@ -2870,15 +2986,8 @@ Gdip_AddPathClosedCurve(pPath, Points) {
 ; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  Points := StrSplit(Points, "|")
-  VarSetCapacity(PointF, 8*Points.Length())
-  for eachPoint, Point in Points
-  {
-    Coord := StrSplit(Point, ",")
-    NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-    NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-  }
-  return DllCall("gdiplus\GdipAddPathClosedCurve", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
+  iCount := CreatePointsF(PointsF, Points)
+  return DllCall("gdiplus\GdipAddPathClosedCurve", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
 Gdip_AddPathClosedCurve2(pPath, Points, Tension:=1) {
@@ -2892,15 +3001,8 @@ Gdip_AddPathClosedCurve2(pPath, Points, Tension:=1) {
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  Points := StrSplit(Points, "|")
-  VarSetCapacity(PointF, 8*Points.Length())
-  for eachPoint, Point in Points
-  {
-    Coord := StrSplit(Point, ",")
-    NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-    NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-  }
-  return DllCall("gdiplus\GdipAddPathClosedCurve2", Ptr, pPath, Ptr, &PointF, "int", Points.Length(), "float", Tension)
+  iCount := CreatePointsF(PointsF, Points)
+  return DllCall("gdiplus\GdipAddPathClosedCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
 }
 
 Gdip_AddPathCurve(pPath, Points) {
@@ -2912,15 +3014,8 @@ Gdip_AddPathCurve(pPath, Points) {
 ; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  Points := StrSplit(Points, "|")
-  VarSetCapacity(PointF, 8*Points.Length())
-  for eachPoint, Point in Points
-  {
-    Coord := StrSplit(Point, ",")
-    NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-    NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-  }
-  return DllCall("gdiplus\GdipAddPathCurve", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
+  iCount := CreatePointsF(PointsF, Points)
+  return DllCall("gdiplus\GdipAddPathCurve", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
 Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
@@ -2934,23 +3029,17 @@ Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  Points := StrSplit(Points, "|")
-  VarSetCapacity(PointF, 8*Points.Length())
-  for eachPoint, Point in Points
-  {
-    Coord := StrSplit(Point, ",")
-    NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-    NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-  }
-  return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointF, "int", Points.Length(), "float", Tension)
+  iCount := CreatePointsF(PointsF, Points)
+  return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
 }
 
 
 Gdip_SetPathFillMode(pPath, FillMode) {
-; Parameters ....: pPath      - Pointer to a GraphicsPath object
-;                  FillMode   - Path fill mode:
-;                  0 - The areas are filled according to the even-odd parity rule
-;                  1 - The areas are filled according to the non-zero winding rule
+; Parameters
+; pPath      - Pointer to a GraphicsPath object
+; FillMode   - Path fill mode:
+;              0 -  [Alternate] The areas are filled according to the even-odd parity rule
+;              1 -  [Winding] The areas are filled according to the non-zero winding rule
 
    return DllCall("gdiplus\GdipSetPathFillMode", A_PtrSize ? "UPtr" : "UInt", pPath, "int", FillMode)
 }
@@ -4252,15 +4341,8 @@ Gdip_GetLastStatus(pMatrix) {
 
 Gdip_AddPathBeziers(pPath, Points) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  Points := StrSplit(Points, "|")
-  VarSetCapacity(PointF, 8*Points.Length())
-  for eachPoint, Point in Points
-  {
-    Coord := StrSplit(Point, ",")
-    NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-    NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-  }
-  return DllCall("gdiplus\GdipAddPathBeziers", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
+  iCount := CreatePointsF(PointsF, Points)
+  return DllCall("gdiplus\GdipAddPathBeziers", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
 Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4) {
@@ -4282,15 +4364,8 @@ Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4) {
 
 Gdip_AddPathLines(pPath, Points) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  Points := StrSplit(Points, "|")
-  VarSetCapacity(PointF, 8*Points.Length())
-  for eachPoint, Point in Points
-  {
-    Coord := StrSplit(Point, ",")
-    NumPut(Coord[1], PointF, 8*(A_Index-1), "float")
-    NumPut(Coord[2], PointF, (8*(A_Index-1))+4, "float")
-  }
-  return DllCall("gdiplus\GdipAddPathLine2", Ptr, pPath, Ptr, &PointF, "int", Points.Length())
+  iCount := CreatePointsF(PointsF, Points)
+  return DllCall("gdiplus\GdipAddPathLine2", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
 Gdip_AddPathLine(pPath, x1, y1, x2, y2) {
@@ -4353,7 +4428,7 @@ Gdip_ClonePath(pPath) {
 }
 
 ;######################################################################################################################################
-; The following PathGradient functions were written by Just Me in March 2012
+; The following PathGradient brush functions were written by Just Me in March 2012
 ; source: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-65
 ;######################################################################################################################################
 
@@ -4454,15 +4529,32 @@ Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, Scal
    Gdip_PathGradientSetSigmaBlend(zBrush, BlendFocus)
    Gdip_PathGradientSetLinearBlend(zBrush, BlendFocus)
    Gdip_PathGradientSetFocusScales(zBrush, ScaleX, ScaleY)
-
    Gdip_FillPath(pGraphics, zBrush, pPath)
    Gdip_DeleteBrush(zBrush)
    Gdip_DeletePath(pPath)
 }
 
 ;######################################################################################################################################
-; The following PathGradient functions were written by Marius Șucan
+; The following PathGradient brush functions were written by Marius Șucan
 ;######################################################################################################################################
+
+Gdip_CreatePathGradient(Points, WrapMode) {
+; Creates a PathGradientBrush object based on an array of points and initializes the wrap mode of the brush
+;
+; Points array format:
+; Points := "x1,y1|x2,y2|x3,y3|x4,y4" [... and so on]
+;
+; WrapMode: specifies how an area is tiled when it is painted with a brush:
+; 0 - Tiling without flipping
+; 1 - Tiles are flipped horizontally as you move from one tile to the next in a row
+; 2 - Tiles are flipped vertically as you move from one tile to the next in a column
+; 3 - Tiles are flipped horizontally as you move along a row and flipped vertically as you move along a column
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    iCount := CreatePointsF(PointsF, Points)
+    DllCall("gdiplus\GdipCreatePathGradient", Ptr, &PointsF, "int", iCount, "int", WrapMode, "int*", pPathGradientBrush)
+    Return pPathGradientBrush
+}
 
 Gdip_PathGradientGetGammaCorrection(pPathGradientBrush) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -5002,5 +5094,15 @@ Gdip_GetImageFramesCount(pBitmap) {
     Return CountFrames
 }
 
-
-
+CreatePointsF(ByRef PointsF, inPoints) {
+   Points := StrSplit(inPoints, "|")
+   PointsCount := Points.Length()
+   VarSetCapacity(PointsF, 8 * PointsCount, 0)
+   for eachPoint, Point in Points
+   {
+       Coord := StrSplit(Point, ",")
+       NumPut(Coord[1], PointsF, 8*(A_Index-1), "float")
+       NumPut(Coord[2], PointsF, (8*(A_Index-1))+4, "float")
+   }
+   Return PointsCount
+}

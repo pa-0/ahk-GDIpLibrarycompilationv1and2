@@ -35,7 +35,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 
 
-## 169 NEW FUNCTIONS:
+## 183 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -106,6 +106,20 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_GetInfo
 
 - By Marius Șucan [robodesign.ro]:
+  - Gdip_CreatePathGradient()
+  - Gdip_FillClosedCurve2()
+  - Gdip_SetPenCompoundArray()
+  - Gdip_SetPenDashArray()
+  - Gdip_SetPenDashOffset()
+  - Gdip_SetPenLineJoin()
+  - Gdip_SetPenMiterLimit()
+  - Gdip_SetPenUnit()
+  - Gdip_GetPenDashCount()
+  - Gdip_GetPenDashOffset()
+  - Gdip_GetPenLineJoin()
+  - Gdip_GetPenMiterLimit()
+  - Gdip_GetPenUnit()
+  - Gdip_GetPenCompoundCount()
   - Gdip_DrawClosedCurve2()
   - Gdip_AddPathClosedCurve()
   - Gdip_AddPathClosedCurve2()
