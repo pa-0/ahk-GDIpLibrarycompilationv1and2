@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.64 on 09/07/2019
 ; - v1.63 on 09/06/2019
 ; - v1.62 on 09/05/2019
 ; - v1.61 on 09/04/2019
@@ -25,6 +26,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/07/2019 = Added 12 new functions [ Marius Șucan ]
 ; - 09/06/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
 ; - 09/05/2019 = Added 27 new GDI+ functions [ Marius Șucan ]
 ; - 09/04/2019 = Added 36 new GDI+ functions [ Marius Șucan ]
@@ -751,7 +753,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.63
+   return 1.64
 }
 
 ;#####################################################################################
@@ -2132,6 +2134,17 @@ Gdip_TranslatePenTransform(pPen, X, Y, matrixOrder:=0) {
    Return DllCall("gdiplus\GdipTranslatePenTransform", Ptr, pPen, "float", X, "float", Y, "int", matrixOrder)
 }
 
+Gdip_SetPenTransform(pPen, pMatrix) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetPenTransform", Ptr, pPen, Ptr, pMatrix)
+}
+
+Gdip_GetPenTransform(pPen) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetPenTransform", Ptr, pPen, "UPtr*", pMatrix)
+   Return pMatrix
+}
+
 Gdip_GetPenBrushFill(pPen) {
 ; Gets the pBrush object that is currently set for the pPen object
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -2461,7 +2474,7 @@ Gdip_GetHatchStyle(pHatchBrush) {
 ; w, h                  Width and height of the image portion
 ; matrix                A color matrix to alter the colors of the given pBitmap
 ; ScaleX, ScaleY        x, y scaling factor for the texture
-; Angle                 Angle to rotate the texture
+; Angle                 Rotates the texture at given angle
 ;
 ; return                If the function succeeds, the return value is nonzero
 ; notes                 If w and h are omitted, the entire pBitmap is used
@@ -2470,7 +2483,7 @@ Gdip_GetHatchStyle(pHatchBrush) {
 ;                       Matrix can be passed as a matrix with "|" as delimiter. 
 ; Function modified by Marius Șucan, to allow color matrix.
 
-Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:="", ScaleX:="", scaleY:="", angle:=0) {
+Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:="", ScaleX:="", ScaleY:="", angle:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    PtrA := A_PtrSize ? "UPtr*" : "UInt*"
 
@@ -2518,6 +2531,17 @@ Gdip_RotateTextureTransform(pTexBrush, Angle, MatrixOrder:=0) {
 Gdip_ScaleTextureTransform(pTexBrush, ScaleX, ScaleY, MatrixOrder:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipScaleTextureTransform", Ptr, pTexBrush, "float", ScaleX, "float", ScaleY, "int", MatrixOrder)
+}
+
+Gdip_SetTextureTransform(pTexBrush, pMatrix) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetTextureTransform", Ptr, pTexBrush, Ptr, pMatrix)
+}
+
+Gdip_GetTextureTransform(pTexBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetTextureTransform", Ptr, pTexBrush, "UPtr*", pMatrix)
+   Return pMatrix
 }
 
 Gdip_ResetTextureTransform(pTexBrush) {
@@ -2648,6 +2672,33 @@ Gdip_TranslateLinearGrBrushTransform(pLinearGradientBrush, X, Y, matrixOrder:=0)
 Gdip_RotateLinearGrBrushTransform(pLinearGradientBrush, Angle, matrixOrder:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipRotateLineTransform", Ptr, pLinearGradientBrush, "float", Angle, "int", matrixOrder)
+}
+
+Gdip_SetLinearGrBrushTransform(pLinearGradientBrush, pMatrix) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetLineTransform", Ptr, pLinearGradientBrush, Ptr, pMatrix)
+}
+
+Gdip_GetLinearGrBrushTransform(pLineGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetLineTransform", Ptr, pLineGradientBrush, "UPtr*", pMatrix)
+   Return pMatrix
+}
+
+Gdip_RotateLinearGrBrushAtCenter(pLinearGradientBrush, Angle, MatrixOrder:=1) {
+; function by Marius Șucan
+; based on Gdip_RotatePathAtCenter() by RazorHalo
+
+  Rect := Gdip_GetLinearGrBrushRect(pLinearGradientBrush) ; boundaries
+  cX := Rect.x + (Rect.w / 2)
+  cY := Rect.y + (Rect.h / 2)
+  pMatrix := Gdip_CreateMatrix()
+  Gdip_TranslateMatrix(pMatrix, -cX , -cY)
+  Gdip_RotateMatrix(pMatrix, Angle, MatrixOrder)
+  Gdip_TranslateMatrix(pMatrix, cX, cY, MatrixOrder)
+  E := Gdip_SetLinearGrBrushTransform(pLinearGradientBrush, pMatrix)
+  Gdip_DeleteMatrix(pMatrix)
+  Return E
 }
 
 Gdip_GetLinearGrBrushWrapMode(pLinearGradientBrush) {
@@ -3333,9 +3384,7 @@ Gdip_GetWorldTransform(pGraphics) {
 ; Returns the world transformation matrix of a pGraphics object.
 ; On error, it returns -1
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   E := DllCall("gdiplus\GdipGetWorldTransform", Ptr, pGraphics, "Ptr*", pMatrix)
-   If E
-      return -1
+   E := DllCall("gdiplus\GdipGetWorldTransform", Ptr, pGraphics, "UPtr*", pMatrix)
    Return pMatrix
 }
 
@@ -3619,9 +3668,30 @@ Gdip_GetRegionBounds(pGraphics, Region) {
   return rData
 }
 
-Gdip_TranslateRegion(Region, dX, dY) {
+Gdip_TranslateRegion(Region, X, Y) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipTranslateRegion", Ptr, Region, "float", dX, "float", dY)
+   return DllCall("gdiplus\GdipTranslateRegion", Ptr, Region, "float", X, "float", Y)
+}
+
+Gdip_RotateRegionAtCenter(pGraphics, Region, Angle, MatrixOrder:=1) {
+; function by Marius Șucan
+; based on Gdip_RotatePathAtCenter() by RazorHalo
+
+  Rect := Gdip_GetRegionBounds(pGraphics, Region)
+  cX := Rect.x + (Rect.w / 2)
+  cY := Rect.y + (Rect.h / 2)
+  pMatrix := Gdip_CreateMatrix()
+  Gdip_TranslateMatrix(pMatrix, -cX , -cY)
+  Gdip_RotateMatrix(pMatrix, Angle, MatrixOrder)
+  Gdip_TranslateMatrix(pMatrix, cX, cY, MatrixOrder)
+  E := Gdip_TransformRegion(Region, pMatrix)
+  Gdip_DeleteMatrix(pMatrix)
+  Return E
+}
+
+Gdip_TransformRegion(Region, pMatrix) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  return DllCall("gdiplus\GdipTransformRegion", Ptr, Region, Ptr, pMatrix)
 }
 
 Gdip_CloneRegion(Region) {
@@ -4255,7 +4325,7 @@ Gdip_RotatePathAtCenter(pPath, Angle, MatrixOrder:=1) {
   E := Gdip_TransformPath(pPath, pMatrix)
   
   ; Delete Matrix
-  GDip_DeleteMatrix(pMatrix)
+  Gdip_DeleteMatrix(pMatrix)
   Return E
 }
 
@@ -4292,7 +4362,7 @@ Gdip_GetPathWorldBounds(pPath) {
     Return status
   }
   
-   return rData
+  return rData
 }
 
 Gdip_ScaleMatrix(pMatrix, scaleX, scaleY, MatrixOrder:=0) {
@@ -4313,7 +4383,6 @@ Gdip_TransformPath(pPath, pMatrix) {
 Gdip_SetMatrixElements(pMatrix, m11, m12, m21, m22, x, y) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
   return DllCall("gdiplus\GdipSetMatrixElements", Ptr, pMatrix, "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y)
-   
 }
 
 Gdip_GetLastStatus(pMatrix) {
@@ -4506,14 +4575,17 @@ Gdip_PathGradientSetFocusScales(pBrush, xScale, yScale) {
    Return DllCall("gdiplus\GdipSetPathGradientFocusScales", "Ptr", pBrush, "Float", xScale, "Float", yScale)
 }
 
-Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, ScaleX, ScaleY, Shape) {
+Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, ScaleX, ScaleY, Shape, Angle:=0) {
+; Parameters:
 ; X, Y   - coordinates where to add the gradient path object 
 ; W, H   - the width and height of the path gradient object 
 ; cX, cY - the coordinates of the Center Point of the gradient within the wdith and height object boundaries
 ; cClr   - the center color in 0xARGB
 ; sClr   - the surrounding color in 0xARGB
 ; BlendFocus - 0.0 to 1.0; where the center color reaches the highest intensity
-; shape   - 1 = rectangle ; 0 = ellipse
+; Shape   - 1 = rectangle ; 0 = ellipse
+; Angle   - Rotate the pPathGradientBrush at given angle
+;
 ; function based on the example provided by Just Me for the path gradient functions
 ; adaptations/modifications by Marius Șucan
 
@@ -4523,6 +4595,8 @@ Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, Scal
    Else
       Gdip_AddPathEllipse(pPath, x, y, W, H)
    zBrush := Gdip_PathGradientCreateFromPath(pPath)
+   If (Angle!=0)
+      Gdip_RotatePathGradientAtCenter(zBrush, Angle)
    Gdip_PathGradientSetCenterPoint(zBrush, cX, cY)
    Gdip_PathGradientSetCenterColor(zBrush, cClr)
    Gdip_PathGradientSetSurroundColors(zBrush, sClr)
@@ -4618,6 +4692,34 @@ Gdip_PathGradientTranslateTransform(pPathGradientBrush, X, Y, matrixOrder:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    Return DllCall("gdiplus\GdipTranslatePathGradientTransform", Ptr, pPathGradientBrush, "float", X, "float", Y, "int", matrixOrder)
 }
+
+Gdip_PathGradientSetTransform(pPathGradientBrush, pMatrix) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  return DllCall("gdiplus\GdipSetPathGradientTransform", Ptr, pPathGradientBrush, Ptr, pMatrix)
+}
+
+Gdip_PathGradientGetTransform(pPathGradientBrush) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetPathGradientTransform", Ptr, pPathGradientBrush, "UPtr*", pMatrix)
+   Return pMatrix
+}
+
+Gdip_RotatePathGradientAtCenter(pPathGradientBrush, Angle, MatrixOrder:=1) {
+; function by Marius Șucan
+; based on Gdip_RotatePathAtCenter() by RazorHalo
+
+  Rect := Gdip_PathGradientGetRect(pPathGradientBrush)
+  cX := Rect.x + (Rect.w / 2)
+  cY := Rect.y + (Rect.h / 2)
+  pMatrix := Gdip_CreateMatrix()
+  Gdip_TranslateMatrix(pMatrix, -cX , -cY)
+  Gdip_RotateMatrix(pMatrix, Angle, MatrixOrder)
+  Gdip_TranslateMatrix(pMatrix, cX, cY, MatrixOrder)
+  E := Gdip_PathGradientSetTransform(pPathGradientBrush, pMatrix)
+  Gdip_DeleteMatrix(pMatrix)
+  Return E
+}
+
 
 Gdip_PathGradientSetGammaCorrection(pPathGradientBrush, UseGammaCorrection) {
 ; Specifies whether gamma correction is enabled for a path gradient brush
