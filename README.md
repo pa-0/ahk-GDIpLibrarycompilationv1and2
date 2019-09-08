@@ -35,7 +35,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 
 
-## 195 NEW FUNCTIONS:
+## 198 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -106,6 +106,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_GetInfo
 
 - By Marius Șucan [robodesign.ro]:
+  - Gdip_GetPenCompoundArray()
+  - Gdip_GetPenDashArray()
+  - Gdip_RotateBitmapAtCenter()
   - Gdip_RotateLinearGrBrushAtCenter()
   - Gdip_SetLinearGrBrushTransform()
   - Gdip_RotatePathGradientAtCenter()
@@ -161,6 +164,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_DeleteCachedBitmap()
   - Gdip_GetTextureImage()
   - Gdip_IsOutlineVisiblePathPoint()
+  - Gdip_IsVisibleRegionRectEntirely()
   - Gdip_GetLinearGrBrushGammaCorrection()
   - Gdip_SetLinearGrBrushGammaCorrection()
   - Gdip_GetLinearGrBrushRect()
@@ -194,7 +198,6 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_GetHatchBackgroundColor()
   - Gdip_GetHatchForegroundColor()
   - Gdip_GetHatchStyle()
-  - Gdip_IsVisibleRegionRectEntirely()
   - *Gdip_GetHistogram()
   - Gdip_CreateRegionRect()
   - Gdip_GetWorldTransform()

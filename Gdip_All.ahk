@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.65 on 09/08/2019
 ; - v1.64 on 09/07/2019
 ; - v1.63 on 09/06/2019
 ; - v1.62 on 09/05/2019
@@ -26,6 +27,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/08/2019 = Added 3 new functions and fixed Gdip_SetPenDashArray() [ Marius Șucan ]
 ; - 09/07/2019 = Added 12 new functions [ Marius Șucan ]
 ; - 09/06/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
 ; - 09/05/2019 = Added 27 new GDI+ functions [ Marius Șucan ]
@@ -753,7 +755,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.64
+   return 1.65
 }
 
 ;#####################################################################################
@@ -1798,10 +1800,10 @@ Gdip_GetImageBounds(pBitmap) {
   status := DllCall("gdiplus\GdipGetImageBounds", Ptr, pBitmap, Ptr, &RectF, "Int*", 0)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -2062,6 +2064,45 @@ Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1) {
    return DllCall("gdiplus\GdipImageRotateFlip", A_PtrSize ? "UPtr" : "UInt", pBitmap, "int", RotateFlipType)
 }
 
+Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0) {
+; the pBrush will be used to fill the background of the image
+; by default, it is black
+
+    If !Angle
+    {
+       newBitmap := Gdip_CloneBitmap(pBitmap)
+       Return newBitmap
+    }
+
+    If !pBrush
+    {
+       pBrush := Gdip_BrushCreateSolid("0xFF000000")
+       defaultBrush := 1
+    }
+
+    Gdip_GetImageDimensions(pBitmap, Width, Height)
+    Gdip_GetRotatedDimensions(Width, Height, Angle, RWidth, RHeight)
+    Gdip_GetRotatedTranslation(Width, Height, Angle, xTranslation, yTranslation)
+    hbm := CreateDIBSection(RWidth, RHeight)
+    hdc := CreateCompatibleDC()
+    obm := SelectObject(hdc, hbm)
+    G := Gdip_GraphicsFromHDC(hdc)
+    Gdip_SetInterpolationMode(G, 7)
+    Gdip_FillRectangle(G, pBrush, 0, 0, Width, Height)
+    Gdip_TranslateWorldTransform(G, xTranslation, yTranslation)
+    Gdip_RotateWorldTransform(G, Angle)
+    Gdip_DrawImage(G, pBitmap, 0, 0, Width, Height, 0, 0, Width, Height)
+    newBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
+    SelectObject(hdc, obm)
+    DeleteObject(hbm)
+    DeleteDC(hdc)
+    Gdip_DeleteGraphics(G)
+    If (defaultBrush=1)
+       Gdip_DeleteBrush(pBrush)
+
+    Return newBitmap
+}
+
 ;#####################################################################################
 ; pPen functions
 ; With Gdip_SetPenBrushFill() or Gdip_CreatePenFromBrush() functions,
@@ -2219,10 +2260,10 @@ Gdip_GetPenCompoundCount(pPen) {
 }
 
 Gdip_SetPenCompoundArray(pPen, inCompounds) {
-; Description    - Sets the compound array currently set for a Pen object
 ; Parameters     - pPen        - Pointer to a pPen object
 ;                  inCompounds - A string of compound values:
 ;                  "value1|value2|value3" [and so on]
+;                  ExampleCompounds := "0.0|0.2|0.7|1.0"
 ; Remarks        - The elements in the string array must be in increasing order, between 0 and not greater than 1.
 ;                  Suppose you want a pen to draw two parallel lines where the width of the first line is 20 percent of the pen's
 ;                  width, the width of the space that separates the two lines is 50 percent of the pen' s width, and the width
@@ -2246,17 +2287,22 @@ Gdip_SetPenDashArray(pPen, Dashes) {
 ;
 ; Parameters      pPen   - Pointer to a Pen object
 ;                 Dashes - The string that specifies the length of the custom dashes and spaces:
-;                 Format: "dL1,sL1|dL2,sL2|dL3,sL3" ... [and so on]
+;                 Format: "dL1,sL1,dL2,sL2,dL3,sL3" ... [and so on]
 ;                   dLn - Dash N length
 ;                   sLn - Space N length
-;                 ExampleDashesArgument := "3,6|8,4|2,1"
+;                 ExampleDashesArgument := "3,6,8,4,2,1"
 ;
 ; Remarks         This function will set the dash style for the Pen object to DashStyleCustom (6)
-; Return status enumeration
+; Return status enumeration.
 
-    Ptr := A_PtrSize ? "UPtr" : "UInt"
-    iCount := CreatePointsF(pDashes, Dashes)
-    Return DllCall("gdiplus\GdipSetPenDashArray", Ptr, pPen, Ptr, &pDashes, "int", iCount)
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Points := StrSplit(Dashes, ",")
+   PointsCount := Points.Length()
+   VarSetCapacity(PointsF, 8 * PointsCount, 0)
+   Loop %PointsCount%
+       NumPut(Points[A_Index], &PointsF, 4*(A_Index-1), "float")
+
+   Return DllCall("gdiplus\GdipSetPenDashArray", Ptr, pPen, Ptr, &PointsF, "int", PointsCount)
 }
 
 Gdip_SetPenDashOffset(pPen, Offset) {
@@ -2267,6 +2313,37 @@ Gdip_SetPenDashOffset(pPen, Offset) {
     Ptr := A_PtrSize ? "UPtr" : "UInt"
     Return DllCall("gdiplus\GdipSetPenDashOffset", Ptr, pPen, "float", Offset)
 }
+
+Gdip_GetPenDashArray(pPen) {
+   iCount := Gdip_GetPenDashCount(pPen)
+   VarSetCapacity(PointsF, 8 * iCount, 0)
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetPenDashArray", Ptr, pPen, "uPtr", &PointsF, "int", iCount)
+
+   Loop %iCount%
+   {
+       A := NumGet(&PointsF, 4*(A_Index-1), "float")
+       printList .= A ","
+   }
+
+   Return Trim(printList, ",")
+}
+
+Gdip_GetPenCompoundArray(pPen) {
+   iCount := Gdip_GetPenCompoundCount(pPen)
+   VarSetCapacity(PointsF, 4 * iCount, 0)
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetPenCompoundArray", Ptr, pPen, "uPtr", &PointsF, "int", iCount)
+
+   Loop %iCount%
+   {
+       A := NumGet(&PointsF, 4*(A_Index-1), "float")
+       printList .= A "|"
+   }
+
+   Return Trim(printList, "|")
+}
+
 
 Gdip_SetPenLineJoin(pPen, LineJoin) {
 ; LineJoin - Line join style:
@@ -2643,10 +2720,10 @@ Gdip_GetLinearGrBrushRect(pLinearGradientBrush) {
   status := DllCall("gdiplus\GdipGetLineRect", Ptr, pLinearGradientBrush, Ptr, &RectF)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -3484,10 +3561,10 @@ Gdip_GetClipBounds(pGraphics) {
   status := DllCall("gdiplus\GdipGetClipBounds", Ptr, pGraphics, Ptr, &RectF)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -3503,10 +3580,10 @@ Gdip_GetVisibleClipBounds(pGraphics) {
   status := DllCall("gdiplus\GdipGetVisibleClipBounds", Ptr, pGraphics, Ptr, &RectF)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -3657,10 +3734,10 @@ Gdip_GetRegionBounds(pGraphics, Region) {
   status := DllCall("gdiplus\GdipGetRegionBounds", Ptr, Region, Ptr, pGraphics, Ptr, &RectF)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -4354,10 +4431,10 @@ Gdip_GetPathWorldBounds(pPath) {
   status := DllCall("gdiplus\GdipGetPathWorldBounds", Ptr, pPath, Ptr, &RectF, ptr, 0, ptr, 0)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -4662,10 +4739,10 @@ Gdip_PathGradientGetRect(pPathGradientBrush) {
   status := DllCall("gdiplus\GdipGetPathGradientRect", Ptr, pPathGradientBrush, Ptr, &RectF)
 
   If (!status) {
-        rData.x := NumGet(RectF, 0, "float")
-      , rData.y := NumGet(RectF, 4, "float")
-      , rData.w := NumGet(RectF, 8, "float")
-      , rData.h := NumGet(RectF, 12, "float")
+        rData.x := NumGet(&RectF, 0, "float")
+      , rData.y := NumGet(&RectF, 4, "float")
+      , rData.w := NumGet(&RectF, 8, "float")
+      , rData.h := NumGet(&RectF, 12, "float")
   } Else {
     Return status
   }
@@ -5203,8 +5280,8 @@ CreatePointsF(ByRef PointsF, inPoints) {
    for eachPoint, Point in Points
    {
        Coord := StrSplit(Point, ",")
-       NumPut(Coord[1], PointsF, 8*(A_Index-1), "float")
-       NumPut(Coord[2], PointsF, (8*(A_Index-1))+4, "float")
+       NumPut(Coord[1], &PointsF, 8*(A_Index-1), "float")
+       NumPut(Coord[2], &PointsF, (8*(A_Index-1))+4, "float")
    }
    Return PointsCount
 }
