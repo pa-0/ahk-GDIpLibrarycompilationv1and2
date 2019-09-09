@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.66 on 09/09/2019
 ; - v1.65 on 09/08/2019
 ; - v1.64 on 09/07/2019
 ; - v1.63 on 09/06/2019
@@ -27,6 +28,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/09/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
 ; - 09/08/2019 = Added 3 new functions and fixed Gdip_SetPenDashArray() [ Marius Șucan ]
 ; - 09/07/2019 = Added 12 new functions [ Marius Șucan ]
 ; - 09/06/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
@@ -755,7 +757,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.65
+   return 1.66
 }
 
 ;#####################################################################################
@@ -2283,16 +2285,16 @@ Gdip_SetPenCompoundArray(pPen, inCompounds) {
 }
 
 Gdip_SetPenDashArray(pPen, Dashes) {
-; Description     Gets an array of custom dashes and spaces currently set for a Pen object
+; Description     Sets custom dashes and spaces for the pPen object.
 ;
 ; Parameters      pPen   - Pointer to a Pen object
 ;                 Dashes - The string that specifies the length of the custom dashes and spaces:
-;                 Format: "dL1,sL1,dL2,sL2,dL3,sL3" ... [and so on]
+;                 Format: "dL1,sL1,dL2,sL2,dL3,sL3" [... and so on]
 ;                   dLn - Dash N length
 ;                   sLn - Space N length
 ;                 ExampleDashesArgument := "3,6,8,4,2,1"
 ;
-; Remarks         This function will set the dash style for the Pen object to DashStyleCustom (6)
+; Remarks         This function sets the dash style for the pPen object to DashStyleCustom (6).
 ; Return status enumeration.
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -2316,6 +2318,9 @@ Gdip_SetPenDashOffset(pPen, Offset) {
 
 Gdip_GetPenDashArray(pPen) {
    iCount := Gdip_GetPenDashCount(pPen)
+   If (iCount=-1)
+      Return 0
+
    VarSetCapacity(PointsF, 8 * iCount, 0)
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    DllCall("gdiplus\GdipGetPenDashArray", Ptr, pPen, "uPtr", &PointsF, "int", iCount)
@@ -2867,9 +2872,10 @@ Gdip_DeleteMatrix(Matrix) {
 ; Text functions
 ;#####################################################################################
 
-Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0) {
-   IWidth := Width, IHeight:= Height
+Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0) {
+; userBrush - if a pBrush object is passed, this will be used to draw the text
 
+   IWidth := Width, IHeight:= Height
    pattern_opts := (A_AhkVersion < "2") ? "iO)" : "i)"
    RegExMatch(Options, pattern_opts "X([\-\d\.]+)(p*)", xpos)
    RegExMatch(Options, pattern_opts "Y([\-\d\.]+)(p*)", ypos)
@@ -2882,7 +2888,10 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
    RegExMatch(Options, pattern_opts "S(\d+)(p*)", Size)
 
    if Colour && !Gdip_DeleteBrush(Gdip_CloneBrush(Colour[2]))
-      PassBrush := 1, pBrush := Colour[2]
+   {
+      PassBrush := 1
+      pBrush := Colour[2]
+   }
 
    if !(IWidth && IHeight) && ((xpos && xpos[2]) || (ypos && ypos[2]) || (Width && Width[2]) || (Height && Height[2]) || (Size && Size[2]))
       return -1
@@ -2911,6 +2920,9 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
    Size := (Size && (Size[1] > 0)) ? Size[2] ? IHeight*(Size[1]/100) : Size[1] : 12
 
    hFamily := Gdip_FontFamilyCreate(Font)
+   If !hFamily
+      hFamily := Gdip_FontFamilyCreateGeneric(1)
+
    hFont := Gdip_FontCreate(hFamily, Size, Style)
    FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
    hFormat := Gdip_StringFormatCreate(FormatStyle)
@@ -2938,8 +2950,9 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
       ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
    }
 
+   thisBrush := userBrush ? userBrush : pBrush
    if !Measure
-      _E := Gdip_DrawString(pGraphics, Text, hFont, hFormat, pBrush, RC)
+      _E := Gdip_DrawString(pGraphics, Text, hFont, hFormat, thisBrush, RC)
 
    if !PassBrush
       Gdip_DeleteBrush(pBrush)
@@ -2951,7 +2964,6 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
 
 Gdip_DrawString(pGraphics, sString, hFont, hFormat, pBrush, ByRef RectF) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    if (!A_IsUnicode)
    {
       nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, Ptr, &sString, "int", -1, Ptr, 0, "int", 0)
@@ -2971,7 +2983,6 @@ Gdip_DrawString(pGraphics, sString, hFont, hFormat, pBrush, ByRef RectF) {
 
 Gdip_MeasureString(pGraphics, sString, hFont, hFormat, ByRef RectF) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    VarSetCapacity(RC, 16)
    if !A_IsUnicode
    {
@@ -3017,7 +3028,7 @@ Gdip_StringFormatCreate(Format:=0, Lang:=0) {
 }
 
 Gdip_FontCreate(hFamily, Size, Style:=0) {
-; Style options:
+; Font style options:
 ; Regular = 0
 ; Bold = 1
 ; Italic = 2
@@ -3030,7 +3041,6 @@ Gdip_FontCreate(hFamily, Size, Style:=0) {
 
 Gdip_FontFamilyCreate(Font) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    if (!A_IsUnicode)
    {
       nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, Ptr, &Font, "int", -1, "uint", 0, "int", 0)
@@ -3046,6 +3056,23 @@ Gdip_FontFamilyCreate(Font) {
    return hFamily
 }
 
+Gdip_FontFamilyCreateGeneric(whichStyle) {
+; This function returns a hFamily font object that uses a generic font.
+;
+; whichStyle options:
+; 0 - monospace generic font 
+; 1 - sans-serif generic font 
+; 2 - serif generic font 
+
+   If (whichStyle=0)
+      DllCall("gdiplus\GdipGetGenericFontFamilyMonospace", "UPtr*", hFamily)
+   Else If (whichStyle=1)
+      DllCall("gdiplus\GdipGetGenericFontFamilySansSerif", "UPtr*", hFamily)
+   Else If (whichStyle=2)
+      DllCall("gdiplus\GdipGetGenericFontFamilySerif", "UPtr*", hFamily)
+   Return hFamily
+}
+
 Gdip_CreateFontFromDC(hDC) {
    ; a font must be selected in the hDC for this function to work
    ; function extracted from a class based wrapper around the GDI+ API made by nnnik
@@ -3053,6 +3080,76 @@ Gdip_CreateFontFromDC(hDC) {
    r := DllCall("gdiplus\GdipCreateFontFromDC", "UPtr", hDC, "UPtr*", pFont)
    Return pFont
 }
+
+Gdip_GetFontHeight(hFont, pGraphics:=0) {
+; Gets the line spacing of a font in the current unit of a specified pGraphics object.
+; The line spacing is the vertical distance between the base lines of two consecutive lines of text.
+; Therefore, the line spacing includes the blank space between lines along with the height of 
+; the character itself.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetFontHeight", Ptr, hFont, Ptr, pGraphics, "float*", result)
+   Return result
+}
+
+Gdip_GetFontHeightGivenDPI(hFont, DPI:=72) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetFontHeightGivenDPI", Ptr, hFont, "float", DPI, "float*", result)
+   Return result
+}
+
+Gdip_GetFontSize(hFont) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetFontSize", Ptr, hFont, "float*", result)
+   Return result
+}
+
+Gdip_GetFontStyle(hFont) {
+; see also Gdip_FontCreate()
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetFontStyle", Ptr, hFont, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetFontUnit(hFont) {
+; Gets the unit of measure of a Font object.
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetFontUnit", Ptr, hFont, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetFontFamilyCellScents(hFamily, ByRef Ascent, ByRef Descent, Style:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetCellAscent", Ptr, hFamily, "int", Style, "ushort*", Ascent)
+   E := DllCall("gdiplus\GdipGetCellDescent", Ptr, hFamily, "int", Style, "ushort*", Descent)
+   Return E
+}
+
+Gdip_GetFontFamilyEmHeight(hFamily, Style:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetEmHeight", Ptr, hFamily, "int", Style, "ushort*", result)
+   Return result
+}
+
+Gdip_GetFontFamilyLineSpacing(hFamily, Style:=0) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetLineSpacing", Ptr, hFamily, "int", Style, "ushort*", result)
+   Return result
+}
+
+Gdip_GetFontFamilyName(hFamily) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   VarSetCapacity(FontName, 90)
+   DllCall("gdiplus\GdipGetFamilyName", Ptr, hFamily, "Ptr", &FontName, "ushort", 0)
+   Return FontName
+}
+
+
+
 
 ;#####################################################################################
 ; Matrix functions
@@ -3065,6 +3162,12 @@ Gdip_CreateAffineMatrix(m11, m12, m21, m22, x, y) {
 
 Gdip_CreateMatrix() {
    DllCall("gdiplus\GdipCreateMatrix", A_PtrSize ? "UPtr*" : "UInt*", Matrix)
+   return Matrix
+}
+
+Gdip_CloneMatrix(pMatrix) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipCloneMatrix", Ptr, pMatrix, A_PtrSize ? "UPtr*" : "UInt*", Matrix)
    return Matrix
 }
 
@@ -3161,6 +3264,45 @@ Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
   return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
 }
 
+Gdip_AddPathString(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0) {
+; Adds the outline of a given string with the given font name, size and style 
+; to a Path object.
+; Size - in em, in world units
+; Remark: a high value might be required; over 60, 90... to see the text
+
+; Align options:
+; Near/left = 0
+; Center = 1
+; Far/right = 2
+
+; Style options:
+; Regular = 0
+; Bold = 1
+; Italic = 2
+; BoldItalic = 3
+; Underline = 4
+; Strikeout = 8
+
+   FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
+   hFamily := Gdip_FontFamilyCreate(FontName)
+   If !hFamily
+      hFamily := Gdip_FontFamilyCreateGeneric(1)
+ 
+   If !hFamily
+      Return -1
+
+   hFormat := Gdip_StringFormatCreate(FormatStyle)
+   If !hFormat
+      Return -2
+
+   Gdip_SetStringFormatAlign(hFormat, Align)
+   CreateRectF(RectF, X, Y, Width, Height)
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipAddPathString", Ptr, pPath, "WStr", String, "int", -1, Ptr, hFamily, "int", Style, "float", Size, Ptr, &RectF, Ptr, hFormat)
+   Gdip_DeleteStringFormat(hFormat)
+   Gdip_DeleteFontFamily(hFamily)
+   Return E
+}
 
 Gdip_SetPathFillMode(pPath, FillMode) {
 ; Parameters
@@ -3199,6 +3341,23 @@ Gdip_GetPathPointsCount(pPath) {
    If E 
       Return -1
    Return result
+}
+
+Gdip_GetPathPoints(pPath) {
+   PointsCount := Gdip_GetPathPointsCount(pPath)
+   If (PointsCount=-1)
+      Return 0
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   VarSetCapacity(PointsF, 8 * PointsCount, 0)
+   DllCall("gdiplus\GdipGetPathPoints", Ptr, pPath, Ptr, &PointsF, "intP", PointsCount)
+   Loop %PointsCount%
+   {
+       A := NumGet(&PointsF, 8*(A_Index-1), "float")
+       B := NumGet(&PointsF, (8*(A_Index-1))+4, "float")
+       printList .= A "," B "|"
+   }
+   Return Trim(printList, "|")
 }
 
 Gdip_ResetPath(pPath) {
@@ -4548,8 +4707,8 @@ Gdip_ClosePathFigure(pPath) {
 ; Description: Draws a sequence of lines and curves defined by a GraphicsPath object
 ;
 ; pGraphics: Pointer to the Graphics of a bitmap
-; pPen: Pointer to a pen
-; pPath: Pointer to a Path
+; pPen: Pointer to a pen object
+; pPath: Pointer to a Path object
 ;
 ; return: status enumeration. 0 = success
 
@@ -4848,6 +5007,26 @@ Gdip_PathGradientGetSurroundColorCount(pPathGradientBrush) {
       return -1
    Return result
 }
+
+Gdip_GetPathGradientSurroundColors(pPathGradientBrush) {
+   iCount := Gdip_PathGradientGetSurroundColorCount(pPathGradientBrush)
+   If (iCount=-1)
+      Return 0
+
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   VarSetCapacity(sColors, 8 * iCount, 0)
+   DllCall("gdiplus\GdipGetPathGradientSurroundColorsWithCount", Ptr, pPathGradientBrush, Ptr, &sColors, "intP", iCount)
+   Loop %iCount%
+   {
+       A := NumGet(&sColors, 8*(A_Index-1), "uint")
+       printList .= Format("{1:#x}", A) ","
+   }
+
+   Return Trim(printList, ",")
+}
+
+
 
 ;######################################################################################################################################
 ; Function written by swagfag in July 2019

@@ -35,7 +35,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 
 
-## 198 NEW FUNCTIONS:
+## 212 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -106,6 +106,20 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_GetInfo
 
 - By Marius Șucan [robodesign.ro]:
+  - Gdip_AddPathString()
+  - Gdip_FontFamilyCreateGeneric()
+  - Gdip_GetFontHeight()
+  - Gdip_GetFontHeightGivenDPI()
+  - Gdip_GetFontSize()
+  - Gdip_GetFontStyle()
+  - Gdip_GetFontUnit()
+  - Gdip_GetFontFamilyCellScents()
+  - Gdip_GetFontFamilyEmHeight()
+  - Gdip_GetFontFamilyLineSpacing()
+  - Gdip_GetFontFamilyName()
+  - Gdip_GetPathGradientSurroundColors()
+  - Gdip_GetPathPoints()
+  - Gdip_CloneMatrix()
   - Gdip_GetPenCompoundArray()
   - Gdip_GetPenDashArray()
   - Gdip_RotateBitmapAtCenter()
@@ -266,3 +280,5 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - the newly added examples are not AHK v2 compatible
   - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
+
+## Last updated on lundi 9 septembre 2019, v1.66
