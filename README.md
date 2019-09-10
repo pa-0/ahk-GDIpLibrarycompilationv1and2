@@ -35,7 +35,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 
 
-## 212 NEW FUNCTIONS:
+## 229 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -106,6 +106,23 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_GetInfo
 
 - By Marius Șucan [robodesign.ro]:
+  - Gdip_CombineRegionPath()
+  - Gdip_AddPathStringEasy()
+  - Gdip_CloneFont()
+  - Gdip_GetFontFamily()
+  - Gdip_CloneFontFamily()
+  - Gdip_IsFontStyleAvailable()
+  - Gdip_StringFormatGetGeneric()
+  - Gdip_GetStringFormatAlign()
+  - Gdip_GetStringFormatLineAlign()
+  - Gdip_GetStringFormatDigitSubstitution()
+  - Gdip_GetStringFormatHotkeyPrefix()
+  - Gdip_GetStringFormatTrimming()
+  - Gdip_SetStringFormatLineAlign()
+  - Gdip_SetStringFormatDigitSubstitution()
+  - Gdip_SetStringFormatFlags()
+  - Gdip_SetStringFormatHotkeyPrefix()
+  - Gdip_SetStringFormatTrimming()
   - Gdip_AddPathString()
   - Gdip_FontFamilyCreateGeneric()
   - Gdip_GetFontHeight()
@@ -281,4 +298,4 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
 
-## Last updated on lundi 9 septembre 2019, v1.66
+## Last updated on: mardi, 10 septembre 2019, v1.67

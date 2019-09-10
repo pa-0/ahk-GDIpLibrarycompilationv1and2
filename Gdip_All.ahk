@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.67 on 09/10/2019
 ; - v1.66 on 09/09/2019
 ; - v1.65 on 09/08/2019
 ; - v1.64 on 09/07/2019
@@ -28,6 +29,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/10/2019 = Added 17 new GDI+ functions [ Marius Șucan ]
 ; - 09/09/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
 ; - 09/08/2019 = Added 3 new functions and fixed Gdip_SetPenDashArray() [ Marius Șucan ]
 ; - 09/07/2019 = Added 12 new functions [ Marius Șucan ]
@@ -757,7 +759,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.66
+   return 1.67
 }
 
 ;#####################################################################################
@@ -2856,12 +2858,12 @@ Gdip_DeleteFont(hFont) {
    return DllCall("gdiplus\GdipDeleteFont", A_PtrSize ? "UPtr" : "UInt", hFont)
 }
 
-Gdip_DeleteStringFormat(hFormat) {
-   return DllCall("gdiplus\GdipDeleteStringFormat", A_PtrSize ? "UPtr" : "UInt", hFormat)
+Gdip_DeleteStringFormat(hStringFormat) {
+   return DllCall("gdiplus\GdipDeleteStringFormat", A_PtrSize ? "UPtr" : "UInt", hStringFormat)
 }
 
-Gdip_DeleteFontFamily(hFamily) {
-   return DllCall("gdiplus\GdipDeleteFontFamily", A_PtrSize ? "UPtr" : "UInt", hFamily)
+Gdip_DeleteFontFamily(hFontFamily) {
+   return DllCall("gdiplus\GdipDeleteFontFamily", A_PtrSize ? "UPtr" : "UInt", hFontFamily)
 }
 
 Gdip_DeleteMatrix(Matrix) {
@@ -2874,6 +2876,10 @@ Gdip_DeleteMatrix(Matrix) {
 
 Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0) {
 ; userBrush - if a pBrush object is passed, this will be used to draw the text
+; Remarks: by changing the alignment, the text will be rendered at a different X
+; coordinate position; the position of the text is set relative to
+; the given X position coordinate and the text width..
+; See also Gdip_SetStringFormatAlign().
 
    IWidth := Width, IHeight:= Height
    pattern_opts := (A_AhkVersion < "2") ? "iO)" : "i)"
@@ -2886,6 +2892,9 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
    RegExMatch(Options, pattern_opts "NoWrap", NoWrap)
    RegExMatch(Options, pattern_opts "R(\d)", Rendering)
    RegExMatch(Options, pattern_opts "S(\d+)(p*)", Size)
+
+   If (width && height && !NoWrap) || (Iwidth && Iheight && !NoWrap)
+      mustTrimText := Measure=1 ? 0 : 1
 
    if Colour && !Gdip_DeleteBrush(Gdip_CloneBrush(Colour[2]))
    {
@@ -2919,26 +2928,32 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
    Rendering := (Rendering && (Rendering[1] >= 0) && (Rendering[1] <= 5)) ? Rendering[1] : 4
    Size := (Size && (Size[1] > 0)) ? Size[2] ? IHeight*(Size[1]/100) : Size[1] : 12
 
-   hFamily := Gdip_FontFamilyCreate(Font)
-   If !hFamily
-      hFamily := Gdip_FontFamilyCreateGeneric(1)
+   hFontFamily := Gdip_FontFamilyCreate(Font)
+   If !hFontFamily
+      hFontFamily := Gdip_FontFamilyCreateGeneric(1)
 
-   hFont := Gdip_FontCreate(hFamily, Size, Style)
+   hFont := Gdip_FontCreate(hFontFamily, Size, Style)
    FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
-   hFormat := Gdip_StringFormatCreate(FormatStyle)
+   hStringFormat := Gdip_StringFormatCreate(FormatStyle)
+   If !hStringFormat
+      hStringFormat := Gdip_StringFormatGetGeneric(1)
    pBrush := PassBrush ? pBrush : Gdip_BrushCreateSolid(Colour)
-   if !(hFamily && hFont && hFormat && pBrush && pGraphics)
-      return !pGraphics ? -2 : !hFamily ? -3 : !hFont ? -4 : !hFormat ? -5 : !pBrush ? -6 : 0
+   if !(hFontFamily && hFont && hStringFormat && pBrush && pGraphics)
+   {
+      E := !pGraphics ? -2 : !hFontFamily ? -3 : !hFont ? -4 : !hStringFormat ? -5 : !pBrush ? -6 : 0
+      return E
+   }
 
    CreateRectF(RC, xpos, ypos, Width, Height)
-   Gdip_SetStringFormatAlign(hFormat, Align)
+   Gdip_SetStringFormatAlign(hStringFormat, Align)
+   If (mustTrimText=1)
+      Gdip_SetStringFormatTrimming(hStringFormat, 3)
    Gdip_SetTextRenderingHint(pGraphics, Rendering)
-   ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
+   ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hStringFormat, RC)
 
    if vPos
    {
       ReturnRC := StrSplit(ReturnRC, "|")
-
       if (vPos[0] = "vCentre") || (vPos[0] = "vCenter")
          ypos += (Height-ReturnRC[4])//2
       else if (vPos[0] = "Top") || (vPos[0] = "Up")
@@ -2947,22 +2962,22 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
          ypos := Height-ReturnRC[4]
 
       CreateRectF(RC, xpos, ypos, Width, ReturnRC[4])
-      ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hFormat, RC)
+      ReturnRC := Gdip_MeasureString(pGraphics, Text, hFont, hStringFormat, RC)
    }
 
    thisBrush := userBrush ? userBrush : pBrush
    if !Measure
-      _E := Gdip_DrawString(pGraphics, Text, hFont, hFormat, thisBrush, RC)
+      _E := Gdip_DrawString(pGraphics, Text, hFont, hStringFormat, thisBrush, RC)
 
    if !PassBrush
       Gdip_DeleteBrush(pBrush)
-   Gdip_DeleteStringFormat(hFormat)
+   Gdip_DeleteStringFormat(hStringFormat)
    Gdip_DeleteFont(hFont)
-   Gdip_DeleteFontFamily(hFamily)
+   Gdip_DeleteFontFamily(hFontFamily)
    return _E ? _E : ReturnRC
 }
 
-Gdip_DrawString(pGraphics, sString, hFont, hFormat, pBrush, ByRef RectF) {
+Gdip_DrawString(pGraphics, sString, hFont, hStringFormat, pBrush, ByRef RectF) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    if (!A_IsUnicode)
    {
@@ -2977,11 +2992,11 @@ Gdip_DrawString(pGraphics, sString, hFont, hFormat, pBrush, ByRef RectF) {
                , "int", -1
                , Ptr, hFont
                , Ptr, &RectF
-               , Ptr, hFormat
+               , Ptr, hStringFormat
                , Ptr, pBrush)
 }
 
-Gdip_MeasureString(pGraphics, sString, hFont, hFormat, ByRef RectF) {
+Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    VarSetCapacity(RC, 16)
    if !A_IsUnicode
@@ -2997,7 +3012,7 @@ Gdip_MeasureString(pGraphics, sString, hFont, hFormat, ByRef RectF) {
                , "int", -1
                , Ptr, hFont
                , Ptr, &RectF
-               , Ptr, hFormat
+               , Ptr, hStringFormat
                , Ptr, &RC
                , "uint*", Chars
                , "uint*", Lines)
@@ -3005,29 +3020,153 @@ Gdip_MeasureString(pGraphics, sString, hFont, hFormat, ByRef RectF) {
    return &RC ? NumGet(RC, 0, "float") "|" NumGet(RC, 4, "float") "|" NumGet(RC, 8, "float") "|" NumGet(RC, 12, "float") "|" Chars "|" Lines : 0
 }
 
-Gdip_SetStringFormatAlign(hFormat, Align) {
-; Near = 0
-; Center = 1
-; Far = 2
-   return DllCall("gdiplus\GdipSetStringFormatAlign", A_PtrSize ? "UPtr" : "UInt", hFormat, "int", Align)
-}
-
-Gdip_StringFormatCreate(Format:=0, Lang:=0) {
+Gdip_StringFormatCreate(FormatFlags:=0, LangID:=0) {
 ; Format options [StringFormatFlags]
 ; DirectionRightToLeft    = 0x00000001
+; - Activates is right to left reading order. For horizontal text, characters are read from right to left. For vertical text, columns are read from right to left.
 ; DirectionVertical       = 0x00000002
+; - Individual lines of text are drawn vertically on the display device.
 ; NoFitBlackBox           = 0x00000004
+; - Parts of characters are allowed to overhang the string's layout rectangle.
 ; DisplayFormatControl    = 0x00000020
+; - Unicode layout control characters are displayed with a representative character.
 ; NoFontFallback          = 0x00000400
+; - Prevent using an alternate font  for characters that are not supported in the requested font.
 ; MeasureTrailingSpaces   = 0x00000800
+; - The spaces at the end of each line are included in a string measurement.
 ; NoWrap                  = 0x00001000
+; - Disable text wrapping
 ; LineLimit               = 0x00002000
+; - Only entire lines are laid out in the layout rectangle.
 ; NoClip                  = 0x00004000
-   r := DllCall("gdiplus\GdipCreateStringFormat", "int", Format, "int", Lang, A_PtrSize ? "UPtr*" : "UInt*", hFormat)
-   return hFormat
+; - Characters overhanging the layout rectangle and text extending outside the layout rectangle are allowed to show.
+
+   E := DllCall("gdiplus\GdipCreateStringFormat", "int", FormatFlags, "int", LangID, A_PtrSize ? "UPtr*" : "UInt*", hStringFormat)
+   return hStringFormat
 }
 
-Gdip_FontCreate(hFamily, Size, Style:=0) {
+Gdip_CloneStringFormat(hStringFormat) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipCloneStringFormat", Ptr, hStringFormat, "uint*", clonedStringFormat)
+   Return clonedStringFormat
+}
+
+Gdip_StringFormatGetGeneric(whichFormat:=0) {
+; Default = 0
+; Typographic := 1
+   If (whichFormat=1)
+      DllCall("gdiplus\GdipStringFormatGetGenericTypographic", "UPtr*", hStringFormat)
+   Else
+      DllCall("gdiplus\GdipStringFormatGetGenericDefault", "UPtr*", hStringFormat)
+   Return hStringFormat
+}
+
+Gdip_SetStringFormatAlign(hStringFormat, Align) {
+; Text alignments:
+; 0 - [Near / Left] Alignment is towards the origin of the bounding rectangle
+; 1 - [Center] Alignment is centered between origin and extent (width) of the formatting rectangle
+; 2 - [Far / Right] Alignment is to the far extent (right side) of the formatting rectangle
+
+   return DllCall("gdiplus\GdipSetStringFormatAlign", A_PtrSize ? "UPtr" : "UInt", hStringFormat, "int", Align)
+}
+
+Gdip_GetStringFormatAlign(hStringFormat) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetStringFormatAlign", Ptr, hStringFormat, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetStringFormatLineAlign(hStringFormat) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetStringFormatLineAlign", Ptr, hStringFormat, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetStringFormatDigitSubstitution(hStringFormat) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetStringFormatDigitSubstitution", Ptr, hStringFormat, "ushort*", 0, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetStringFormatHotkeyPrefix(hStringFormat) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetStringFormatHotkeyPrefix", Ptr, hStringFormat, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetStringFormatTrimming(hStringFormat) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetStringFormatTrimming", Ptr, hStringFormat, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_SetStringFormatLineAlign(hStringFormat, StringAlign) {
+; The line alignment setting specifies how to align the string vertically in the layout rectangle.
+; The layout rectangle is used to position the displayed string
+; StringAlign  - Type of line alignment to use:
+; 0 - [Left] Alignment is towards the origin of the bounding rectangle
+; 1 - [Center] Alignment is centered between origin and the height of the formatting rectangle
+; 2 - [Right] Alignment is to the far extent (right side) of the formatting rectangle
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetStringFormatLineAlign", Ptr, hStringFormat, "int", StringAlign)
+}
+
+Gdip_SetStringFormatDigitSubstitution(hStringFormat, DigitSubstitute, LangID:=0) {
+; Sets the language ID and the digit substitution method that is used by a StringFormat object
+; DigitSubstitute - Digit substitution method that will be used by the StringFormat object:
+; 0 - A user-defined substitution scheme
+; 1 - Digit substitution is disabled
+; 2 - Substitution digits that correspond with the official national language of the user's locale
+; 3 - Substitution digits that correspond with the user's native script or language
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetStringFormatDigitSubstitution", Ptr, hStringFormat, "ushort", LangID, "int", DigitSubstitute)
+}
+
+Gdip_SetStringFormatFlags(hStringFormat, Flags) {
+; see Gdip_StringFormatCreate() for possible StringFormatFlags
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetStringFormatFlags", Ptr, hStringFormat, "int", Flags)
+}
+
+Gdip_SetStringFormatHotkeyPrefix(hStringFormat, PrefixProcessMode) {
+; Sets the type of processing that is performed on a string when a hot key prefix (&) is encountered
+; PrefixProcessMode - Type of hot key prefix processing to use:
+; 0 - No hot key processing occurs.
+; 1 - Unicode text is scanned for ampersands (&). All pairs of ampersands are replaced by a single ampersand.
+;     All single ampersands are removed, the first character that follows a single ampersand is displayed underlined.
+; 2 - Same as 1 but a character following a single ampersand is not displayed underlined.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetStringFormatHotkeyPrefix", Ptr, hStringFormat, "int", PrefixProcessMode)
+}
+
+Gdip_SetStringFormatTrimming(hStringFormat, TrimMode) {
+; TrimMode - The trimming style  to use:
+; 0 - No trimming is done
+; 1 - String is broken at the boundary of the last character that is inside the layout rectangle
+; 2 - String is broken at the boundary of the last word that is inside the layout rectangle
+; 3 - String is broken at the boundary of the last character that is inside the layout rectangle and an ellipsis (...) is inserted after the character
+; 4 - String is broken at the boundary of the last word that is inside the layout rectangle and an ellipsis (...) is inserted after the word
+; 5 - The center is removed from the string and replaced by an ellipsis. The algorithm keeps as much of the last portion of the string as possible
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetStringFormatTrimming", Ptr, hStringFormat, "int", TrimMode)
+}
+
+
+Gdip_FontCreate(hFontFamily, Size, Style:=0) {
 ; Font style options:
 ; Regular = 0
 ; Bold = 1
@@ -3035,25 +3174,25 @@ Gdip_FontCreate(hFamily, Size, Style:=0) {
 ; BoldItalic = 3
 ; Underline = 4
 ; Strikeout = 8
-   DllCall("gdiplus\GdipCreateFont", A_PtrSize ? "UPtr" : "UInt", hFamily, "float", Size, "int", Style, "int", 0, A_PtrSize ? "UPtr*" : "UInt*", hFont)
+   DllCall("gdiplus\GdipCreateFont", A_PtrSize ? "UPtr" : "UInt", hFontFamily, "float", Size, "int", Style, "int", 0, A_PtrSize ? "UPtr*" : "UInt*", hFont)
    return hFont
 }
 
-Gdip_FontFamilyCreate(Font) {
+Gdip_FontFamilyCreate(FontName) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    if (!A_IsUnicode)
    {
-      nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, Ptr, &Font, "int", -1, "uint", 0, "int", 0)
-      VarSetCapacity(wFont, nSize*2)
-      DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, Ptr, &Font, "int", -1, Ptr, &wFont, "int", nSize)
+      nSize := DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, Ptr, &FontName, "int", -1, "uint", 0, "int", 0)
+      VarSetCapacity(wFontName, nSize*2)
+      DllCall("MultiByteToWideChar", "uint", 0, "uint", 0, Ptr, &FontName, "int", -1, Ptr, &wFontName, "int", nSize)
    }
 
    _E := DllCall("gdiplus\GdipCreateFontFamilyFromName"
-               , Ptr, A_IsUnicode ? &Font : &wFont
+               , Ptr, A_IsUnicode ? &FontName : &wFontName
                , "uint", 0
-               , A_PtrSize ? "UPtr*" : "UInt*", hFamily)
+               , A_PtrSize ? "UPtr*" : "UInt*", hFontFamily)
 
-   return hFamily
+   return hFontFamily
 }
 
 Gdip_FontFamilyCreateGeneric(whichStyle) {
@@ -3065,17 +3204,17 @@ Gdip_FontFamilyCreateGeneric(whichStyle) {
 ; 2 - serif generic font 
 
    If (whichStyle=0)
-      DllCall("gdiplus\GdipGetGenericFontFamilyMonospace", "UPtr*", hFamily)
+      DllCall("gdiplus\GdipGetGenericFontFamilyMonospace", "UPtr*", hFontFamily)
    Else If (whichStyle=1)
-      DllCall("gdiplus\GdipGetGenericFontFamilySansSerif", "UPtr*", hFamily)
+      DllCall("gdiplus\GdipGetGenericFontFamilySansSerif", "UPtr*", hFontFamily)
    Else If (whichStyle=2)
-      DllCall("gdiplus\GdipGetGenericFontFamilySerif", "UPtr*", hFamily)
-   Return hFamily
+      DllCall("gdiplus\GdipGetGenericFontFamilySerif", "UPtr*", hFontFamily)
+   Return hFontFamily
 }
 
 Gdip_CreateFontFromDC(hDC) {
-   ; a font must be selected in the hDC for this function to work
-   ; function extracted from a class based wrapper around the GDI+ API made by nnnik
+; a font must be selected in the hDC for this function to work
+; function extracted from a class based wrapper around the GDI+ API made by nnnik
 
    r := DllCall("gdiplus\GdipCreateFontFromDC", "UPtr", hDC, "UPtr*", pFont)
    Return pFont
@@ -3093,6 +3232,9 @@ Gdip_GetFontHeight(hFont, pGraphics:=0) {
 }
 
 Gdip_GetFontHeightGivenDPI(hFont, DPI:=72) {
+; Remarks: it seems to always yield the same value 
+; regardless of the given DPI.
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    DllCall("gdiplus\GdipGetFontHeightGivenDPI", Ptr, hFont, "float", DPI, "float*", result)
    Return result
@@ -3122,33 +3264,67 @@ Gdip_GetFontUnit(hFont) {
    Return result
 }
 
-Gdip_GetFontFamilyCellScents(hFamily, ByRef Ascent, ByRef Descent, Style:=0) {
+Gdip_CloneFont(hfont) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   E := DllCall("gdiplus\GdipGetCellAscent", Ptr, hFamily, "int", Style, "ushort*", Ascent)
-   E := DllCall("gdiplus\GdipGetCellDescent", Ptr, hFamily, "int", Style, "ushort*", Descent)
+   DllCall("gdiplus\GdipCloneFont", Ptr, hFont, "UPtr*", clonedFont)
+   Return clonedFont
+}
+
+Gdip_GetFontFamily(hFont) {
+; On success returns a handle to a hFontFamily object
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipGetFamily", Ptr, hFont, "UPtr*", hFontFamily)
+   Return hFontFamily
+}
+
+
+Gdip_CloneFontFamily(hFontFamily) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipCloneFontFamily", Ptr, hFontFamily, "UPtr*", clonedFontFamily)
+   Return clonedFontFamily
+}
+
+Gdip_IsFontStyleAvailable(hFontFamily, Style) {
+; Remarks: given a proper hFontFamily object, it seems to be always 
+; returning 1 [true] regardless of Style...
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsStyleAvailable", Ptr, hFontFamily, "int", Style, "Int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_GetFontFamilyCellScents(hFontFamily, ByRef Ascent, ByRef Descent, Style:=0) {
+; Ascent and Descent values are given in «design units»
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetCellAscent", Ptr, hFontFamily, "int", Style, "ushort*", Ascent)
+   E := DllCall("gdiplus\GdipGetCellDescent", Ptr, hFontFamily, "int", Style, "ushort*", Descent)
    Return E
 }
 
-Gdip_GetFontFamilyEmHeight(hFamily, Style:=0) {
+Gdip_GetFontFamilyEmHeight(hFontFamily, Style:=0) {
+; EmHeight returned in «design units»
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   DllCall("gdiplus\GdipGetEmHeight", Ptr, hFamily, "int", Style, "ushort*", result)
+   DllCall("gdiplus\GdipGetEmHeight", Ptr, hFontFamily, "int", Style, "ushort*", result)
    Return result
 }
 
 Gdip_GetFontFamilyLineSpacing(hFamily, Style:=0) {
+; Line spacing returned in «design units»
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   DllCall("gdiplus\GdipGetLineSpacing", Ptr, hFamily, "int", Style, "ushort*", result)
+   DllCall("gdiplus\GdipGetLineSpacing", Ptr, hFontFamily, "int", Style, "ushort*", result)
    Return result
 }
 
-Gdip_GetFontFamilyName(hFamily) {
+
+Gdip_GetFontFamilyName(hFontFamily) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    VarSetCapacity(FontName, 90)
-   DllCall("gdiplus\GdipGetFamilyName", Ptr, hFamily, "Ptr", &FontName, "ushort", 0)
+   DllCall("gdiplus\GdipGetFamilyName", Ptr, hFontFamily, "Ptr", &FontName, "ushort", 0)
    Return FontName
 }
-
-
 
 
 ;#####################################################################################
@@ -3264,7 +3440,7 @@ Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
   return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
 }
 
-Gdip_AddPathString(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0) {
+Gdip_AddPathStringEasy(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0) {
 ; Adds the outline of a given string with the given font name, size and style 
 ; to a Path object.
 ; Size - in em, in world units
@@ -3284,25 +3460,35 @@ Gdip_AddPathString(pPath, String, FontName, Size, Style, X, Y, Width, Height, Al
 ; Strikeout = 8
 
    FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
-   hFamily := Gdip_FontFamilyCreate(FontName)
-   If !hFamily
-      hFamily := Gdip_FontFamilyCreateGeneric(1)
+   hFontFamily := Gdip_FontFamilyCreate(FontName)
+   If !hFontFamily
+      hFontFamily := Gdip_FontFamilyCreateGeneric(1)
  
-   If !hFamily
+   If !hFontFamily
       Return -1
 
-   hFormat := Gdip_StringFormatCreate(FormatStyle)
-   If !hFormat
+   hStringFormat := Gdip_StringFormatCreate(FormatStyle)
+   If !hStringFormat
+      hStringFormat := Gdip_StringFormatGetGeneric(1)
+
+   If !hStringFormat
       Return -2
 
-   Gdip_SetStringFormatAlign(hFormat, Align)
-   CreateRectF(RectF, X, Y, Width, Height)
-   Ptr := A_PtrSize ? "UPtr" : "UInt"
-   E := DllCall("gdiplus\GdipAddPathString", Ptr, pPath, "WStr", String, "int", -1, Ptr, hFamily, "int", Style, "float", Size, Ptr, &RectF, Ptr, hFormat)
-   Gdip_DeleteStringFormat(hFormat)
-   Gdip_DeleteFontFamily(hFamily)
+   Gdip_SetStringFormatTrimming(hStringFormat, 3)
+   Gdip_SetStringFormatAlign(hStringFormat, Align)
+   E := Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, Width, Height)
+   Gdip_DeleteStringFormat(hStringFormat)
+   Gdip_DeleteFontFamily(hFontFamily)
    Return E
 }
+
+Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, W, H) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   CreateRectF(RectF, X, Y, W, H)
+   E := DllCall("gdiplus\GdipAddPathString", Ptr, pPath, "WStr", String, "int", -1, Ptr, hFontFamily, "int", Style, "float", Size, Ptr, &RectF, Ptr, hStringFormat)
+   Return E
+}
+
 
 Gdip_SetPathFillMode(pPath, FillMode) {
 ; Parameters
@@ -3797,15 +3983,21 @@ Gdip_CreateRegion() {
 }
 
 Gdip_CombineRegionRegion(Region, Region2, CombineMode) {
-   ; Updates this region to the portion of itself that intersects another region. Added by Learning one
-   ; see CombineMode options from Gdip_SetClipRect()
+; Updates this region to the portion of itself that intersects another region. Added by Learning one
+; see CombineMode options from Gdip_SetClipRect()
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipCombineRegionRegion", Ptr, Region, Ptr, Region2, "int", CombineMode)
 }
 
+Gdip_CombineRegionPath(Region, pPath, CombineMode) {
+; see CombineMode options from Gdip_SetClipRect()
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipCombineRegionPath", Ptr, Region, Ptr, pPath, "int", CombineMode)
+}
+
 Gdip_CreateRegionPath(pPath) {
-   ; Creates a region that is defined by a GraphicsPath.  Added by Learning one
+; Creates a region that is defined by a GraphicsPath.  Added by Learning one
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    E := DllCall("gdiplus\GdipCreateRegionPath", Ptr, pPath, "UInt*", Region)
