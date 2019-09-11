@@ -85,9 +85,10 @@ DeleteDC(hdc)
 Gdip_DeleteGraphics(G)
 Return
 
+
 ;#######################################################################
 
-ExitFunc()
+ExitFunc(ExitReason, ExitCode)
 {
    global
    ; gdi+ may now be shutdown on exiting the program
