@@ -5,11 +5,13 @@ This repository is a fork of https://github.com/mmikeww/AHKv2-Gdip/ . Some of th
 
 The Tutorials/Examples are left untouched. They are the same as in the repository of @mmikeww. I added several new examples that showcase the newly supported GDI+ APIs. These are example scripts initially provided by those that coded the new functions.
 
+This Gdip_all.ahk file should be compatible with projects already relying on the original edition.
+
 # History
 - @tic created the original [Gdip.ahk](https://github.com/tariqporter/Gdip/) library
 - @Rseding91 updated it to make it compatible with unicode and x64 AHK versions and renamed the file `Gdip_All.ahk`
 - @mmikeww's repository updates @Rseding91's `Gdip_All.ahk` to make it compatible with AHK v2 and also fixes some bugs
-- this repository attempts to gather all the GDI+ functions contributed by various people that were missing
+- this repository attempts to gather all the GDI+ functions contributed by various people that were missing, and further extend the coverage/support of GDI+ API functions
 
 # Comparisions
 
@@ -35,7 +37,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 
 
-## 229 NEW FUNCTIONS:
+## 239 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -50,6 +52,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 
 - by SBC:
   - Gdip_GetImageFramesCount()
+
+- by iPhilip:
+  - Gdip_SetPenDashStyle()
 
 - By RazorHalo:
   - Gdip_RotatePathAtCenter()
@@ -106,8 +111,17 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_GetInfo
 
 - By Marius Șucan [robodesign.ro]:
+  - Gdip_GetPenDashStyle()
+  - Gdip_SetPenEndCap()
+  - Gdip_GetPenEndCap()
+  - Gdip_SetPenAlignment()
+  - Gdip_GetPenAlignment()
+  - Gdip_GetBrushType()
+  - Gdip_GetSmoothingMode()
+  - Gdip_DrawDrivenString()
+  - Gdip_DrawOrientedString()
   - Gdip_CombineRegionPath()
-  - Gdip_AddPathStringEasy()
+  - Gdip_AddPathStringSimplified()
   - Gdip_CloneFont()
   - Gdip_GetFontFamily()
   - Gdip_CloneFontFamily()
@@ -270,7 +284,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_CreateDIBitmap()
   - Gdip_GetDIBits()
   - Gdip_DrawImageFX()
-  - Gdip_ApplyEffect()
+  - Gdip_BitmapApplyEffect()
   - Gdip_CreateEffect()
   - Gdip_DisposeEffect()
   - GenerateColorMatrix()

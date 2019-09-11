@@ -5,6 +5,7 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; - v1.68 on 09/11/2019
 ; - v1.67 on 09/10/2019
 ; - v1.66 on 09/09/2019
 ; - v1.65 on 09/08/2019
@@ -29,6 +30,7 @@
 ; - v1.01 on 31/05/2008 by tic (Tariq Porter)
 ;
 ; Detailed history:
+; - 09/11/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/10/2019 = Added 17 new GDI+ functions [ Marius Șucan ]
 ; - 09/09/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
 ; - 09/08/2019 = Added 3 new functions and fixed Gdip_SetPenDashArray() [ Marius Șucan ]
@@ -759,7 +761,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.67
+   return 1.68
 }
 
 ;#####################################################################################
@@ -1334,7 +1336,7 @@ Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0) {
 ; sX, sY          x, y coordinates of the source upper-left corner
 ; sW, sH          width and height of the source rectangle
 ; Matrix          a matrix used to alter image attributes when drawing
-;
+; Unit            see Gdip_DrawImage()
 ; return          status enumeration. 0 = success
 ;
 ; notes           if sx,sy,sw,sh are missed then the entire source bitmap will be used
@@ -1342,10 +1344,8 @@ Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0) {
 ;                 Matrix may be passed as a digit from 0 - 1 to change just transparency
 ;                 Matrix can be passed as a matrix with "|" delimiter
 
-Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1) {
+Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-   iCount := CreatePointsF(PointsF, Points)
    if !IsNumber(Matrix)
       ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
    else if (Matrix != 1)
@@ -1357,6 +1357,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
       Gdip_GetImageDimensions(pBitmap, sw, sh)
    }
 
+   iCount := CreatePointsF(PointsF, Points)
    _E := DllCall("gdiplus\GdipDrawImagePointsRect"
             , Ptr, pGraphics
             , Ptr, pBitmap
@@ -1366,7 +1367,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
             , "float", sY
             , "float", sW
             , "float", sH
-            , "int", 2
+            , "int", Unit
             , Ptr, ImageAttr
             , Ptr, 0
             , Ptr, 0)
@@ -1387,6 +1388,14 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ; sX, sY          x, y coordinates of the source upper-left corner
 ; sW, sH          width and height of the source image
 ; Matrix          a matrix used to alter image attributes when drawing
+; Unit            Unit of measurement:
+;                 0 - World coordinates, a nonphysical unit
+;                 1 - Display units
+;                 2 - A unit is 1 pixel
+;                 3 - A unit is 1 point or 1/72 inch
+;                 4 - A unit is 1 inch
+;                 5 - A unit is 1/300 inch
+;                 6 - A unit is 1 millimeter
 ;
 ; return          status enumeration. 0 = success
 ;
@@ -1408,7 +1417,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ;                 MatrixGreyScale = 0.299|0.299|0.299|0|0|0.587|0.587|0.587|0|0|0.114|0.114|0.114|0|0|0|0|0|1|0|0|0|0|0|1
 ;                 MatrixNegative = -1|0|0|0|0|0|-1|0|0|0|0|0|-1|0|0|0|0|0|1|0|1|1|1|0|1
 
-Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1) {
+Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
 
    if !IsNumber(Matrix)
@@ -1443,7 +1452,7 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
             , "float", sY
             , "float", sW
             , "float", sH
-            , "int", 2
+            , "int", Unit
             , Ptr, ImageAttr
             , Ptr, 0
             , Ptr, 0)
@@ -1917,7 +1926,6 @@ Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="") {
 Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    pBitmap := ""
-
    DllCall("gdiplus\GdipCreateBitmapFromHBITMAP", Ptr, hBitmap, Ptr, Palette, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
    return pBitmap
 }
@@ -1929,38 +1937,45 @@ Gdip_CreateHBITMAPFromBitmap(pBitmap, Background:=0xffffffff) {
 
 Gdip_CreateBitmapFromHICON(hIcon) {
    pBitmap := ""
-
    DllCall("gdiplus\GdipCreateBitmapFromHICON", A_PtrSize ? "UPtr" : "UInt", hIcon, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
    return pBitmap
 }
 
 Gdip_CreateHICONFromBitmap(pBitmap) {
-   pBitmap := ""
    hIcon := 0
-
    DllCall("gdiplus\GdipCreateHICONFromBitmap", A_PtrSize ? "UPtr" : "UInt", pBitmap, A_PtrSize ? "UPtr*" : "uint*", hIcon)
    return hIcon
 }
 
 Gdip_CreateBitmap(Width, Height, Format:=0x26200A) {
    pBitmap := ""
-
    DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", 0, "int", Format, A_PtrSize ? "UPtr" : "UInt", 0, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
    Return pBitmap
 }
 
 Gdip_CreateBitmapFromClipboard() {
+; modified by Marius Șucan
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    if !DllCall("IsClipboardFormatAvailable", "uint", 8)
       return -2
+
    if !DllCall("OpenClipboard", Ptr, 0)
       return -1
+
    if !hBitmap := DllCall("GetClipboardData", "uint", 2, Ptr)
+   {
+      DllCall("CloseClipboard")
       return -3
+   }
+
+   DllCall("CloseClipboard")
    if !pBitmap := Gdip_CreateBitmapFromHBITMAP(hBitmap)
+   {
+      If hBitmap
+         DeleteObject(hBitmap)
       return -4
-   if !DllCall("CloseClipboard")
-      return -5
+   }
 
    DeleteObject(hBitmap)
    return pBitmap
@@ -2144,6 +2159,13 @@ Gdip_GetPenWidth(pPen) {
    return width
 }
 
+Gdip_GetPenDashStyle(pPen) {
+   E := DllCall("gdiplus\GdipGetPenDashStyle", "UPtr", pPen, "float*", DashStyle)
+   If E
+      return -1
+   return DashStyle
+}
+
 Gdip_SetPenColor(pPen, ARGB) {
    return DllCall("gdiplus\GdipSetPenColor", "UPtr", pPen, "UInt", ARGB)
 }
@@ -2223,6 +2245,22 @@ Gdip_GetPenStartCap(pPen) {
    Return result
 }
 
+Gdip_GetPenEndCap(pPen) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPenEndCap", Ptr, pPen, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
+Gdip_GetPenAlignment(pPen) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetPenMode", Ptr, pPen, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
 ;#####################################################################################
 ; Function    - Gdip_SetPenLineCaps
 ; Description - Sets the cap styles for the start, end, and dashes in a line drawn with the pPen object
@@ -2256,6 +2294,22 @@ Gdip_SetPenStartCap(pPen, LineCap) {
    Return DllCall("gdiplus\GdipSetPenStartCap", Ptr, pPen, "int", LineCap)
 }
 
+Gdip_SetPenEndCap(pPen, LineCap) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetPenEndCap", Ptr, pPen, "int", LineCap)
+}
+
+Gdip_SetPenAlignment(pPen, Alignment) {
+; Specifies the alignment setting of the pen relative to the line that is drawn. The default value is Center.
+; If you set the alignment of a Pen object to Inset, you cannot use that pen to draw compound lines or triangular dash caps.
+; Alignment options:
+; 0 [Center] - Specifies that the pen is aligned on the center of the line that is drawn.
+; 1 [Inset]  - Specifies, when drawing a polygon, that the pen is aligned on the inside of the edge of the polygon.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetPenEndCap", Ptr, pPen, "int", Alignment)
+}
+
 Gdip_GetPenCompoundCount(pPen) {
     E := DllCall("gdiplus\GdipGetPenCompoundCount", Ptr, pPen, "int*", result)
     If E
@@ -2284,6 +2338,20 @@ Gdip_SetPenCompoundArray(pPen, inCompounds) {
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    Return DllCall("gdiplus\GdipSetPenCompoundArray", Ptr, pPen, "uptr", &pCompounds, "int", totalCompounds)
+}
+
+Gdip_SetPenDashStyle(pPen, DashStyle) {
+; DashStyle options:
+; Solid = 0
+; Dash = 1
+; Dot = 2
+; DashDot = 3
+; DashDotDot = 4
+; Custom = 5
+; https://technet.microsoft.com/pt-br/ms534104(v=vs.71).aspx
+; function by IPhilip
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetPenDashStyle", Ptr, pPen, "Int", DashStyle)
 }
 
 Gdip_SetPenDashArray(pPen, Dashes) {
@@ -2354,10 +2422,10 @@ Gdip_GetPenCompoundArray(pPen) {
 
 Gdip_SetPenLineJoin(pPen, LineJoin) {
 ; LineJoin - Line join style:
-; 0 - a sharp corner or a clipped corner
-; 1 - a diagonal corner.
-; 2 - a smooth, circular arc between the lines.
-; 3 - a sharp corner or a clipped corner
+; MITER = 0 - it produces a sharp corner or a clipped corner, depending on whether the length of the miter exceeds the miter limit.
+; BEVEL = 1 - it produces a diagonal corner.
+; ROUND = 2 - it produces a smooth, circular arc between the lines.
+; MITERCLIPPED = 3 - it produces a sharp corner or a beveled corner, depending on whether the length of the miter exceeds the miter limit.
 
     Ptr := A_PtrSize ? "UPtr" : "UInt"
     Return DllCall("gdiplus\GdipSetPenLineJoin", Ptr, pPen, "int", LineJoin)
@@ -2435,7 +2503,7 @@ Gdip_ClonePen(pPen) {
 }
 
 ;#####################################################################################
-; pBrush functions [types: SolidFill, Texture, Hatch pattern and LinearGradient]
+; pBrush functions [types: SolidFill, Texture, Hatch patterns, PathGradient and LinearGradient]
 ; pBrush objects can be used by pPen objects via Gdip_SetPenBrushFill()
 ;#####################################################################################
 
@@ -2821,6 +2889,22 @@ Gdip_CloneBrush(pBrush) {
    return pBrushClone
 }
 
+Gdip_GetBrushType(pBrush) {
+; Possible brush types [return values]:
+; 0 - Solid color
+; 1 - Hatch pattern fill
+; 2 - Texture fill
+; 3 - Path gradient
+; 4 - Linear gradient
+; -1 - error
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetBrushType", Ptr, pBrush, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
 ;#####################################################################################
 ; Delete resources
 ;#####################################################################################
@@ -2874,12 +2958,94 @@ Gdip_DeleteMatrix(Matrix) {
 ; Text functions
 ;#####################################################################################
 
+Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, Height, Angle:=0, pBrush:=0, pPen:=0, Align:=0, ScaleX:=1) {
+; Size   - in em, in world units [font size]
+; Remarks: a high value might be required; over 60, 90... to see the text.
+; X, Y   - coordinates for the rectangle where the text will be drawn
+; W, H   - width and heigh for the rectangle where the text will be drawn
+; Angle  - the angle at which the text should be rotated
+
+; pBrush - a pointer to a pBrush object to fill the text with
+; pPen   - a pointer to a pPen object to draw the outline [contour] of the text
+; Remarks: both are optional, but one at least must be given, otherwise
+; the function fails, returns -3.
+; For example, if you want only the contour of the text, pass only a pPen object.
+
+; Align options:
+; Near/left = 0
+; Center = 1
+; Far/right = 2
+
+; Style options:
+; Regular = 0
+; Bold = 1
+; Italic = 2
+; BoldItalic = 3
+; Underline = 4
+; Strikeout = 8
+
+; ScaleX - if you want to distort the text [make it wider or narrower]
+
+; On success, the function returns an array:
+; PathBounds.x , PathBounds.y , PathBounds.w , PathBounds.h
+
+   If (!pBrush && !pPen)
+      Return -3
+
+   hFontFamily := Gdip_FontFamilyCreate(FontName)
+   If !hFontFamily
+      hFontFamily := Gdip_FontFamilyCreateGeneric(1)
+ 
+   If !hFontFamily
+      Return -1
+
+   FormatStyle := 0x4000
+   hStringFormat := Gdip_StringFormatCreate(FormatStyle)
+   If !hStringFormat
+      hStringFormat := Gdip_StringFormatGetGeneric(1)
+
+   If !hStringFormat
+   {
+      Gdip_DeleteFontFamily(hFontFamily)
+      Return -2
+   }
+
+   Gdip_SetStringFormatTrimming(hStringFormat, 3)
+   Gdip_SetStringFormatAlign(hStringFormat, Align)
+   pPath := Gdip_CreatePath()
+
+   E := Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, Width, Height)
+   If (ScaleX>0 && ScaleX!=1)
+   {
+      hMatrix := Gdip_CreateMatrix()
+      Gdip_ScaleMatrix(hMatrix, ScaleX, 1)
+      Gdip_TransformPath(pPath, hMatrix)
+      Gdip_DeleteMatrix(hMatrix)
+   }
+   Gdip_RotatePathAtCenter(pPath, Angle)
+
+   If (!E && pBrush)
+      E := Gdip_FillPath(pGraphics, pBrush, pPath)
+   If (!E && pPen)
+      E := Gdip_DrawPath(pGraphics, pPen, pPath)
+   PathBounds := Gdip_GetPathWorldBounds(pPath)
+   Gdip_DeleteStringFormat(hStringFormat)
+   Gdip_DeleteFontFamily(hFontFamily)
+   Gdip_DeletePath(pPath)
+   Return E ? E : PathBounds
+}
+
 Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0) {
 ; userBrush - if a pBrush object is passed, this will be used to draw the text
 ; Remarks: by changing the alignment, the text will be rendered at a different X
 ; coordinate position; the position of the text is set relative to
 ; the given X position coordinate and the text width..
 ; See also Gdip_SetStringFormatAlign().
+;
+; On success, the function returns a string in the following format:
+; "x|y|width|height|chars|lines"
+; The first four elements represent the boundaries of the text.
+; The string is returned by Gdip_MeasureString()
 
    IWidth := Width, IHeight:= Height
    pattern_opts := (A_AhkVersion < "2") ? "iO)" : "i)"
@@ -2941,6 +3107,14 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
    if !(hFontFamily && hFont && hStringFormat && pBrush && pGraphics)
    {
       E := !pGraphics ? -2 : !hFontFamily ? -3 : !hFont ? -4 : !hStringFormat ? -5 : !pBrush ? -6 : 0
+      If pBrush
+         Gdip_DeleteBrush(pBrush)
+      If hStringFormat
+         Gdip_DeleteStringFormat(hStringFormat)
+      If hFont
+         Gdip_DeleteFont(hFont)
+      If hFontFamily
+         Gdip_DeleteFontFamily(hFontFamily)
       return E
    }
 
@@ -2997,6 +3171,10 @@ Gdip_DrawString(pGraphics, sString, hFont, hStringFormat, pBrush, ByRef RectF) {
 }
 
 Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF) {
+; The function returns a string in the following format:
+; "x|y|width|height|chars|lines"
+; The first four elements represent the boundaries of the text
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    VarSetCapacity(RC, 16)
    if !A_IsUnicode
@@ -3019,6 +3197,29 @@ Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF) {
 
    return &RC ? NumGet(RC, 0, "float") "|" NumGet(RC, 4, "float") "|" NumGet(RC, 8, "float") "|" NumGet(RC, 12, "float") "|" Chars "|" Lines : 0
 }
+
+Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=0, hMatrix:=1) {
+; Parameters:
+; pBrush       - pointer to a pBrush object used to draw the text into the given pGraphics
+; hFont        - pointer for a Font object used to draw the given text that determines font, size and style 
+; DriverPoints - a list of points coordinates that determines where the glyphs [letters] will be drawn
+;                "x1,y1|x2,y2|x3,y3" [... and so on]
+; Flags options:
+; 1 - The string array contains Unicode character values. If this flag is not set, each value in $vText is
+;     interpreted as an index to a font glyph that defines a character to be displayed
+; 2 - The string is displayed vertically
+; 4 - The glyph positions are calculated from the position of the first glyph. If this flag is not set, the
+;     glyph positions are obtained from an array of coordinates ($aPoints)
+; 8 - Less memory should be used for cache of antialiased glyphs. This also produces lower quality. If this
+;     flag is not set, more memory is used, but the quality is higher
+; hMatrix      - pointer to a Matrix object that specifies the transformation matrix to apply to each value in the text array
+
+   txtLen := StrLen(String)
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   iCount := CreatePointsF(PointsF, DriverPoints)
+   return DllCall("gdiplus\GdipDrawDriverString", Ptr, pGraphics, "WStr", String, "int", txtLen, Ptr, hFont, Ptr, pBrush, Ptr, &PointsF, "int", Flags, Ptr, hMatrix)
+}
+
 
 Gdip_StringFormatCreate(FormatFlags:=0, LangID:=0) {
 ; Format options [StringFormatFlags]
@@ -3176,6 +3377,14 @@ Gdip_FontCreate(hFontFamily, Size, Style:=0) {
 ; Strikeout = 8
    DllCall("gdiplus\GdipCreateFont", A_PtrSize ? "UPtr" : "UInt", hFontFamily, "float", Size, "int", Style, "int", 0, A_PtrSize ? "UPtr*" : "UInt*", hFont)
    return hFont
+}
+
+Gdip_CreateFontFromLogicalFont(hDC, pLogFont) {
+; hDC      - handle to a device context
+; pLogFont - handle to a logical font 
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipCreateFontFromLogfontW", Ptr, hDC, "ushort*", pLogFont, "UPtr*", hFont)
+   Return hFont
 }
 
 Gdip_FontFamilyCreate(FontName) {
@@ -3440,11 +3649,14 @@ Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
   return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
 }
 
-Gdip_AddPathStringEasy(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0) {
+Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0) {
 ; Adds the outline of a given string with the given font name, size and style 
 ; to a Path object.
-; Size - in em, in world units
-; Remark: a high value might be required; over 60, 90... to see the text
+; Size - in em, in world units [font size]
+; Remarks: a high value might be required; over 60, 90... to see the text.
+
+; X, Y   - coordinates for the rectangle where the text will be placed
+; W, H   - width and heigh for the rectangle where the text will be placed
 
 ; Align options:
 ; Near/left = 0
@@ -3472,7 +3684,10 @@ Gdip_AddPathStringEasy(pPath, String, FontName, Size, Style, X, Y, Width, Height
       hStringFormat := Gdip_StringFormatGetGeneric(1)
 
    If !hStringFormat
+   {
+      Gdip_DeleteFontFamily(hFontFamily)
       Return -2
+   }
 
    Gdip_SetStringFormatTrimming(hStringFormat, 3)
    Gdip_SetStringFormatAlign(hStringFormat, Align)
@@ -3710,6 +3925,14 @@ Gdip_GetCompositingQuality(pGraphics) {
 Gdip_GetInterpolationMode(pGraphics) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    E := DllCall("gdiplus\GdipGetInterpolationMode", Ptr, pGraphics, "int*", result)
+   If E
+      return -1
+   Return result
+}
+
+Gdip_GetSmoothingMode(pGraphics) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipGetSmoothingMode", Ptr, pGraphics, "int*", result)
    If E
       return -1
    Return result
@@ -4909,11 +5132,10 @@ Gdip_DrawPath(pGraphics, pPen, pPath) {
   return DllCall("gdiplus\GdipDrawPath", Ptr, pGraphics, Ptr, pPen, Ptr, pPath)
 }
 
-Gdip_WidenPath(pPath, pPen, Matrix:=0, Flatness:=1) {
-  ; Replaces this path with curves that enclose the area that is filled when this path is drawn by a specified pen. This method also flattens the path.
+Gdip_WidenPath(pPath, pPen, hMatrix:=0, Flatness:=1) {
+; Replaces this path with curves that enclose the area that is filled when this path is drawn by a specified pen. This method also flattens the path.
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-  return DllCall("gdiplus\GdipWidenPath", Ptr, pPath, "uint", pPen, Ptr, Matrix, "float", Flatness)
+  return DllCall("gdiplus\GdipWidenPath", Ptr, pPath, "uint", pPen, Ptr, hMatrix, "float", Flatness)
 }
 
 Gdip_ClonePath(pPath) {
@@ -5318,7 +5540,7 @@ Gdip_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
    Return r
 }
 
-Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="") {
+Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, hMatrix:=0) {
 ; written by Marius Șucan
 
     If !IsNumber(Matrix)
@@ -5334,33 +5556,40 @@ Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", p
 
     Ptr := A_PtrSize ? "UPtr" : "UInt"
     CreateRectF(sourceRect, sX, sY, sW, sH)
-    r := DllCall("gdiplus\GdipDrawImageFX"
+    E := DllCall("gdiplus\GdipDrawImageFX"
       , Ptr, pGraphics
       , Ptr, pBitmap
-      , Ptr, &sourceRect        ; sourceRect,
-      , Ptr, NULL               ; xForm transformation matrix ? xForm->nativeMatrix : NULL,
-      , Ptr, pEffect                ; effect ? effect->nativeEffect : NULL,
-      , Ptr, ImageAttr          ; imageAttributes ? imageAttributes->nativeImageAttr : NULL,
-      , "Uint", 2)              ; srcUnit
+      , Ptr, &sourceRect
+      , Ptr, hMatrix             ; transformation matrix
+      , Ptr, pEffect
+      , Ptr, ImageAttr
+      , "Uint", Unit)            ; srcUnit
     ; r4 := GetStatus(A_LineNumber ":GdipDrawImageFX",r4)
-      
+
     If ImageAttr
        Gdip_DisposeImageAttributes(ImageAttr)
       
-    Return r
+    Return E
 }
 
-Gdip_ApplyEffect(pBitmap, pEffect) {
+Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0) {
+; X, Y   - coordinates for the rectangle where the effect is applied
+; W, H   - width and heigh for the rectangle where the effect is applied
+; If X, Y, W or H are omitted , the effect is applied on the entire pBitmap 
+;
 ; written by Marius Șucan
 ; many thanks to Drugwash for the help provided
   If InStr(pEffect, "err-")
      Return pEffect
 
-  Gdip_GetImageDimensions(pBitmap, Width, Height)
-  CreateRectF(RectF, 0, 0, Width, Height)
+  If (!x && !y && !w && !h)
+  {
+     Gdip_GetImageDimensions(pBitmap, Width, Height)
+     CreateRectF(RectF, 0, 0, Width, Height)
+  } Else CreateRectF(RectF, X, Y, W, H)
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  r := DllCall("gdiplus\GdipBitmapApplyEffect"
+  E := DllCall("gdiplus\GdipBitmapApplyEffect"
       , Ptr, pBitmap
       , Ptr, pEffect
       , Ptr, &RectF
@@ -5368,7 +5597,7 @@ Gdip_ApplyEffect(pBitmap, pEffect) {
       , Ptr, 0
       , Ptr, 0)
 
-   Return r
+   Return E
 }
 
 COM_GUID4String(ByRef CLSID, String) {
@@ -5627,7 +5856,6 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
     }
     Return matrix
 }
-
 
 Gdip_GetImageFramesCount(pBitmap) {
 ; The function returns the number of frames or pages a given pBitmap has
