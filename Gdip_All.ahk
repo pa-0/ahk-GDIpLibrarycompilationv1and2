@@ -3741,7 +3741,7 @@ Gdip_GetPixelOffsetMode(pGraphics) {
 
 Gdip_GetRenderingOrigin(pGraphics, ByRef X, ByRef Y) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return := DllCall("gdiplus\GdipGetRenderingOrigin", Ptr, pGraphics, "int*", X, "int*", Y)
+   return DllCall("gdiplus\GdipGetRenderingOrigin", Ptr, pGraphics, "int*", X, "int*", Y)
 }
 
 Gdip_GetTextRenderingHint(pGraphics) {
