@@ -5,6 +5,8 @@
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
 ;
 ; Gdip standard library versions:
+; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.69 on 09/12/2019
 ; - v1.68 on 09/11/2019
 ; - v1.67 on 09/10/2019
 ; - v1.66 on 09/09/2019
@@ -18,18 +20,26 @@
 ; - v1.58 on 08/29/2019
 ; - v1.57 on 08/23/2019
 ; - v1.56 on 08/21/2019
+;
+; bug fixes and AHK v2 compatibility by mmikeww and others
 ; - v1.55 on 08/14/2019
 ; - v1.54 on 11/15/2017
 ; - v1.53 on 06/19/2017
 ; - v1.52 on 06/11/2017
 ; - v1.51 on 01/27/2017
 ; - v1.50 on 11/20/2016
+;
 ; - v1.47 on 02/20/2014 [?]
-; - v1.45 on 05/01/2013 modified by Rseding91 using fincs 64 bit compatible
-; - v1.45 on 07/09/2011 by tic (Tariq Porter)
-; - v1.01 on 31/05/2008 by tic (Tariq Porter)
+;
+; modified by Rseding91 using fincs 64 bit compatible
+; - v1.45 on 05/01/2013 
+;
+; by tic (Tariq Porter)
+; - v1.45 on 07/09/2011 
+; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 09/12/2019 = Added 6 new GDI+ functions [ Marius Șucan ]
 ; - 09/11/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/10/2019 = Added 17 new GDI+ functions [ Marius Șucan ]
 ; - 09/09/2019 = Added 14 new GDI+ functions [ Marius Șucan ]
@@ -134,15 +144,15 @@ UpdateLayeredWindow(hwnd, hdc, x:="", y:="", w:="", h:="", Alpha:=255) {
    }
 
    return DllCall("UpdateLayeredWindow"
-   , Ptr, hwnd
-   , Ptr, 0
-   , Ptr, ((x = "") && (y = "")) ? 0 : &pt
-   , "int64*", w|h<<32
-   , Ptr, hdc
-   , "int64*", 0
-   , "uint", 0
-   , "UInt*", Alpha<<16|1<<24
-   , "uint", 2)
+               , Ptr, hwnd
+               , Ptr, 0
+               , Ptr, ((x = "") && (y = "")) ? 0 : &pt
+               , "int64*", w|h<<32
+               , Ptr, hdc
+               , "int64*", 0
+               , "uint", 0
+               , "UInt*", Alpha<<16|1<<24
+               , "uint", 2)
 }
 
 ;#####################################################################################
@@ -590,10 +600,10 @@ GetIconDimensions(hIcon, ByRef Width, ByRef Height) {
       Height := NumGet(&BITMAP, 8, "Int")
    }
 
-   if !DllCall("gdi32\DeleteObject", Ptr, hbmMask)
+   if !DeleteObject(hbmMask)
       return -2
    
-   if !DllCall("gdi32\DeleteObject", Ptr, hbmColor)
+   if !DeleteObject(hbmColor)
       return -3
 
    return 0
@@ -761,7 +771,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.68
+   return 1.69
 }
 
 ;#####################################################################################
@@ -1335,14 +1345,16 @@ Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0) {
 ; Points          Points passed as x1,y1|x2,y2|x3,y3 (3 points: top left, top right, bottom left) describing the drawing of the bitmap
 ; sX, sY          x, y coordinates of the source upper-left corner
 ; sW, sH          width and height of the source rectangle
-; Matrix          a matrix used to alter image attributes when drawing
+; Matrix          a color matrix used to alter image attributes when drawing
 ; Unit            see Gdip_DrawImage()
 ; return          status enumeration. 0 = success
 ;
-; notes           if sx,sy,sw,sh are missed then the entire source bitmap will be used
-;                 Matrix can be omitted to just draw with no alteration to ARGB
-;                 Matrix may be passed as a digit from 0 - 1 to change just transparency
-;                 Matrix can be passed as a matrix with "|" delimiter
+; notes           If sx, sy, sw, sh are omitted the entire source bitmap will be used.
+;                 Matrix can be omitted to just draw with no alteration to ARGB.
+;                 Matrix may be passed as a digit from 0 - 1 to change just transparency.
+;                 Matrix can be passed as a matrix with "|" delimiter.
+;                 To generate a color matrix using user-friendly parameters,
+;                 use GenerateColorMatrix()
 
 Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -1400,7 +1412,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ; return          status enumeration. 0 = success
 ;
 ; notes           When sx,sy,sw,sh are omitted the entire source bitmap will be used
-;                 Gdip_DrawImage performs faster
+;                 Gdip_DrawImage performs faster.
 ;                 Matrix can be omitted to just draw with no alteration to ARGB
 ;                 Matrix may be passed as a digit from 0.0 - 1.0 to change just transparency
 ;                 Matrix can be passed as a matrix with "|" as delimiter. For example:
@@ -1413,9 +1425,12 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ;                 0.05  |0.05 |0.05 |0    |1
 ;                 )
 ;
-; notes           MatrixBright = 1.5|0|0|0|0|0|1.5|0|0|0|0|0|1.5|0|0|0|0|0|1|0|0.05|0.05|0.05|0|1
+; example color matrix:
+;                 MatrixBright = 1.5|0|0|0|0|0|1.5|0|0|0|0|0|1.5|0|0|0|0|0|1|0|0.05|0.05|0.05|0|1
 ;                 MatrixGreyScale = 0.299|0.299|0.299|0|0|0.587|0.587|0.587|0|0|0.114|0.114|0.114|0|0|0|0|0|1|0|0|0|0|0|1
 ;                 MatrixNegative = -1|0|0|0|0|0|-1|0|0|0|0|0|-1|0|0|0|0|0|1|0|1|1|1|0|1
+;                 To generate a color matrix using user-friendly parameters,
+;                 use GenerateColorMatrix()
 
 Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -1626,7 +1641,7 @@ Gdip_BlurBitmap(pBitmap, Blur) {
 ; sOutput          The name of the file that the bitmap will be saved to. Supported extensions are: .BMP,.DIB,.RLE,.JPG,.JPEG,.JPE,.JFIF,.GIF,.TIF,.TIFF,.PNG
 ; Quality          If saving as jpg (.JPG,.JPEG,.JPE,.JFIF) then quality can be 1-100 with default at maximum quality
 ;
-; retur n          If the function succeeds, the return value is zero, otherwise:
+; return           If the function succeeds, the return value is zero, otherwise:
 ;                 -1 = Extension supplied is not a supported file format
 ;                 -2 = Could not get a list of encoders on system
 ;                 -3 = Could not find matching encoder for specified file format
@@ -1903,7 +1918,7 @@ Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="") {
       DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", Stride, "int", 0x26200A, Ptr, Bits, PtrA, pBitmapOld)
       pBitmap := Gdip_CreateBitmap(Width, Height)
       _G := Gdip_GraphicsFromImage(pBitmap)
-      , Gdip_DrawImage(_G, pBitmapOld, 0, 0, Width, Height, 0, 0, Width, Height)
+      Gdip_DrawImage(_G, pBitmapOld, 0, 0, Width, Height, 0, 0, Width, Height)
       SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
       Gdip_DeleteGraphics(_G), Gdip_DisposeImage(pBitmapOld)
       DestroyIcon(hIcon)
@@ -2000,7 +2015,7 @@ Gdip_SetBitmapToClipboard(pBitmap) {
    r2 := DllCall("EmptyClipboard")
    If !r2
    {
-      DllCall("DeleteObject", Ptr, hBitmap)
+      DeleteObject(hBitmap)
       DllCall("CloseClipboard")
       Return -2
    }
@@ -2011,7 +2026,7 @@ Gdip_SetBitmapToClipboard(pBitmap) {
    DllCall("RtlMoveMemory", Ptr, pdib, Ptr, &oi+off2, Ptr, 40)
    DllCall("RtlMoveMemory", Ptr, pdib+40, Ptr, NumGet(oi, off2 - (A_PtrSize ? A_PtrSize : 4), Ptr), Ptr, NumGet(oi, off1, "UInt"))
    DllCall("GlobalUnlock", Ptr, hdib)
-   DllCall("DeleteObject", Ptr, hBitmap)
+   DeleteObject(hBitmap)
    r3 := DllCall("SetClipboardData", "uint", 8, Ptr, hdib)
    DllCall("CloseClipboard")
    E := r3 ? 0 : -4    ; 0 - success
@@ -2956,6 +2971,12 @@ Gdip_DeleteMatrix(Matrix) {
 
 ;#####################################################################################
 ; Text functions
+; Easy to use functions:
+; Gdip_DrawOrientedString() - allows to draw strings or string contours/outlines, 
+; or both, rotated at any angle. On success, the boundaries are returned.
+; Gdip_DrawStringAlongPolygon() - allows you to draw a string along a pPath
+; or multiple given coordinates.
+; Gdip_TextToGraphics() - allows you to draw strings or measure their boundaries.
 ;#####################################################################################
 
 Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, Height, Angle:=0, pBrush:=0, pPen:=0, Align:=0, ScaleX:=1) {
@@ -3198,10 +3219,124 @@ Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF) {
    return &RC ? NumGet(RC, 0, "float") "|" NumGet(RC, 4, "float") "|" NumGet(RC, 8, "float") "|" NumGet(RC, 12, "float") "|" Chars "|" Lines : 0
 }
 
-Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=0, hMatrix:=1) {
+
+Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, hMatrix:=0) {
+; pGraphics - a pointer to a pGraphics object where to draw the text
+; FontSize  - in em, in world units
+; Remarks: a high value might be required; over 60, 90... to see the text.
+; pBrush - a pointer to a pBrush object to fill the text with
+; DriverPoints - a string with X, Y coordinates where the letters
+;                of the string will be drawn. Each X/Y pair corresponds to a letter.
+;                "x1,y1|x2,y2|x3,y3" [...and so on]
+; pPath        - A pointer to a pPath object;
+;                It will be used only if no DriverPoints are given.
+; If both DriverPoints and pPath are omitted, the function will return -4.
+; Intermmediate points will be generated if there are more glyphs / letters than defined points.
+;
+; minDist - the minimum distance between letters; by default it is FontSize/4
+;
+; Style options:
+; Regular = 0
+; Bold = 1
+; Italic = 2
+; BoldItalic = 3
+; Underline = 4
+; Strikeout = 8
+
+   If (pPath && !DriverPoints)
+      DriverPoints := Gdip_GetPathPoints(pPath)
+
+   If (!pPath && !DriverPoints)
+      Return -4
+
+   hFontFamily := Gdip_FontFamilyCreate(FontName)
+   If !hFontFamily
+      hFontFamily := Gdip_FontFamilyCreateGeneric(1)
+   If !hFontFamily
+      Return -1
+
+   hFont := Gdip_FontCreate(hFontFamily, FontSize, Style)
+   If !hFont
+   {
+      Gdip_DeleteFontFamily(hFontFamily)
+      Return -2
+   }
+
+   Points := StrSplit(DriverPoints, "|")
+   PointsCount := Points.Length()
+   If (PointsCount<2)
+      Return -3
+
+   If (!minDist || minDist<1)
+      minDist := FontSize//4 + 1
+
+   txtLen := StrLen(String)
+   If (PointsCount<txtLen)
+   {
+      loopsMax := txtLen * 3
+      newDriverPoints := DriverPoints
+      Loop %loopsMax%
+      { 
+         newDriverPoints := GenerateIntermediatePoints(newDriverPoints, minDist, totalResult)
+         If (totalResult>=txtLen)
+            Break
+      }
+      String := SubStr(String, 1, totalResult)
+   } Else newDriverPoints := DriverPoints
+   E := Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, newDriverPoints, 1, hMatrix)
+   Gdip_DeleteFont(hFont)
+   Gdip_DeleteFontFamily(hFontFamily)
+   return E   
+}
+
+GenerateIntermediatePoints(PointsList, minDist, ByRef resultPointsCount) {
+; function used by Gdip_DrawFreeFormString()
+   AllPoints := StrSplit(PointsList, "|")
+   PointsCount := AllPoints.Length()
+   thizIndex := 0.5
+   resultPointsCount := 0
+   loopsMax := PointsCount*2
+   Loop %loopsMax%
+   {
+        thizIndex += 0.5
+        thisIndex := InStr(thizIndex, ".5") ? thizIndex : Trim(Round(thizIndex))
+        thisPoint := AllPoints[thisIndex]
+        theseCoords := StrSplit(thisPoint, ",")
+        If (theseCoords[1]!="" && theseCoords[2]!="")
+        {
+           resultPointsCount++
+           newPointsList .= theseCoords[1] "," theseCoords[2] "|"
+        } Else
+        {
+           aIndex := Trim(Round(thizIndex - 0.5))
+           bIndex := Trim(Round(thizIndex + 0.5))
+           theseAcoords := StrSplit(AllPoints[aIndex], ",")
+           theseBcoords := StrSplit(AllPoints[bIndex], ",")
+           If (theseAcoords[1]!="" && theseAcoords[2]!="")
+           && (theseBcoords[1]!="" && theseBcoords[2]!="")
+           {
+               newPosX := (theseAcoords[1] + theseBcoords[1])//2
+               newPosY := (theseAcoords[2] + theseBcoords[2])//2
+               distPosX := newPosX - theseAcoords[1]
+               distPosY := newPosY - theseAcoords[2]
+               If (distPosX>minDist || distPosY>minDist)
+               {
+                  newPointsList .= newPosX "," newPosY "|"
+                  resultPointsCount++
+               }
+           }
+        }
+   }
+   If !newPointsList
+      Return PointsList
+   Return Trim(newPointsList, "|")
+}
+
+Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=1, hMatrix:=0) {
 ; Parameters:
 ; pBrush       - pointer to a pBrush object used to draw the text into the given pGraphics
 ; hFont        - pointer for a Font object used to draw the given text that determines font, size and style 
+; hMatrix      - pointer to a transformation matrix object that specifies the transformation matrix to apply to each value in the DriverPoints
 ; DriverPoints - a list of points coordinates that determines where the glyphs [letters] will be drawn
 ;                "x1,y1|x2,y2|x3,y3" [... and so on]
 ; Flags options:
@@ -3212,14 +3347,12 @@ Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=0, 
 ;     glyph positions are obtained from an array of coordinates ($aPoints)
 ; 8 - Less memory should be used for cache of antialiased glyphs. This also produces lower quality. If this
 ;     flag is not set, more memory is used, but the quality is higher
-; hMatrix      - pointer to a Matrix object that specifies the transformation matrix to apply to each value in the text array
 
-   txtLen := StrLen(String)
+   txtLen := -1 ; StrLen(String)
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    iCount := CreatePointsF(PointsF, DriverPoints)
-   return DllCall("gdiplus\GdipDrawDriverString", Ptr, pGraphics, "WStr", String, "int", txtLen, Ptr, hFont, Ptr, pBrush, Ptr, &PointsF, "int", Flags, Ptr, hMatrix)
+   return DllCall("gdiplus\GdipDrawDriverString", Ptr, pGraphics, "UPtr", &String, "int", txtLen, Ptr, hFont, Ptr, pBrush, Ptr, &PointsF, "int", Flags, Ptr, hMatrix)
 }
-
 
 Gdip_StringFormatCreate(FormatFlags:=0, LangID:=0) {
 ; Format options [StringFormatFlags]
@@ -3548,6 +3681,49 @@ Gdip_CreateAffineMatrix(m11, m12, m21, m22, x, y) {
 Gdip_CreateMatrix() {
    DllCall("gdiplus\GdipCreateMatrix", A_PtrSize ? "UPtr*" : "UInt*", Matrix)
    return Matrix
+}
+
+Gdip_InvertMatrix(hMatrix) {
+; Replaces the elements of a matrix with the elements of its inverse
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipInvertMatrix", Ptr, hMatrix)
+}
+
+Gdip_IsMatrixEqual(hMatrixA, hMatrixB) {
+; compares two matrices; if identical, the function returns 1
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsMatrixEqual", Ptr, hMatrixA, Ptr, hMatrixB, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_IsMatrixIdentity(hMatrix) {
+; The identity matrix represents a transformation with no scaling, translation, rotation and conversion, and
+; represents a transformation that does nothing.
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsMatrixIdentity", Ptr, hMatrix, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_IsMatrixInvertible(hMatrix) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipIsMatrixInvertible", Ptr, hMatrix, "int*", result)
+   If E
+      Return -1
+   Return result
+}
+
+Gdip_MultiplyMatrix(hMatrixA, hMatrixB, matrixOrder) {
+; Updates hMatrixA with the product of itself and hMatrixB
+; matrixOrder - Order of matrices multiplication:
+; 0 - The second matrix is on the left
+; 1 - The second matrix is on the right
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipMultiplyMatrix", Ptr, hMatrixA, Ptr, hMatrixB, "int", matrixOrder)
 }
 
 Gdip_CloneMatrix(pMatrix) {
@@ -3964,7 +4140,7 @@ Gdip_GetPixelOffsetMode(pGraphics) {
 
 Gdip_GetRenderingOrigin(pGraphics, ByRef X, ByRef Y) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipGetRenderingOrigin", Ptr, pGraphics, "int*", X, "int*", Y)
+   return DllCall("gdiplus\GdipGetRenderingOrigin", Ptr, pGraphics, "uint*", X, "uint*", Y)
 }
 
 Gdip_GetTextRenderingHint(pGraphics) {
@@ -4618,11 +4794,13 @@ MDMF_Enum(HMON := "") {
    Static CbFunc := (A_AhkVersion < "2") ? Func("RegisterCallback") : Func("CallbackCreate")
    Static EnumProc := %CbFunc%("MDMF_EnumProc") 
    Static Monitors := {}
-   If (HMON = "") ; new enumeration
+   If (HMON="") ; new enumeration
       Monitors := {}
-   If (Monitors.MaxIndex() = "") ; enumerate
+   If (Monitors.MaxIndex()="") ; enumerate
+   {
       If !DllCall("User32.dll\EnumDisplayMonitors", "Ptr", 0, "Ptr", 0, "Ptr", EnumProc, "Ptr", &Monitors, "UInt")
          Return False
+   }
    Return (HMON = "") ? Monitors : Monitors.HasKey(HMON) ? Monitors[HMON] : False
 }
 
@@ -5440,8 +5618,6 @@ Gdip_GetPathGradientSurroundColors(pPathGradientBrush) {
    Return Trim(printList, ",")
 }
 
-
-
 ;######################################################################################################################################
 ; Function written by swagfag in July 2019
 ; source https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
@@ -5506,7 +5682,7 @@ Gdip_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS)
 ; otherwise a handle to the hBitmap
 
 ; Function written by Marius Șucan.
-; many thanks to Drugwash for the help offered.
+; Many thanks to Drugwash for the help offered.
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    hBitmap := DllCall("CreateDIBitmap"
@@ -5525,10 +5701,10 @@ Gdip_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
 ; into the pBits pointer.
 ; Return: if the function fails, the return value is zero.
 ; It can also return ERROR_INVALID_PARAMETER
-; Function written by Marius Șucan
+; Function written by Marius Șucan.
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   r := DllCall("GetDIBits"
+   E := DllCall("GetDIBits"
             , Ptr, hdc
             , Ptr, hBitmap
             , "uint", start
@@ -5537,11 +5713,55 @@ Gdip_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
             , Ptr, BITMAPINFO
             , "uint", DIB_COLORS, Ptr)    ; PAL=1 ; RGB=2
 
-   Return r
+   Return E
 }
 
+;#####################################################################################
+
+; Function        Gdip_DrawImageFX
+; Description     This function draws a bitmap into the pGraphics that can use an Effect.
+;
+; pGraphics       Pointer to the Graphics of a bitmap
+; pBitmap         Pointer to a bitmap to be drawn
+; sX, sY          x, y coordinates of the source upper-left corner
+; sW, sH          width and height of the source image
+; Matrix          a color matrix used to alter image attributes when drawing
+; pEffect         a pointer to an Effect object to apply when drawing the image
+; hMatrix         a pointer to a transformation matrix
+; Unit            Unit of measurement:
+;                 0 - World coordinates, a nonphysical unit
+;                 1 - Display units
+;                 2 - A unit is 1 pixel
+;                 3 - A unit is 1 point or 1/72 inch
+;                 4 - A unit is 1 inch
+;                 5 - A unit is 1/300 inch
+;                 6 - A unit is 1 millimeter
+;
+; return          status enumeration. 0 = success
+;
+; notes on the color matrix:
+;                 Matrix can be omitted to just draw with no alteration to ARGB
+;                 Matrix may be passed as a digit from 0.0 - 1.0 to change just transparency
+;                 Matrix can be passed as a matrix with "|" as delimiter. For example:
+;                 MatrixBright=
+;                 (
+;                 1.5   |0    |0    |0    |0
+;                 0     |1.5  |0    |0    |0
+;                 0     |0    |1.5  |0    |0
+;                 0     |0    |0    |1    |0
+;                 0.05  |0.05 |0.05 |0    |1
+;                 )
+;
+; example color matrix:
+;                 MatrixBright = 1.5|0|0|0|0|0|1.5|0|0|0|0|0|1.5|0|0|0|0|0|1|0|0.05|0.05|0.05|0|1
+;                 MatrixGreyScale = 0.299|0.299|0.299|0|0|0.587|0.587|0.587|0|0|0.114|0.114|0.114|0|0|0|0|0|1|0|0|0|0|0|1
+;                 MatrixNegative = -1|0|0|0|0|0|-1|0|0|0|0|0|-1|0|0|0|0|0|1|0|1|1|1|0|1
+;                 To generate a color matrix using user-friendly parameters,
+;                 use GenerateColorMatrix()
+; Function written by Marius Șucan.
+
+
 Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, hMatrix:=0) {
-; written by Marius Șucan
 
     If !IsNumber(Matrix)
        ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
@@ -5619,9 +5839,11 @@ Gdip_CreateEffect(whichFX, paramA, paramB, paramC:=0) {
 ; 9 - ! ColorBalance
 ; 10 - ! RedEyeCorrection
 ; 11 - ! ColorCurve
-; effects marked with "!" are not yet implemented
-; function written by Marius Șucan
-; many thanks to Drugwash for the help provided
+; Effects marked with "!" are not yet implemented.
+; Through ParamA, ParamB and ParamC, the effects can be controlled.
+;
+; Function written by Marius Șucan. Many thanks to Drugwash for the help provided,
+
 
     Static gdipImgFX := {1:"633C80A4-1843-482b-9EF2-BE2834C5FDD4", 2:"63CBF3EE-C526-402c-8F71-62C540BF5142", 3:"718F2615-7933-40e3-A511-5F68FE14DD74", 4:"A7CE72A9-0F7F-40d7-B3CC-D0C02D5C3212", 5:"D3A1DBE1-8EC4-4c17-9F4C-EA97AD1C343D", 6:"8B2DD6C3-EB07-4d87-A5F0-7108E26A9C5F", 7:"99C354EC-2A31-4f3a-8C34-17A803B33A25", 8:"1077AF00-2848-4441-9489-44AD4C2D7A2C", 9:"537E597D-251E-48da-9664-29CA496B70F8", 10:"74D29D05-69A4-4266-9549-3CC52836B632", 11:"DD6A0022-58E4-4a67-9D9B-D48EB881A53D"}
     Ptr := A_PtrSize=8 ? "UPtr" : "UInt"
@@ -5697,7 +5919,6 @@ Gdip_DisposeEffect(pEffect) {
    r := DllCall("gdiplus\GdipDeleteEffect", Ptr, pEffect)
    Return r
 }
-
 
 GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0,chnBdec:=0) {
 ; parameters ranges / intervals:
@@ -5884,3 +6105,4 @@ CreatePointsF(ByRef PointsF, inPoints) {
    }
    Return PointsCount
 }
+

@@ -3,9 +3,10 @@ This is a compilation of user contributed functions for the GDI+ library wrapper
 
 This repository is a fork of https://github.com/mmikeww/AHKv2-Gdip/ . Some of the newly added functions are possibly not AHK v2 compatible.
 
-The Tutorials/Examples are left untouched. They are the same as in the repository of @mmikeww. I added several new examples that showcase the newly supported GDI+ APIs. These are example scripts initially provided by those that coded the new functions.
-
 This Gdip_all.ahk file should be compatible with projects already relying on the original edition.
+
+The Tutorials/Examples are left untouched. They are the same as in the repository of @mmikeww in Examples folder.
+I re-added the original examples in Examples-ahk-v1-1 folder and several new examples that showcase the newly supported GDI+ APIs. These are example scripts initially provided by those that coded the new functions.
 
 # History
 - @tic created the original [Gdip.ahk](https://github.com/tariqporter/Gdip/) library
@@ -17,7 +18,7 @@ This Gdip_all.ahk file should be compatible with projects already relying on the
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## 17 MODIFIED FUNCTIONS:
+## 18 MODIFIED FUNCTIONS:
 - Gdip_CreateBitmapFromClipboard()
 - Gdip_SetBitmapToClipboard()
 - UpdateLayeredWindow()
@@ -35,9 +36,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_TextToGraphics()
 - Gdip_GetClipRegion()
 - Gdip_CreateTextureBrush()
+- Gdip_TextToGraphics()
 
-
-## 239 NEW FUNCTIONS:
+## 245 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -56,7 +57,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - by iPhilip:
   - Gdip_SetPenDashStyle()
 
-- By RazorHalo:
+- 9 by RazorHalo:
   - Gdip_RotatePathAtCenter()
   - Gdip_ResetMatrix()
   - Gdip_RotateMatrix()
@@ -67,7 +68,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetMatrixElements()
   - Gdip_IsVisiblePathPoint()
 
-- By "Learning one":
+- 14 by "Learning one":
   - Gdip_AddPathBeziers()
   - Gdip_AddPathBezier()
   - Gdip_AddPathLines()
@@ -83,7 +84,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_CombineRegionRegion()
   - Gdip_CreateRegionPath()
 
-- By "Just Me":
+- 23 by "Just Me":
   - Gdip_PathGradientCreateFromPath()
   - Gdip_PathGradientSetCenterPoint()
   - Gdip_PathGradientSetCenterColor()
@@ -101,16 +102,21 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_GetPropertyTagType()
   - Gdip_GetPropertyItemValue()
   - Multiple Display Monitors Functions by "Just me":
-    - GetMonitorCount
-    - GetMonitorInfo
-    - GetPrimaryMonitor
-    - MDMF_Enum
-    - MDMF_FromHWND
-    - MDMF_FromPoint
-    - MDMF_FromRect
-    - MDMF_GetInfo
+    - GetMonitorCount()
+    - GetMonitorInfo()
+    - GetPrimaryMonitor()
+    - MDMF_FromHWND()
+    - MDMF_FromPoint()
+    - MDMF_FromRect()
+    - MDMF_GetInfo()
 
-- By Marius Șucan [robodesign.ro]:
+- 183 by Marius Șucan [robodesign.ro]:
+  - Gdip_DrawStringAlongPolygon()
+  - Gdip_InvertMatrix()
+  - Gdip_IsMatrixEqual()
+  - Gdip_IsMatrixIdentity()
+  - Gdip_IsMatrixInvertible()
+  - Gdip_MultiplyMatrix()
   - Gdip_GetPenDashStyle()
   - Gdip_SetPenEndCap()
   - Gdip_GetPenEndCap()
@@ -291,7 +297,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 
 (*) mainly written by swagfag, but at my request and modified it further
 
-- By nnnik [extracted from his GDI+ class]:
+- 12 by nnnik [extracted from his GDI+ class]:
   - Gdip_DrawBeziers()
   - Gdip_SetLinearGrBrushColors()
   - Gdip_GetLinearGrBrushColors()
@@ -312,4 +318,4 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
 
-## Last updated on: mardi, 10 septembre 2019, v1.67
+## Last updated on: jeudi, 12 septembre 2019, v1.69
