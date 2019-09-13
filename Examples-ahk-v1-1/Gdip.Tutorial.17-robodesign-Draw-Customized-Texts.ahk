@@ -53,12 +53,13 @@ Gdip_FillRectangle(G, pBrushBgr, 1, 1, 990, 990)
 ; Create a slightly transparent (66) blue brush (ARGB = Transparency, red, green, blue) to draw a rectangle
 pBrush := Gdip_BrushCreateSolid(0x660000ff)
 
-; Draws a text along a polygonal line defined by PolygonLines
-PolygonLines := "50,190|400,390|890,190|800,990"
-Gdip_DrawStringAlongPolygon(G, "Oh my God, example text!", "Arial", 100, 1, pBrush, PolygonLines)
+; Draws a text along a polygonal line defined by PolygonalLine
+PolygonalLine := "50,190|400,390|890,190|800,990"
+Gdip_DrawStringAlongPolygon(G, "Oh my God, example text!", "Arial", 100, 1, pBrush, PolygonalLine)
 
 ; Now draw a text contour rotated at 45 degrees
 pPen := Gdip_CreatePen("0xCC990011", 5)
+Gdip_SetPenDashStyle(pPen, 2)
 Gdip_DrawOrientedString(G, "Contour text example", "Verdana", 90, 1, 20, 500, 800, 800, 45, pBrushBgr, pPen, 1)
 
 ; Delete the brush as it is no longer needed and wastes memory

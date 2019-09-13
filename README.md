@@ -18,7 +18,7 @@ I re-added the original examples in Examples-ahk-v1-1 folder and several new exa
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## 18 MODIFIED FUNCTIONS:
+## 19 MODIFIED FUNCTIONS:
 - Gdip_CreateBitmapFromClipboard()
 - Gdip_SetBitmapToClipboard()
 - UpdateLayeredWindow()
@@ -28,6 +28,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_BitmapFromHWND()
 - Gdip_BitmapFromBRA()
 - Gdip_DrawLines()
+- Gdip_DrawImage()
 - Gdip_FillPolygon()
 - Gdip_DrawImagePointsRect()
 - Gdip_SetImageAttributesColorMatrix()
@@ -38,7 +39,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - Gdip_CreateTextureBrush()
 - Gdip_TextToGraphics()
 
-## 245 NEW FUNCTIONS:
+## 255 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -110,7 +111,17 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_FromRect()
     - MDMF_GetInfo()
 
-- 183 by Marius Șucan [robodesign.ro]:
+- 193 by Marius Șucan [robodesign.ro]:
+  - Gdip_CreateImageAttributes()
+  - Gdip_CloneImageAttributes()
+  - Gdip_ResetImageAttributes()
+  - Gdip_SetImageAttributesThreshold()
+  - Gdip_SetImageAttributesResetMatrix()
+  - Gdip_SetImageAttributesGamma()
+  - Gdip_SetImageAttributesToggle()
+  - Gdip_SetImageAttributesOutputChannel()
+  - Gdip_SetImageAttributesColorKeys()
+  - Gdip_SetImageAttributesWrapMode()
   - Gdip_DrawStringAlongPolygon()
   - Gdip_InvertMatrix()
   - Gdip_IsMatrixEqual()
@@ -318,4 +329,5 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
 
-## Last updated on: jeudi, 12 septembre 2019, v1.69
+## Last updated on: vendredi 13 septembre 2019, v1.70
+

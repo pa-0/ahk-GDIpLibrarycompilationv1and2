@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.70 on 09/13/2019
 ; - v1.69 on 09/12/2019
 ; - v1.68 on 09/11/2019
 ; - v1.67 on 09/10/2019
@@ -39,6 +40,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 09/13/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/12/2019 = Added 6 new GDI+ functions [ Marius Șucan ]
 ; - 09/11/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/10/2019 = Added 17 new GDI+ functions [ Marius Șucan ]
@@ -771,7 +773,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.69
+   return 1.70
 }
 
 ;#####################################################################################
@@ -874,7 +876,6 @@ Gdip_BitmapFromBase64(ByRef Base64) {
 
 Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipDrawRectangle", Ptr, pGraphics, Ptr, pPen, "float", x, "float", y, "float", w, "float", h)
 }
 
@@ -1356,12 +1357,15 @@ Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0) {
 ;                 To generate a color matrix using user-friendly parameters,
 ;                 use GenerateColorMatrix()
 
-Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2) {
+Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   if !IsNumber(Matrix)
-      ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
-   else if (Matrix != 1)
-      ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+   If !ImageAttr
+   {
+      if !IsNumber(Matrix)
+         ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
+      else if (Matrix != 1)
+         ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+   } Else usrImageAttr := 1
 
    if (sx = "" && sy = "" && sw = "" && sh = "")
    {
@@ -1383,8 +1387,10 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
             , Ptr, ImageAttr
             , Ptr, 0
             , Ptr, 0)
-   if ImageAttr
+
+   if (ImageAttr && usrImageAttr!=1)
       Gdip_DisposeImageAttributes(ImageAttr)
+
    return _E
 }
 
@@ -1432,13 +1438,15 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 ;                 To generate a color matrix using user-friendly parameters,
 ;                 use GenerateColorMatrix()
 
-Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2) {
+Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
-   if !IsNumber(Matrix)
-      ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
-   else if (Matrix != 1)
-      ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+   If !ImageAttr
+   {
+      if !IsNumber(Matrix)
+         ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
+      else if (Matrix != 1)
+         ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+   } Else usrImageAttr := 1
 
    if (sx = "" && sy = "" && sw = "" && sh = "")
    {
@@ -1471,41 +1479,196 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
             , Ptr, ImageAttr
             , Ptr, 0
             , Ptr, 0)
-   if ImageAttr
+
+   if (ImageAttr && usrImageAttr!=1)
       Gdip_DisposeImageAttributes(ImageAttr)
+
    return _E
 }
 
 ;#####################################################################################
 
 ; Function        Gdip_SetImageAttributesColorMatrix
-; Description     This function creates an image matrix ready for drawing
+; Description     This function creates an image color matrix ready for drawing if no ImageAttr is given.
+;                 It can set or clear the color and/or grayscale-adjustment matrices for a specified ImageAttr object.
 ;
-; Matrix          a matrix used to alter image attributes when drawing
-;                 passed with "|" as delimeter
+; clrMatrix       A color-adjustment matrix used to alter image attributes when drawing
+;                 passed with "|" as delimeter.
+; grayMatrix      A grayscale-adjustment matrix used to alter image attributes when drawing
+;                 passed with "|" as delimeter. This applies only when ColorMatrixFlag=2.
 ;
-; return          returns an image matrix on sucess or 0 if it fails
+; ColorAdjustType The category for which the color and grayscale-adjustment matrices are set or cleared.
+;                 0 - adjustments apply to all categories that do not have adjustment settings of their own
+;                 1 - adjustments apply to bitmapped images
+;                 2 - adjustments apply to brush operations in metafiles
+;                 3 - adjustments apply to pen operations in metafiles
+;                 4 - adjustments apply to text drawn in metafiles
+;
+; fEnable         If True, the specified matrices (color, grayscale or both) adjustments for the specified
+;                 category are applied; otherwise the category is cleared
+;
+; ColorMatrixFlag Type of image and color that will be affected by the adjustment matrices:
+;                 0 - All color values (including grays) are adjusted by the same color-adjustment matrix.
+;                 1 - Colors are adjusted but gray shades are not adjusted.
+;                     A gray shade is any color that has the same value for its red, green, and blue components.
+;                 2 - Colors are adjusted by one matrix and gray shades are adjusted by another matrix.
+
+; ImageAttr       A pointer to an ImageAttributes object.
+;                 If this parameter is omitted, a new one is created.
+
+; return          It return 0 on success, if an ImageAttr object was given,
+;                 otherwise, it returns the handle of a new ImageAttr object [if succesful].
 ;
 ; notes           MatrixBright = 1.5|0|0|0|0|0|1.5|0|0|0|0|0|1.5|0|0|0|0|0|1|0|0.05|0.05|0.05|0|1
 ;                 MatrixGreyScale = 0.299|0.299|0.299|0|0|0.587|0.587|0.587|0|0|0.114|0.114|0.114|0|0|0|0|0|1|0|0|0|0|0|1
 ;                 MatrixNegative = -1|0|0|0|0|0|-1|0|0|0|0|0|-1|0|0|0|0|0|1|0|1|1|1|0|1
+;                 To generate a color matrix using user-friendly parameters,
+;                 use GenerateColorMatrix()
+; additional remarks:
+; In my tests, it seems that the grayscale matrix is not functioning properly.
+; Grayscale images are rendered invisible [with zero opacity] for some reason...
+; TO DO: fix this?
 
-Gdip_SetImageAttributesColorMatrix(Matrix) {
+Gdip_SetImageAttributesColorMatrix(clrMatrix, ImageAttr:=0, grayMatrix:=0, ColorAdjustType:=1, fEnable:=1, ColorMatrixFlag:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   If StrLen(matrix)<5
+   If (StrLen(clrMatrix)<5 && ImageAttr)
+   {
+;      MsgBox, % ImageAttr "<>" clrMatrix
+      Return -1
+   }
+
+   If StrLen(clrMatrix)<5
       Return
 
    VarSetCapacity(ColourMatrix, 100, 0)
-   Matrix := RegExReplace(RegExReplace(Matrix, "^[^\d-\.]+([\d\.])", "$1", , 1), "[^\d-\.]+", "|")
+   Matrix := RegExReplace(RegExReplace(clrMatrix, "^[^\d-\.]+([\d\.])", "$1", , 1), "[^\d-\.]+", "|")
    Matrix := StrSplit(Matrix, "|")
    Loop 25
    {
       M := (Matrix[A_Index] != "") ? Matrix[A_Index] : Mod(A_Index-1, 6) ? 0 : 1
       NumPut(M, ColourMatrix, (A_Index-1)*4, "float")
    }
+
+   Matrix := ""
+   Matrix := RegExReplace(RegExReplace(grayMatrix, "^[^\d-\.]+([\d\.])", "$1", , 1), "[^\d-\.]+", "|")
+   Matrix := StrSplit(Matrix, "|")
+   If (StrLen(Matrix)>2 && ColorMatrixFlag=2)
+   {
+      VarSetCapacity(GrayscaleMatrix, 100, 0)
+      Loop 25
+      {
+         M := (Matrix[A_Index] != "") ? Matrix[A_Index] : Mod(A_Index-1, 6) ? 0 : 1
+         NumPut(M, GrayscaleMatrix, (A_Index-1)*4, "float")
+      }
+   }
+
+   If !ImageAttr
+   {
+      created := 1
+      ImageAttr := Gdip_CreateImageAttributes()
+   }
+
+   E := DllCall("gdiplus\GdipSetImageAttributesColorMatrix"
+         , Ptr, ImageAttr
+         , "int", ColorAdjustType
+         , "int", fEnable
+         , Ptr, &ColourMatrix
+         , Ptr, &GrayscaleMatrix
+         , "int", ColorMatrixFlag)
+
+   E := created=1 ? ImageAttr : E
+   return E
+}
+
+Gdip_CreateImageAttributes() {
    DllCall("gdiplus\GdipCreateImageAttributes", A_PtrSize ? "UPtr*" : "uint*", ImageAttr)
-   DllCall("gdiplus\GdipSetImageAttributesColorMatrix", Ptr, ImageAttr, "int", 1, "int", 1, Ptr, &ColourMatrix, Ptr, 0, "int", 0)
    return ImageAttr
+}
+
+Gdip_CloneImageAttributes(ImageAttr) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipCloneImageAttributes", Ptr, ImageAttr, "UPtr*", clonedImageAttr)
+   return clonedImageAttr
+}
+
+Gdip_SetImageAttributesThreshold(ImageAttr, Threshold, ColorAdjustType:=1, fEnable:=1) {
+; Sets or clears the threshold (transparency range) for a specified category by ColorAdjustType
+; The threshold is a value from 0 through 1 that specifies a cutoff point for each color component. For example,
+; suppose the threshold is set to 0.7, and suppose you are rendering a color whose red, green, and blue
+; components are 230, 50, and 220. The red component, 230, is greater than 0.7ª255, so the red component will
+; be changed to 255 (full intensity). The green component, 50, is less than 0.7ª255, so the green component will
+; be changed to 0. The blue component, 220, is greater than 0.7ª255, so the blue component will be changed to 255.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetImageAttributesThreshold", Ptr, ImageAttr, "int", ColorAdjustType, "int", fEnable, "float", Threshold)
+}
+
+Gdip_SetImageAttributesResetMatrix(ImageAttr, ColorAdjustType) {
+; Sets the color-adjustment matrix of a specified category to the identity matrix.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetImageAttributesToIdentity", Ptr, ImageAttr, "int", ColorAdjustType)
+}
+
+Gdip_SetImageAttributesGamma(ImageAttr, Gamma, ColorAdjustType:=1, fEnable:=1) {
+; Gamma from 0.1 to 5.0
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetImageAttributesGamma", Ptr, ImageAttr, "int", ColorAdjustType, "int", fEnable, "float", Gamma)
+}
+
+Gdip_SetImageAttributesToggle(ImageAttr, ColorAdjustType, fEnable) {
+; Turns on or off color adjustment for a specified category defined by ColorAdjustType
+; fEnable - 0 or 1
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetImageAttributesNoOp", Ptr, ImageAttr, "int", ColorAdjustType, "int", fEnable)
+}
+
+Gdip_SetImageAttributesOutputChannel(ImageAttr, ColorChannelFlags, ColorAdjustType:=1, fEnable:=1) {
+; ColorChannelFlags - The output channel, can be any combination:
+; 0 - Cyan color channel
+; 1 - Magenta color channel
+; 2 - Yellow color channel
+; 3 - Black color channel
+; 4 - The previous selected channel
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipSetImageAttributesOutputChannel", Ptr, ImageAttr, "int", ColorAdjustType, "int", fEnable, "int", ColorChannelFlags)
+}
+
+Gdip_SetImageAttributesColorKeys(ImageAttr, ARGBLow, ARGBHigh, ColorAdjustType:=1, fEnable:=1) {
+; initial tests of this function lead to a crash of the application ...
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetImageAttributesColorKeys", Ptr, ImageAttr, "int", ColorAdjustType, "int", fEnable, "uint", ARGBLow, "uint", ARGBHigh)
+}
+
+Gdip_SetImageAttributesWrapMode(ImageAttr, WrapMode, ARGB) {
+; ImageAttr - Pointer to an ImageAttribute object
+; WrapMode  - Specifies how repeated copies of an image are used to tile an area:
+;             0 - Tiling without flipping
+;             1 - Tiles are flipped horizontally as you move from one tile to the next in a row
+;             2 - Tiles are flipped vertically as you move from one tile to the next in a column
+;             3 - Tiles are flipped horizontally as you move along a row and flipped vertically as you move along a column
+;             4 - No tiling takes place
+; ARGB      - Alpha, Red, Green and Blue components of the color of pixels outside of a rendered image.
+;             This color is visible if the wrap mode is set to 4 and the source rectangle of the image is greater than the
+;             image itself.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("gdiplus\GdipSetImageAttributesWrapMode", Ptr, ImageAttr, "int", WrapMode, "uint", ARGB, "int", 0)
+}
+
+Gdip_ResetImageAttributes(ImageAttr, ColorAdjustType) {
+; Clears all color and grayscale-adjustment settings for a specified category defined by ColorAdjustType.
+;
+; ImageAttr - a pointer to an ImageAttributes object.
+; ColorAdjustType - The category for which color adjustment is reset:
+; see Gdip_SetImageAttributesColorMatrix() for details.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   DllCall("gdiplus\GdipResetImageAttributes", Ptr, ImageAttr, "int", ColorAdjustType)
 }
 
 ;#####################################################################################
@@ -1537,7 +1700,6 @@ Gdip_GraphicsFromImage(pBitmap) {
 
 Gdip_GraphicsFromHDC(hdc) {
    pGraphics := ""
-
    DllCall("gdiplus\GdipCreateFromHDC", A_PtrSize ? "UPtr" : "UInt", hdc, A_PtrSize ? "UPtr*" : "UInt*", pGraphics)
    return pGraphics
 }
@@ -2648,9 +2810,9 @@ Gdip_GetHatchStyle(pHatchBrush) {
 ;                       Matrix can be omitted to just draw with no alteration to the ARGB channels
 ;                       Matrix may be passed as a digit from 0.0 - 1.0 to change just transparency
 ;                       Matrix can be passed as a matrix with "|" as delimiter. 
-; Function modified by Marius Șucan, to allow color matrix.
+; Function modified by Marius Șucan, to allow use of color matrix and ImageAttributes object.
 
-Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:="", ScaleX:="", ScaleY:="", angle:=0) {
+Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:="", ScaleX:="", ScaleY:="", Angle:=0, ImageAttr:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    PtrA := A_PtrSize ? "UPtr*" : "UInt*"
 
@@ -2659,10 +2821,13 @@ Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:=
       DllCall("gdiplus\GdipCreateTexture", Ptr, pBitmap, "int", WrapMode, PtrA, pBrush)
    } else
    {
-      If !IsNumber(Matrix)
-         ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
-      Else if (Matrix != 1)
-         ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+      If !ImageAttr
+      {
+         if !IsNumber(Matrix)
+            ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
+         else if (Matrix != 1)
+            ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+      } Else usrImageAttr := 1
 
       If ImageAttr
       {
@@ -2673,7 +2838,7 @@ Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:=
          DllCall("gdiplus\GdipCreateTexture2", Ptr, pBitmap, "int", WrapMode, "float", x, "float", y, "float", w, "float", h, PtrA, pBrush)
    }
 
-   If ImageAttr
+   if (ImageAttr && usrImageAttr!=1)
       Gdip_DisposeImageAttributes(ImageAttr)
 
    If (ScaleX && ScaleX && pBrush)
@@ -2973,7 +3138,7 @@ Gdip_DeleteMatrix(Matrix) {
 ; Text functions
 ; Easy to use functions:
 ; Gdip_DrawOrientedString() - allows to draw strings or string contours/outlines, 
-; or both, rotated at any angle. On success, the boundaries are returned.
+; or both, rotated at any angle. On success, its boundaries are returned.
 ; Gdip_DrawStringAlongPolygon() - allows you to draw a string along a pPath
 ; or multiple given coordinates.
 ; Gdip_TextToGraphics() - allows you to draw strings or measure their boundaries.
@@ -3221,6 +3386,8 @@ Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF) {
 
 
 Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, hMatrix:=0) {
+; The function allows you to draw a text string along a polygonal line.
+;
 ; pGraphics - a pointer to a pGraphics object where to draw the text
 ; FontSize  - in em, in world units
 ; Remarks: a high value might be required; over 60, 90... to see the text.
@@ -3228,8 +3395,9 @@ Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush
 ; DriverPoints - a string with X, Y coordinates where the letters
 ;                of the string will be drawn. Each X/Y pair corresponds to a letter.
 ;                "x1,y1|x2,y2|x3,y3" [...and so on]
-; pPath        - A pointer to a pPath object;
-;                It will be used only if no DriverPoints are given.
+; pPath        - A pointer to a pPath object.
+;                It will be used only if DriverPoints parameter is omitted.
+;                The points defining the pPath will be treated as an ordinary polygonal line.
 ; If both DriverPoints and pPath are omitted, the function will return -4.
 ; Intermmediate points will be generated if there are more glyphs / letters than defined points.
 ;
@@ -3244,7 +3412,11 @@ Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush
 ; Strikeout = 8
 
    If (pPath && !DriverPoints)
+   {
       DriverPoints := Gdip_GetPathPoints(pPath)
+      If !DriverPoints
+         Return -5
+   }
 
    If (!pPath && !DriverPoints)
       Return -4
@@ -5761,12 +5933,15 @@ Gdip_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
 ; Function written by Marius Șucan.
 
 
-Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, hMatrix:=0) {
-
-    If !IsNumber(Matrix)
-       ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
-    Else if (Matrix != 1)
-       ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, ImageAttr:=0, hMatrix:=0) {
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    If !ImageAttr
+    {
+       if !IsNumber(Matrix)
+          ImageAttr := Gdip_SetImageAttributesColorMatrix(Matrix)
+       else if (Matrix != 1)
+          ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
+    } Else usrImageAttr := 1
 
     if (sX="" && sY="")
        sX := sY := 0
@@ -5774,7 +5949,6 @@ Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", p
     if (sW="" && sH="")
        Gdip_GetImageDimensions(pBitmap, sW, sH)
 
-    Ptr := A_PtrSize ? "UPtr" : "UInt"
     CreateRectF(sourceRect, sX, sY, sW, sH)
     E := DllCall("gdiplus\GdipDrawImageFX"
       , Ptr, pGraphics
@@ -5786,7 +5960,7 @@ Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", p
       , "Uint", Unit)            ; srcUnit
     ; r4 := GetStatus(A_LineNumber ":GdipDrawImageFX",r4)
 
-    If ImageAttr
+    If (ImageAttr && usrImageAttr!=1)
        Gdip_DisposeImageAttributes(ImageAttr)
       
     Return E
@@ -5920,7 +6094,7 @@ Gdip_DisposeEffect(pEffect) {
    Return r
 }
 
-GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0,chnBdec:=0) {
+GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0, chnBdec:=0) {
 ; parameters ranges / intervals:
 ; bright:     [0.001 - 20.0]
 ; contrast:   [-20.0 - 1.00]
