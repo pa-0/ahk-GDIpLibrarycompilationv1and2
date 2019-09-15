@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.71 on 09/15/2019
 ; - v1.70 on 09/13/2019
 ; - v1.69 on 09/12/2019
 ; - v1.68 on 09/11/2019
@@ -40,6 +41,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 09/15/2019 = Added 3 new GDI+ functions and improved Gdip_DrawStringAlongPolygon() [ Marius Șucan ]
 ; - 09/13/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/12/2019 = Added 6 new GDI+ functions [ Marius Șucan ]
 ; - 09/11/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
@@ -60,7 +62,7 @@
 ; - 08/15/2019 = Added Gdip_DrawRoundedLine() by DevX and Rabiator
 ; - 08/15/2019 = Added eleven GraphicsPath related functions by "Learning one" and updated by Marius Șucan
 ; - 08/14/2019 = Added Gdip_IsVisiblePathPoint() and RotateAtCenter() by RazorHalo
-; - 08/08/2019 = Added Gdip_GetDIBits() and Gdip_CreateDIBitmap() by Marius Șucan
+; - 08/08/2019 = Added Gdi_GetDIBits() and Gdi_CreateDIBitmap() by Marius Șucan
 ; - 07/19/2019 = Added Gdip_GetHistogram() by swagfag and GetProperty GDI+ functions by JustMe
 ; - 11/15/2017 = compatibility with both AHK v2 and v1, restored by nnnik
 ; - 06/19/2017 = Fixed few bugs from old syntax by Bartlomiej Uliasz
@@ -773,7 +775,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.70
+   return 1.71
 }
 
 ;#####################################################################################
@@ -1764,19 +1766,20 @@ Gdip_GraphicsFlush(pGraphics, intent) {
 ; Description        Gives a pointer to a blurred bitmap from a pointer to a bitmap
 ;
 ; pBitmap            Pointer to a bitmap to be blurred
-; Blur               The Amount to blur a bitmap by from 1 (least blur) to 100 (most blur)
+; BlurAmount         The Amount to blur a bitmap by from 1 (least blur) to 100 (most blur)
 ;
 ; return             If the function succeeds, the return value is a pointer to the new blurred bitmap
 ;                    -1 = The blur parameter is outside the range 1-100
 ;
 ; notes              This function will not dispose of the original bitmap
 
-Gdip_BlurBitmap(pBitmap, Blur) {
-   if (Blur > 100) || (Blur < 1)
+Gdip_BlurBitmap(pBitmap, BlurAmount) {
+   if (BlurAmount > 100) || (BlurAmount < 1)
       return -1
 
-   sWidth := Gdip_GetImageWidth(pBitmap), sHeight := Gdip_GetImageHeight(pBitmap)
-   dWidth := sWidth//Blur, dHeight := sHeight//Blur
+   Gdip_GetImageDimensions(pBitmap, sWidth, sHeight)
+   dWidth := sWidth//BlurAmount
+   dHeight := sHeight//BlurAmount
 
    pBitmap1 := Gdip_CreateBitmap(dWidth, dHeight)
    G1 := Gdip_GraphicsFromImage(pBitmap1)
@@ -2006,6 +2009,11 @@ Gdip_GetImagePixelFormat(pBitmap) {
    return Format
 }
 
+Gdip_GetDPI(pGraphics, ByRef DpiX, ByRef DpiY) {
+   DpiX := Gdip_GetDpiX(pGraphics)
+   DpiY := Gdip_GetDpiY(pGraphics)
+}
+
 Gdip_GetDpiX(pGraphics) {
    DllCall("gdiplus\GdipGetDpiX", A_PtrSize ? "UPtr" : "uint", pGraphics, "float*", dpix)
    return Round(dpix)
@@ -2033,7 +2041,7 @@ Gdip_BitmapSetResolution(pBitmap, dpix, dpiy) {
 Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="") {
    pBitmap := ""
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   , PtrA := A_PtrSize ? "UPtr*" : "UInt*"
+   PtrA := A_PtrSize ? "UPtr*" : "UInt*"
 
    SplitPath sFile,,, Extension
    if RegExMatch(Extension, "^(?i:exe|dll)$")
@@ -2215,6 +2223,30 @@ Gdip_CloneBitmap(pBitmap) {
                , A_PtrSize ? "UPtr" : "UInt", pBitmap
                , A_PtrSize ? "UPtr*" : "UInt*", pBitmapDest)
    return pBitmapDest
+}
+
+Gdip_BitmapSelectActiveFrame(pBitmap, FrameIndex) {
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    DllCall("gdiplus\GdipImageGetFrameDimensionsCount", Ptr, pBitmap, "UInt*", Countu)
+    VarSetCapacity(dIDs, 16, 0)
+    DllCall("gdiplus\GdipImageGetFrameDimensionsList", Ptr, pBitmap, "Uint", &dIDs, "UInt", Countu)
+    DllCall("gdiplus\GdipImageGetFrameCount", Ptr, pBitmap, "Uint", &dIDs, "UInt*", CountFrames)
+    Return DllCall("gdiplus\GdipImageSelectActiveFrame", Ptr, pBitmap, Ptr, &dIDs, "uint", FrameIndex)
+}
+
+Gdip_GetBitmapFramesCount(pBitmap) {
+; The function returns the number of frames or pages a given pBitmap has
+; For GDI+ only GIFs and TIFFs can have multiple frames/pages.
+; Function written by SBC in September 2010 and
+; extracted from his «Picture Viewer» script.
+; https://autohotkey.com/board/topic/58226-ahk-picture-viewer/
+
+    Ptr := A_PtrSize ? "UPtr" : "UInt"
+    DllCall("gdiplus\GdipImageGetFrameDimensionsCount", Ptr, pBitmap, "UInt*", Countu)
+    VarSetCapacity(dIDs, 16, 0)
+    DllCall("gdiplus\GdipImageGetFrameDimensionsList", Ptr, pBitmap, "Uint", &dIDs, "UInt", Countu)
+    DllCall("gdiplus\GdipImageGetFrameCount", Ptr, pBitmap, "Uint", &dIDs, "UInt*", CountFrames)
+    Return CountFrames
 }
 
 
@@ -3130,8 +3162,8 @@ Gdip_DeleteFontFamily(hFontFamily) {
    return DllCall("gdiplus\GdipDeleteFontFamily", A_PtrSize ? "UPtr" : "UInt", hFontFamily)
 }
 
-Gdip_DeleteMatrix(Matrix) {
-   return DllCall("gdiplus\GdipDeleteMatrix", A_PtrSize ? "UPtr" : "UInt", Matrix)
+Gdip_DeleteMatrix(hMatrix) {
+   return DllCall("gdiplus\GdipDeleteMatrix", A_PtrSize ? "UPtr" : "UInt", hMatrix)
 }
 
 ;#####################################################################################
@@ -3384,24 +3416,31 @@ Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF) {
    return &RC ? NumGet(RC, 0, "float") "|" NumGet(RC, 4, "float") "|" NumGet(RC, 8, "float") "|" NumGet(RC, 12, "float") "|" Chars "|" Lines : 0
 }
 
-
-Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, hMatrix:=0) {
+Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, flatness:=4, hMatrix:=0) {
 ; The function allows you to draw a text string along a polygonal line.
+; Each point on the line corresponds to a letter.
+; If they are too close, the letters will overlap. If they are fewer than
+; the string length, the text is going to be truncated.
+; If given, a pPath object will be segmented according to the precision defined by «flatness».
 ;
-; pGraphics - a pointer to a pGraphics object where to draw the text
-; FontSize  - in em, in world units
-; Remarks: a high value might be required; over 60, 90... to see the text.
-; pBrush - a pointer to a pBrush object to fill the text with
+; pGraphics    - a pointer to a pGraphics object where to draw the text
+; FontSize     - in em, in world units
+;                a high value might be required; over 60, 90... to see the text.
+; pBrush       - a pointer to a pBrush object to fill the text with
 ; DriverPoints - a string with X, Y coordinates where the letters
 ;                of the string will be drawn. Each X/Y pair corresponds to a letter.
 ;                "x1,y1|x2,y2|x3,y3" [...and so on]
 ; pPath        - A pointer to a pPath object.
 ;                It will be used only if DriverPoints parameter is omitted.
-;                The points defining the pPath will be treated as an ordinary polygonal line.
 ; If both DriverPoints and pPath are omitted, the function will return -4.
 ; Intermmediate points will be generated if there are more glyphs / letters than defined points.
 ;
-; minDist - the minimum distance between letters; by default it is FontSize/4
+; flatness - from 0.1 to 5; the precision for arcs, beziers and curves segmentation;
+;            the lower the number is, the higher density of points is;
+;            it applies only for given pPath objects
+;
+; minDist  - the minimum distance between letters; by default it is FontSize/4
+;            does not apply for pPath objects; use the flatness parameter to control points density
 ;
 ; Style options:
 ; Regular = 0
@@ -3411,9 +3450,15 @@ Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush
 ; Underline = 4
 ; Strikeout = 8
 
+   If (!minDist || minDist<1)
+      minDist := FontSize//4 + 1
+
    If (pPath && !DriverPoints)
    {
-      DriverPoints := Gdip_GetPathPoints(pPath)
+      newPath := Gdip_ClonePath(pPath)
+      Gdip_PathOutline(newPath, flatness)
+      DriverPoints := Gdip_GetPathPoints(newPath)
+      Gdip_DeletePath(newPath)
       If !DriverPoints
          Return -5
    }
@@ -3438,9 +3483,6 @@ Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush
    PointsCount := Points.Length()
    If (PointsCount<2)
       Return -3
-
-   If (!minDist || minDist<1)
-      minDist := FontSize//4 + 1
 
    txtLen := StrLen(String)
    If (PointsCount<txtLen)
@@ -3684,14 +3726,6 @@ Gdip_FontCreate(hFontFamily, Size, Style:=0) {
    return hFont
 }
 
-Gdip_CreateFontFromLogicalFont(hDC, pLogFont) {
-; hDC      - handle to a device context
-; pLogFont - handle to a logical font 
-   Ptr := A_PtrSize ? "UPtr" : "UInt"
-   DllCall("gdiplus\GdipCreateFontFromLogfontW", Ptr, hDC, "ushort*", pLogFont, "UPtr*", hFont)
-   Return hFont
-}
-
 Gdip_FontFamilyCreate(FontName) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    if (!A_IsUnicode)
@@ -3825,13 +3859,12 @@ Gdip_GetFontFamilyEmHeight(hFontFamily, Style:=0) {
    Return result
 }
 
-Gdip_GetFontFamilyLineSpacing(hFamily, Style:=0) {
+Gdip_GetFontFamilyLineSpacing(hFontFamily, Style:=0) {
 ; Line spacing returned in «design units»
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    DllCall("gdiplus\GdipGetLineSpacing", Ptr, hFontFamily, "int", Style, "ushort*", result)
    Return result
 }
-
 
 Gdip_GetFontFamilyName(hFontFamily) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -3898,10 +3931,10 @@ Gdip_MultiplyMatrix(hMatrixA, hMatrixB, matrixOrder) {
    Return DllCall("gdiplus\GdipMultiplyMatrix", Ptr, hMatrixA, Ptr, hMatrixB, "int", matrixOrder)
 }
 
-Gdip_CloneMatrix(pMatrix) {
+Gdip_CloneMatrix(hMatrix) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   DllCall("gdiplus\GdipCloneMatrix", Ptr, pMatrix, A_PtrSize ? "UPtr*" : "UInt*", Matrix)
-   return Matrix
+   DllCall("gdiplus\GdipCloneMatrix", Ptr, hMatrix, A_PtrSize ? "UPtr*" : "UInt*", clonedMatrix)
+   return clonedMatrix
 }
 
 ;#####################################################################################
@@ -4107,6 +4140,30 @@ Gdip_GetPathPoints(pPath) {
        printList .= A "," B "|"
    }
    Return Trim(printList, "|")
+}
+
+Gdip_FlattenPath(pPath, flatness, hMatrix:=0) {
+; flatness - a precision value that specifies the maximum error between the path and
+; its flattened [segmented] approximation. Reducing the flatness increases the number
+; of line segments in the approximation. 
+;
+; hMatrix - a pointer to a transformation matrix to apply.
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipFlattenPath", Ptr, pPath, Ptr, hMatrix, "float", flatness)
+}
+
+Gdip_PathOutline(pPath, flatness:=1, hMatrix:=0) {
+; Transforms and flattens [segmentates] a pPath object, and then converts the path's data points
+; so that they represent only the outline of the given path.
+;
+; flatness - a precision value that specifies the maximum error between the path and
+; its flattened [segmented] approximation. Reducing the flatness increases the number
+; of line segments in the resulted approximation. 
+;
+; hMatrix - a pointer to a transformation matrix to apply.
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   return DllCall("gdiplus\GdipWindingModeOutline", Ptr, pPath, Ptr, hMatrix, "float", flatness)
 }
 
 Gdip_ResetPath(pPath) {
@@ -4568,7 +4625,7 @@ Gdip_CombineRegionPath(Region, pPath, CombineMode) {
 }
 
 Gdip_CreateRegionPath(pPath) {
-; Creates a region that is defined by a GraphicsPath.  Added by Learning one
+; Creates a region that is defined by a GraphicsPath [pPath object]. Written by Learning one.
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    E := DllCall("gdiplus\GdipCreateRegionPath", Ptr, pPath, "UInt*", Region)
@@ -4720,7 +4777,6 @@ Gdip_LockBits(pBitmap, x, y, w, h, ByRef Stride, ByRef Scan0, ByRef BitmapData, 
 
 Gdip_UnlockBits(pBitmap, ByRef BitmapData) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("Gdiplus\GdipBitmapUnlockBits", Ptr, pBitmap, Ptr, &BitmapData)
 }
 
@@ -5037,9 +5093,10 @@ MDMF_GetInfo(HMON) {
 ; Taken from https://autohotkey.com/board/topic/85238-get-image-metadata-using-gdi-ahk-l/
 ; October 2013; minimal modifications by Marius Șucan in July 2019
 
-Gdip_LoadImageFromFile(PicPath) {
+Gdip_LoadImageFromFile(sFile) {
+; An Image object encapsulates a bitmap or a metafile and stores attributes that you can retrieve.
    pImage := 0
-   R := DllCall("gdiplus\GdipLoadImageFromFile", "WStr", PicPath, "UPtrP", pImage)
+   R := DllCall("gdiplus\GdipLoadImageFromFile", "WStr", sFile, "UPtrP", pImage)
    ErrorLevel := R
    Return pImage
 }
@@ -5337,14 +5394,14 @@ Gdip_RotatePathAtCenter(pPath, Angle, MatrixOrder:=1) {
 ; to pass MatrixOrder as 1 for "Append"
 ; the (default is 0 for "Prepend") to get the correct results.
 
-Gdip_ResetMatrix(pMatrix) {
+Gdip_ResetMatrix(hMatrix) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipResetMatrix", Ptr, pMatrix)
+   return DllCall("gdiplus\GdipResetMatrix", Ptr, hMatrix)
 }
 
-Gdip_RotateMatrix(pMatrix, Angle, MatrixOrder:=0) {
+Gdip_RotateMatrix(hMatrix, Angle, MatrixOrder:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipRotateMatrix", Ptr, pMatrix, "float", Angle, "Int", MatrixOrder)
+   return DllCall("gdiplus\GdipRotateMatrix", Ptr, hMatrix, "float", Angle, "Int", MatrixOrder)
 }
 
 Gdip_GetPathWorldBounds(pPath) {
@@ -5366,24 +5423,24 @@ Gdip_GetPathWorldBounds(pPath) {
   return rData
 }
 
-Gdip_ScaleMatrix(pMatrix, scaleX, scaleY, MatrixOrder:=0) {
+Gdip_ScaleMatrix(hMatrix, ScaleX, ScaleY, MatrixOrder:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipScaleMatrix", Ptr, pMatrix, "float", scaleX, "float", scaleY, "Int", MatrixOrder)
+   return DllCall("gdiplus\GdipScaleMatrix", Ptr, hMatrix, "float", ScaleX, "float", ScaleY, "Int", MatrixOrder)
 }
 
-Gdip_TranslateMatrix(pMatrix, offsetX, offsetY, MatrixOrder:=0) {
+Gdip_TranslateMatrix(hMatrix, offsetX, offsetY, MatrixOrder:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-   return DllCall("gdiplus\GdipTranslateMatrix", Ptr, pMatrix, "float", offsetX, "float", offsetY, "Int", MatrixOrder)
+   return DllCall("gdiplus\GdipTranslateMatrix", Ptr, hMatrix, "float", offsetX, "float", offsetY, "Int", MatrixOrder)
 }
 
-Gdip_TransformPath(pPath, pMatrix) {
+Gdip_TransformPath(pPath, hMatrix) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  return DllCall("gdiplus\GdipTransformPath", Ptr, pPath, Ptr, pMatrix)
+  return DllCall("gdiplus\GdipTransformPath", Ptr, pPath, Ptr, hMatrix)
 }
 
-Gdip_SetMatrixElements(pMatrix, m11, m12, m21, m22, x, y) {
+Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, x, y) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
-  return DllCall("gdiplus\GdipSetMatrixElements", Ptr, pMatrix, "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y)
+  return DllCall("gdiplus\GdipSetMatrixElements", Ptr, hMatrix, "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y)
 }
 
 Gdip_GetLastStatus(pMatrix) {
@@ -5483,7 +5540,9 @@ Gdip_DrawPath(pGraphics, pPen, pPath) {
 }
 
 Gdip_WidenPath(pPath, pPen, hMatrix:=0, Flatness:=1) {
-; Replaces this path with curves that enclose the area that is filled when this path is drawn by a specified pen. This method also flattens the path.
+; Replaces this path with curves that enclose the area that is filled when this path is drawn by a specified pen.
+; This method also flattens the path.
+
   Ptr := A_PtrSize ? "UPtr" : "UInt"
   return DllCall("gdiplus\GdipWidenPath", Ptr, pPath, "uint", pPen, Ptr, hMatrix, "float", Flatness)
 }
@@ -5846,7 +5905,7 @@ Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor) {
 }
 
 
-Gdip_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) {
+Gdi_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) {
 ; This function creates a hBitmap from a pointer of data-bits [pBits]
 ; The hBitmap is created according to the information found in
 ; BITMAPINFO and bmpInfoHeader pointers.
@@ -5868,7 +5927,7 @@ Gdip_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS)
    Return hBitmap
 }
 
-Gdip_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
+Gdi_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
 ; This function returns the data-bits from a hBitmap
 ; into the pBits pointer.
 ; Return: if the function fails, the return value is zero.
@@ -5994,10 +6053,10 @@ Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0) {
    Return E
 }
 
-COM_GUID4String(ByRef CLSID, String) {
-    VarSetCapacity(CLSID, 16)
-    r := DllCall("ole32\CLSIDFromString", "WStr", String, "Ptr", &CLSID)
-    Return r
+COM_CLSIDfromString(ByRef CLSID, String) {
+    VarSetCapacity(CLSID, 16, 0)
+    E := DllCall("ole32\CLSIDFromString", "WStr", String, "UPtr", &CLSID)
+    Return E
 }
 
 Gdip_CreateEffect(whichFX, paramA, paramB, paramC:=0) {
@@ -6018,12 +6077,11 @@ Gdip_CreateEffect(whichFX, paramA, paramB, paramC:=0) {
 ;
 ; Function written by Marius Șucan. Many thanks to Drugwash for the help provided,
 
-
     Static gdipImgFX := {1:"633C80A4-1843-482b-9EF2-BE2834C5FDD4", 2:"63CBF3EE-C526-402c-8F71-62C540BF5142", 3:"718F2615-7933-40e3-A511-5F68FE14DD74", 4:"A7CE72A9-0F7F-40d7-B3CC-D0C02D5C3212", 5:"D3A1DBE1-8EC4-4c17-9F4C-EA97AD1C343D", 6:"8B2DD6C3-EB07-4d87-A5F0-7108E26A9C5F", 7:"99C354EC-2A31-4f3a-8C34-17A803B33A25", 8:"1077AF00-2848-4441-9489-44AD4C2D7A2C", 9:"537E597D-251E-48da-9664-29CA496B70F8", 10:"74D29D05-69A4-4266-9549-3CC52836B632", 11:"DD6A0022-58E4-4a67-9D9B-D48EB881A53D"}
     Ptr := A_PtrSize=8 ? "UPtr" : "UInt"
     Ptr2 := A_PtrSize=8 ? "Ptr*" : "PtrP"
 
-    r1 := COM_GUID4String(eFXguid, "{" gdipImgFX[whichFX] "}" )
+    r1 := COM_CLSIDfromString(eFXguid, "{" gdipImgFX[whichFX] "}" )
     If r1
        Return "err-" r1
 
@@ -6250,21 +6308,6 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
        matrix := StrReplace(mtrx, A_Space)
     }
     Return matrix
-}
-
-Gdip_GetImageFramesCount(pBitmap) {
-; The function returns the number of frames or pages a given pBitmap has
-; For GDI+ only GIFs and TIFFs can have multiple frames/pages.
-; Function written by SBC in September 2010 and
-; extracted from his «Picture Viewer» script.
-; https://autohotkey.com/board/topic/58226-ahk-picture-viewer/
-
-    Ptr := A_PtrSize ? "UPtr" : "UInt"
-    DllCall("gdiplus\GdipImageGetFrameDimensionsCount", Ptr, pBitmap, "UInt*", Countu)
-    VarSetCapacity(dIDs, 16, 0)
-    DllCall("gdiplus\GdipImageGetFrameDimensionsList", Ptr, pBitmap, "Uint", &dIDs, "UInt", Countu)
-    DllCall("gdiplus\GdipImageGetFrameCount", Ptr, pBitmap, "Uint", &dIDs, "UInt*", CountFrames)
-    Return CountFrames
 }
 
 CreatePointsF(ByRef PointsF, inPoints) {
