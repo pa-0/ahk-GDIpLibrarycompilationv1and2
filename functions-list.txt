@@ -9,14 +9,12 @@ of what is available in the Gdip_all.ahk extended compilation.
 
 Please note, this is not a complete list of all the functions.
 
-## 35 GraphicsPath object functions
+## 34 GraphicsPath object functions
  - Gdip_AddPathArc(pPath, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4)
  - Gdip_AddPathBeziers(pPath, Points)
- - Gdip_AddPathClosedCurve(pPath, Points)
- - Gdip_AddPathClosedCurve2(pPath, Points, Tension:=1)
- - Gdip_AddPathCurve(pPath, Points)
- - Gdip_AddPathCurve2(pPath, Points, Tension:=1)
+ - Gdip_AddPathClosedCurve(pPath, Points, Tension:="")
+ - Gdip_AddPathCurve(pPath, Points, Tension:="")
  - Gdip_AddPathEllipse(pPath, x, y, w, h)
  - Gdip_AddPathLine(pPath, x1, y1, x2, y2)
  - Gdip_AddPathLines(pPath, Points)
@@ -49,8 +47,8 @@ Please note, this is not a complete list of all the functions.
 
 ## 42 Pen object functions
  - Gdip_ClonePen(pPen)
- - Gdip_CreatePen(ARGB, w)
- - Gdip_CreatePenFromBrush(pBrush, w, unit:=2)
+ - Gdip_CreatePen(ARGB, w, Unit:=2)
+ - Gdip_CreatePenFromBrush(pBrush, w, Unit:=2)
  - Gdip_DeletePen(pPen)
  - Gdip_GetPenAlignment(pPen)
  - Gdip_GetPenBrushFill(pPen)
@@ -151,7 +149,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_ScaleTextureTransform(pTexBrush, ScaleX, ScaleY, MatrixOrder:=0)
  - Gdip_SetTextureTransform(pTexBrush, hMatrix)
  - Gdip_SetTextureWrapMode(pTexBrush, WrapMode)
- - Gdip_TranslateTextureTransform(pTexBrush, X, Y, MatrixOrder:=0) {
+ - Gdip_TranslateTextureTransform(pTexBrush, X, Y, MatrixOrder:=0)
 
 ## 10 SolidFill and hatch brush functions
  - Gdip_BrushCreateSolid(ARGB:=0xff000000)
@@ -165,7 +163,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 35 pBitmap functions
+## 37 pBitmap functions
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapFromBase64(ByRef Base64)
  - Gdip_BitmapFromBRA(ByRef BRAFromMemIn, File, Alternate := 0)
@@ -179,6 +177,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_CreateBitmap(Width, Height, Format:=0x26200A)
  - Gdip_CreateBitmapFromClipboard()
  - Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="")
+ - Gdip_CreateBitmapFromGdiDib(BITMAPINFO, BitmapData)
+ - Gdip_CreateBitmapFromGraphics(pGraphics, Width, Height)
  - Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0)
  - Gdip_CreateBitmapFromHICON(hIcon)
  - Gdip_CreateHBITMAPFromBitmap(pBitmap, Background:=0xffffffff)
@@ -352,29 +352,33 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, x, y)
  - Gdip_TranslateMatrix(hMatrix, offsetX, offsetY, MatrixOrder:=0)
 
-## 31 Draw/Fill on pGraphics functions
+## 35 Draw/Fill on pGraphics functions
  - Gdip_DrawArc(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4)
  - Gdip_DrawBezierCurve(pGraphics, pPen, Points)
  - Gdip_DrawCachedBitmap(pGraphics, pCachedBitmap, X, Y)
- - Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1)
+ - Gdip_DrawClosedCurve(pGraphics, pPen, Points, Tension:=1)
+ - Gdip_DrawCurve(pGraphics, pPen, Points, Tension:="")
  - Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=1, hMatrix:=0)
  - Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
  - Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
+ - Gdip_DrawImageFast(pGraphics, pBitmap, X, Y)
  - Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, ImageAttr:=0, hMatrix:=0)
  - Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
+ - Gdip_DrawImageRect(pGraphics, pBitmap, X, Y, W, H)
  - Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2)
  - Gdip_DrawLines(pGraphics, pPen, Points)
  - Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, Height, Angle:=0, pBrush:=0, pPen:=0, Align:=0, ScaleX:=1)
  - Gdip_DrawPath(pGraphics, pPen, pPath)
  - Gdip_DrawPie(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
+ - Gdip_DrawPolygon(pGraphics, pPen, Points)
  - Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
  - Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor)
  - Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r)
  - Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r)
  - Gdip_DrawString(pGraphics, sString, hFont, hStringFormat, pBrush, ByRef RectF)
  - Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, flatness:=4, hMatrix:=0)
- - Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0)
+ - Gdip_FillClosedCurve(pGraphics, pBrush, Points, Tension:="", FillMode:=0)
  - Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h)
  - Gdip_FillPath(pGraphics, pBrush, pPath)
  - Gdip_FillPie(pGraphics, pBrush, x, y, w, h, StartAngle, SweepAngle)
@@ -440,7 +444,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
  - Gdip_TextToGraphics()
  - Gdip_GetImagePixelFormat()
 
-## 270 NEW FUNCTIONS:
+## 273 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -512,7 +516,13 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_FromRect()
     - MDMF_GetInfo()
 
-- 206 by Marius Șucan [robodesign.ro]:
+- 209 by Marius Șucan [robodesign.ro]:
+  - Gdip_CreateBitmapFromGraphics()
+  - Gdip_CreateBitmapFromGdiDib()
+  - Gdip_DrawPolygon()
+  - Gdip_DrawCurve()
+  - Gdip_DrawImageFast()
+  - Gdip_DrawImageRect()
   - Gdip_SetPenDashCaps()
   - Gdip_GetPenDashCaps()
   - Gdip_TranslateTextureTransform()
@@ -598,7 +608,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_GetPenTransform()
   - Gdip_GetTextureTransform()
   - Gdip_CreatePathGradient()
-  - Gdip_FillClosedCurve2()
+  - Gdip_FillClosedCurve()
   - Gdip_SetPenCompoundArray()
   - Gdip_SetPenDashArray()
   - Gdip_SetPenDashOffset()
@@ -611,11 +621,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_GetPenMiterLimit()
   - Gdip_GetPenUnit()
   - Gdip_GetPenCompoundCount()
-  - Gdip_DrawClosedCurve2()
+  - Gdip_DrawClosedCurve()
   - Gdip_AddPathClosedCurve()
-  - Gdip_AddPathClosedCurve2()
   - Gdip_AddPathCurve()
-  - Gdip_AddPathCurve2()
   - Gdip_GetLinearGrBrushWrapMode()
   - Gdip_SetLinearGrBrushLinearBlend()
   - Gdip_SetLinearGrBrushSigmaBlend()
@@ -734,3 +742,181 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_GetPenColor()
   - Gdip_SetPenBrushFill()
   - Gdip_CreateFontFromDC()
+
+# 174 GDI+ functions still missing
+In short, functions related to CustomCaps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
+
+ - GdipAddPathCurve3
+ - GdipAddPathRectangles
+ - GdipBeginContainer
+ - GdipBeginContainer2
+ - GdipClearPathMarkers
+ - GdipCloneCustomLineCap
+ - GdipClosePathFigures
+ - GdipComment
+ - GdipCreateBitmapFromFileICM
+ - GdipCreateBitmapFromResource
+ - GdipCreateCustomLineCap
+ - GdipCreateFontFromLogfontA
+ - GdipCreateFontFromLogfontW
+ - GdipCreateFromHDC2
+ - GdipCreateHalftonePalette
+ - GdipCreateLineBrushFromRectWithAngle
+ - GdipCreateMatrix3
+ - GdipCreateMetafileFromEmf
+ - GdipCreateMetafileFromFile
+ - GdipCreateMetafileFromStream
+ - GdipCreateMetafileFromWmf
+ - GdipCreateMetafileFromWmfFile
+ - GdipCreatePath2
+ - GdipCreatePathIter
+ - GdipCreateRegionHrgn
+ - GdipCreateRegionRgnData
+ - GdipCreateStreamOnFile
+ - GdipDeletePathIter
+ - GdipDeletePrivateFontCollection
+ - GdipDrawCurve3
+ - GdipDrawImagePointRect
+ - GdipDrawRectangles
+ - GdipEmfToWmfBits
+ - GdipEndContainer
+ - GdipEnumerateMetafileDestPoint
+ - GdipEnumerateMetafileDestPoints
+ - GdipEnumerateMetafileDestRect
+ - GdipEnumerateMetafileSrcRectDestPoint
+ - GdipEnumerateMetafileSrcRectDestPoints
+ - GdipEnumerateMetafileSrcRectDestRect
+ - GdipFillRectangles
+ - GdipGetCustomLineCapBaseCap
+ - GdipGetCustomLineCapBaseInset
+ - GdipGetCustomLineCapStrokeCaps
+ - GdipGetCustomLineCapStrokeJoin
+ - GdipGetCustomLineCapType
+ - GdipGetCustomLineCapWidthScale
+ - GdipGetFontCollectionFamilyCount
+ - GdipGetFontCollectionFamilyList
+ - GdipGetHemfFromMetafile
+ - GdipGetImageAttributesAdjustedPalette
+ - GdipGetImagePalette
+ - GdipGetImagePaletteSize
+ - GdipGetImageThumbnail
+ - GdipGetLineBlend
+ - GdipGetLinePresetBlend
+ - GdipGetLinePresetBlendCount
+ - GdipGetLogFontA
+ - GdipGetLogFontW
+ - GdipGetMatrixElements
+ - GdipGetMetafileDownLevelRasterizationLimit
+ - GdipGetMetafileHeaderFromEmf
+ - GdipGetMetafileHeaderFromFile
+ - GdipGetMetafileHeaderFromMetafile
+ - GdipGetMetafileHeaderFromStream
+ - GdipGetMetafileHeaderFromWmf
+ - GdipGetNearestColor
+ - GdipGetPathData
+ - GdipGetPathGradientBlend
+ - GdipGetPathGradientBlendCount
+ - GdipGetPathGradientCenterPointI
+ - GdipGetPathGradientPresetBlend
+ - GdipGetPathGradientPresetBlendCount
+ - GdipGetPathPointsI
+ - GdipGetPathTypes
+ - GdipGetPenCustomStartCap
+ - GdipGetRegionData
+ - GdipGetRegionDataSize
+ - GdipGetRegionHRgn
+ - GdipGetRegionScans
+ - GdipGetRegionScansCount
+ - GdipGetStringFormatFlags
+ - GdipGetStringFormatMeasurableCharacterRangeCount
+ - GdipGetStringFormatTabStopCount
+ - GdipGetStringFormatTabStops
+ - GdipImageForceValidation
+ - GdipLoadImageFromFileICM
+ - GdipLoadImageFromStream
+ - GdipLoadImageFromStreamICM
+ - GdipMeasureCharacterRanges
+ - GdipMeasureDriverString
+ - GdipMultiplyLineTransform
+ - GdipMultiplyPathGradientTransform
+ - GdipMultiplyPenTransform
+ - GdipMultiplyTextureTransform
+ - GdipMultiplyWorldTransform
+ - GdipNewInstalledFontCollection
+ - GdipNewPrivateFontCollection
+ - GdipPathIterCopyData
+ - GdipPathIterEnumerate
+ - GdipPathIterGetCount
+ - GdipPathIterGetSubpathCount
+ - GdipPathIterHasCurve
+ - GdipPathIterIsValid
+ - GdipPathIterNextMarker
+ - GdipPathIterNextMarkerPath
+ - GdipPathIterNextPathType
+ - GdipPathIterNextSubpath
+ - GdipPathIterNextSubpathPath
+ - GdipPathIterRewind
+ - GdipPlayMetafileRecord
+ - GdipPrivateAddFontFile
+ - GdipPrivateAddMemoryFont
+ - GdipRecordMetafile
+ - GdipRecordMetafileFileName
+ - GdipRecordMetafileStream
+ - GdipRemovePropertyItem
+ - GdipRestoreGraphics
+ - GdipSaveAdd
+ - GdipSaveAddImage
+ - GdipSaveGraphics
+ - GdipSaveImageToStream
+ - GdipSetClipHrgn
+ - GdipSetCustomLineCapBaseCap
+ - GdipSetCustomLineCapBaseInset
+ - GdipSetCustomLineCapStrokeCaps
+ - GdipSetCustomLineCapStrokeJoin
+ - GdipSetCustomLineCapWidthScale
+ - GdipSetImageAttributesOutputChannelColorProfile
+ - GdipSetImageAttributesRemapTable
+ - GdipSetImagePalette
+ - GdipSetLineBlend
+ - GdipSetLinePresetBlend
+ - GdipSetMetafileDownLevelRasterizationLimit
+ - GdipSetPathGradientBlend
+ - GdipSetPathGradientPresetBlend
+ - GdipSetPathMarker
+ - GdipSetPenCustomStartCap
+ - GdipSetPropertyItem
+ - GdipSetStringFormatMeasurableCharacterRanges
+ - GdipSetStringFormatTabStops
+ - GdipShearMatrix
+ - GdipTransformMatrixPoints
+ - GdipTransformMatrixPointsI
+ - GdipTransformPoints
+ - GdipTransformPointsI
+ - GdipTranslateTextureTransform
+ - GdipVectorTransformMatrixPoints
+ - GdipVectorTransformMatrixPointsI
+ - GdipWarpPath
+ - =======================================
+ - DispCallFunc
+ - GdipBitmapConvertFormat
+ - GdipBitmapCreateApplyEffect
+ - GdipCreateAdjustableArrowCap
+ - GdipDeleteCustomLineCap
+ - GdipDrawImagePoints
+ - GdipGetAdjustableArrowCapFillState
+ - GdipGetAdjustableArrowCapHeight
+ - GdipGetAdjustableArrowCapMiddleInset
+ - GdipGetAdjustableArrowCapWidth
+ - GdipGetEffectParameters
+ - GdipGetImageDecoders
+ - GdipGetImageDecodersSize
+ - GdipGetImageFlags
+ - GdipGetImageRawFormat
+ - GdipGetPenCustomEndCap
+ - GdipInitializePalette
+ - GdipSetAdjustableArrowCapFillState
+ - GdipSetAdjustableArrowCapHeight
+ - GdipSetAdjustableArrowCapMiddleInset
+ - GdipSetAdjustableArrowCapWidth
+ - GdipSetPenCustomEndCap
+ - SetBitmapBits

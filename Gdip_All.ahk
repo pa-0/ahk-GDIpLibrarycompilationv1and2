@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.73 on 09/17/2019
 ; - v1.72 on 09/16/2019
 ; - v1.71 on 09/15/2019
 ; - v1.70 on 09/13/2019
@@ -42,6 +43,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 09/17/2019 = Added 6 new GDI+ functions and renamed curve related functions [ Marius Șucan ]
 ; - 09/16/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/15/2019 = Added 3 new GDI+ functions and improved Gdip_DrawStringAlongPolygon() [ Marius Șucan ]
 ; - 09/13/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
@@ -62,7 +64,7 @@
 ; - 08/18/2019 = Added Gdip_AddPathRectangle() and eight PathGradient related functions by JustMe
 ; - 08/16/2019 = Added Gdip_DrawImageFX(), Gdip_CreateEffect() and other related functions [ Marius Șucan ]
 ; - 08/15/2019 = Added Gdip_DrawRoundedLine() by DevX and Rabiator
-; - 08/15/2019 = Added eleven GraphicsPath related functions by "Learning one" and updated by Marius Șucan
+; - 08/15/2019 = Added 11 GraphicsPath related functions by "Learning one" and updated by Marius Șucan
 ; - 08/14/2019 = Added Gdip_IsVisiblePathPoint() and RotateAtCenter() by RazorHalo
 ; - 08/08/2019 = Added Gdi_GetDIBits() and Gdi_CreateDIBitmap() by Marius Șucan
 ; - 07/19/2019 = Added Gdip_GetHistogram() by swagfag and GetProperty GDI+ functions by JustMe
@@ -790,7 +792,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.72
+   return 1.73
 }
 
 ;#####################################################################################
@@ -1044,7 +1046,7 @@ Gdip_DrawBezierCurve(pGraphics, pPen, Points) {
    return DllCall("gdiplus\GdipDrawBeziers", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount)
 }
 
-Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1) {
+Gdip_DrawClosedCurve(pGraphics, pPen, Points, Tension:="") {
 ; Draws a closed cardinal spline on a pGraphics object using a pPen object.
 ; A cardinal spline is a curve that passes through each point in the array.
 
@@ -1054,9 +1056,42 @@ Gdip_DrawClosedCurve2(pGraphics, pPen, Points, Tension:=1) {
 
 ; Example points array:
 ; Points := "x1,y1|x2,y2|x3,y3" [and so on]
+; At least three points must be defined.
 
    iCount := CreatePointsF(PointsF, Points)
-   return DllCall("gdiplus\GdipDrawClosedCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount, "float", Tension)
+   If Tension
+      return DllCall("gdiplus\GdipDrawClosedCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount, "float", Tension)
+   Else
+      return DllCall("gdiplus\GdipDrawClosedCurve", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount)
+}
+
+Gdip_DrawCurve(pGraphics, pPen, Points, Tension:="") {
+; Draws an open spline on a pGraphics object using a pPen object.
+; A cardinal spline is a curve that passes through each point in the array.
+
+; Tension: Non-negative real number that controls the length of the curve and how the curve bends. A value of
+; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
+; Number that specifies how tightly the curve bends through the coordinates of the closed cardinal spline.
+
+; Example points array:
+; Points := "x1,y1|x2,y2|x3,y3" [and so on]
+; At least three points must be defined.
+
+   iCount := CreatePointsF(PointsF, Points)
+   If Tension
+      return DllCall("gdiplus\GdipDrawCurve2", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount, "float", Tension)
+   Else
+      return DllCall("gdiplus\GdipDrawCurve", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount)
+}
+
+Gdip_DrawPolygon(pGraphics, pPen, Points) {
+; Draws a closed polygonal line on a pGraphics object using a pPen object.
+;
+; Example points array:
+; Points := "x1,y1|x2,y2|x3,y3" [and so on]
+
+   iCount := CreatePointsF(PointsF, Points)
+   return DllCall("gdiplus\GdipDrawPolygon", "UPtr", pGraphics, "UPtr", pPen, "UPtr", &PointsF, "UInt", iCount)
 }
 
 ;#####################################################################################
@@ -1080,10 +1115,8 @@ Gdip_DrawArc(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle) {
    return DllCall("gdiplus\GdipDrawArc"
                , Ptr, pGraphics
                , Ptr, pPen
-               , "float", x
-               , "float", y
-               , "float", w
-               , "float", h
+               , "float", x, "float", y
+               , "float", w, "float", h
                , "float", StartAngle
                , "float", SweepAngle)
 }
@@ -1327,7 +1360,7 @@ Gdip_FillPath(pGraphics, pBrush, pPath) {
 }
 ;#####################################################################################
 
-; Function        Gdip_FillClosedCurve2
+; Function        Gdip_FillClosedCurve
 ; Description     This function fills a closed cardinal spline on a pGraphics object
 ;                 using a pBrush object.
 ;                 A cardinal spline is a curve that passes through each point in the array.
@@ -1347,10 +1380,13 @@ Gdip_FillPath(pGraphics, pBrush, pPath) {
 ;
 ; return          status enumeration. 0 = success
 
-Gdip_FillClosedCurve2(pGraphics, pBrush, Points, Tension:=1, FillMode:=0) {
+Gdip_FillClosedCurve(pGraphics, pBrush, Points, Tension:="", FillMode:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    iCount := CreatePointsF(PointsF, Points)
-   Return DllCall("gdiplus\GdipFillClosedCurve2", Ptr, pGraphics, Ptr, pBrush, "UPtr", &PointsF, "int", iCount, "float", Tension, "int", FillMode)
+   If Tension
+      Return DllCall("gdiplus\GdipFillClosedCurve2", Ptr, pGraphics, Ptr, pBrush, "UPtr", &PointsF, "int", iCount, "float", Tension, "int", FillMode)
+   Else
+      Return DllCall("gdiplus\GdipFillClosedCurve", Ptr, pGraphics, Ptr, pBrush, "UPtr", &PointsF, "int", iCount)
 }
 
 ;#####################################################################################
@@ -1484,22 +1520,40 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
    _E := DllCall("gdiplus\GdipDrawImageRectRect"
             , Ptr, pGraphics
             , Ptr, pBitmap
-            , "float", dX
-            , "float", dY
-            , "float", dW
-            , "float", dH
-            , "float", sX
-            , "float", sY
-            , "float", sW
-            , "float", sH
-            , "int", Unit
-            , Ptr, ImageAttr
-            , Ptr, 0
-            , Ptr, 0)
+            , "float", dX, "float", dY
+            , "float", dW, "float", dH
+            , "float", sX, "float", sY
+            , "float", sW, "float", sH
+            , "int", Unit, Ptr, ImageAttr
+            , Ptr, 0, Ptr, 0)
 
    if (ImageAttr && usrImageAttr!=1)
       Gdip_DisposeImageAttributes(ImageAttr)
 
+   return _E
+}
+
+Gdip_DrawImageFast(pGraphics, pBitmap, X, Y) {
+; this function performs faster than Gdip_DrawImage()
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   _E := DllCall("gdiplus\GdipDrawImage"
+            , Ptr, pGraphics
+            , Ptr, pBitmap
+            , "float", X
+            , "float", Y)
+   return _E
+}
+
+Gdip_DrawImageRect(pGraphics, pBitmap, X, Y, W, H) {
+; this function performs faster than Gdip_DrawImage()
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   _E := DllCall("gdiplus\GdipDrawImageRect"
+            , Ptr, pGraphics
+            , Ptr, pBitmap
+            , "float", X
+            , "float", Y
+            , "float", W
+            , "float", H)
    return _E
 }
 
@@ -2114,6 +2168,13 @@ Gdip_BitmapSetResolution(pBitmap, dpix, dpiy) {
    return DllCall("gdiplus\GdipBitmapSetResolution", A_PtrSize ? "UPtr" : "uint", pBitmap, "float", dpix, "float", dpiy)
 }
 
+Gdip_CreateBitmapFromGraphics(pGraphics, Width, Height) {
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  PtrA := A_PtrSize ? "UPtr*" : "UInt*"
+  DllCall("gdiplus\GdipCreateBitmapFromGraphics", "int", Width, "int", Height, Ptr, pGraphics, PtrA, pBitmap)
+  Return pBitmap
+}
+
 Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="") {
    pBitmap := ""
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -2432,13 +2493,13 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0) {
 ; pPen objects can have gradients or textures.
 ;#####################################################################################
 
-Gdip_CreatePen(ARGB, w) {
-   E := DllCall("gdiplus\GdipCreatePen1", "UInt", ARGB, "float", w, "int", 2, A_PtrSize ? "UPtr*" : "UInt*", pPen)
+Gdip_CreatePen(ARGB, w, Unit:=2) {
+   E := DllCall("gdiplus\GdipCreatePen1", "UInt", ARGB, "float", w, "int", Unit, A_PtrSize ? "UPtr*" : "UInt*", pPen)
    return pPen
 }
 
-Gdip_CreatePenFromBrush(pBrush, w, unit:=2) {
-; unit  - Unit of measurement for the pen size:
+Gdip_CreatePenFromBrush(pBrush, w, Unit:=2) {
+; Unit  - Unit of measurement for the pen size:
 ; 0 - World coordinates, a non-physical unit
 ; 1 - Display units
 ; 2 - A unit is 1 pixel [default]
@@ -4090,60 +4151,40 @@ Gdip_AddPathPolygon(pPath, Points) {
    return DllCall("gdiplus\GdipAddPathPolygon", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
-Gdip_AddPathClosedCurve(pPath, Points) {
-; Adds a closed cardinal spline to a path.
-; A cardinal spline is a curve that passes through each point in the array.
-
-; Parameters:
-; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
-
-  Ptr := A_PtrSize ? "UPtr" : "UInt"
-  iCount := CreatePointsF(PointsF, Points)
-  return DllCall("gdiplus\GdipAddPathClosedCurve", Ptr, pPath, Ptr, &PointsF, "int", iCount)
-}
-
-Gdip_AddPathClosedCurve2(pPath, Points, Tension:=1) {
+Gdip_AddPathClosedCurve(pPath, Points, Tension:="") {
 ; Adds a closed cardinal spline to a path.
 ; A cardinal spline is a curve that passes through each point in the array.
 ;
 ; Parameters:
 ; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]
 ; Tension: Non-negative real number that controls the length of the curve and how the curve bends. A value of
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
   iCount := CreatePointsF(PointsF, Points)
-  return DllCall("gdiplus\GdipAddPathClosedCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
+  If Tension
+     return DllCall("gdiplus\GdipAddPathClosedCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
+  Else
+     return DllCall("gdiplus\GdipAddPathClosedCurve", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
-Gdip_AddPathCurve(pPath, Points) {
+Gdip_AddPathCurve(pPath, Points, Tension:="") {
 ; Adds a cardinal spline to the current figure of a path
 ; A cardinal spline is a curve that passes through each point in the array.
 ;
 ; Parameters:
 ; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
-
-  Ptr := A_PtrSize ? "UPtr" : "UInt"
-  iCount := CreatePointsF(PointsF, Points)
-  return DllCall("gdiplus\GdipAddPathCurve", Ptr, pPath, Ptr, &PointsF, "int", iCount)
-}
-
-Gdip_AddPathCurve2(pPath, Points, Tension:=1) {
-; Adds a cardinal spline to the current figure of a path
-; A cardinal spline is a curve that passes through each point in the array.
-;
-; Parameters:
-; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]
 ; Tension: Non-negative real number that controls the length of the curve and how the curve bends. A value of
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
 
   Ptr := A_PtrSize ? "UPtr" : "UInt"
   iCount := CreatePointsF(PointsF, Points)
-  return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
+  If Tension
+     return DllCall("gdiplus\GdipAddPathCurve2", Ptr, pPath, Ptr, &PointsF, "int", iCount, "float", Tension)
+  Else
+     return DllCall("gdiplus\GdipAddPathCurve", Ptr, pPath, Ptr, &PointsF, "int", iCount)
 }
 
 Gdip_AddPathToPath(pPathA, pPathB, fConnect) {
@@ -5674,7 +5715,6 @@ Gdip_ClosePathFigure(pPath) {
   return DllCall("gdiplus\GdipClosePathFigure", Ptr, pPath)
 }
 
-
 ;#####################################################################################
 ; Function: Gdip_DrawPath
 ; Description: Draws a sequence of lines and curves defined by a GraphicsPath object
@@ -6055,7 +6095,6 @@ Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor) {
   Gdip_DeletePen(pPen) 
 }
 
-
 Gdi_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) {
 ; This function creates a hBitmap from a pointer of data-bits [pBits]
 ; The hBitmap is created according to the information found in
@@ -6076,6 +6115,12 @@ Gdi_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) 
             , "uint", DIB_COLORS, Ptr)    ; PAL=1 ; RGB=2
 
    Return hBitmap
+}
+
+Gdip_CreateBitmapFromGdiDib(BITMAPINFO, BitmapData) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E := DllCall("gdiplus\GdipCreateBitmapFromGdiDib", Ptr, BITMAPINFO, Ptr, BitmapData, "UPtr*", pBitmap)
+   Return pBitmap
 }
 
 Gdi_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
@@ -6254,7 +6299,7 @@ Gdip_CreateEffect(whichFX, paramA, paramB, paramC:=0) {
        Return "err-" r2
 
     ; r2 := GetStatus(A_LineNumber ":GdipCreateEffect", r2)
-    FXsize := 8
+
     VarSetCapacity(FXparams, 16, 0)
     If (whichFX=1)   ; Blur FX
     {
@@ -6273,19 +6318,18 @@ Gdip_CreateEffect(whichFX, paramA, paramB, paramC:=0) {
        NumPut(paramA, FXparams, 0, "Int")     ; range hue [-180, 180]
        NumPut(paramB, FXparams, 4, "Int")     ; range saturation [-100, 100]
        NumPut(paramC, FXparams, 8, "Int")     ; range light [-100, 100]
-       FXsize := 12
     } Else If (whichFX=7)   ; levels adjust
     {
        NumPut(paramA, FXparams, 0, "Int")     ; range highlights [0, 100]
        NumPut(paramB, FXparams, 4, "Int")     ; range midtones [-100, 100]
        NumPut(paramC, FXparams, 8, "Int")     ; range shadows [0, 100]
-       FXsize := 12
     } Else If (whichFX=8)   ; tint adjust
     {
        NumPut(paramA, FXparams, 0, "Int")     ; range hue [180, 180]
        NumPut(paramB, FXparams, 4, "Int")     ; range amount [0, 100]
     }
 
+    DllCall("gdiplus\GdipGetEffectParameterSize", Ptr, pEffect, "uint*", FXsize)
     r3 := DllCall("gdiplus\GdipSetEffectParameters", Ptr, pEffect, Ptr, &FXparams, "UInt", FXsize)
     If r3
     {
