@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.74 on 09/19/2019
 ; - v1.73 on 09/17/2019
 ; - v1.72 on 09/16/2019
 ; - v1.71 on 09/15/2019
@@ -43,6 +44,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 09/19/2019 = Added 4 new functions and improved Gdip_RotateBitmapAtCenter() [ Marius Șucan ]
 ; - 09/17/2019 = Added 6 new GDI+ functions and renamed curve related functions [ Marius Șucan ]
 ; - 09/16/2019 = Added 10 new GDI+ functions [ Marius Șucan ]
 ; - 09/15/2019 = Added 3 new GDI+ functions and improved Gdip_DrawStringAlongPolygon() [ Marius Șucan ]
@@ -109,18 +111,8 @@
 ; ProfileNotFound          = 21
 ;
 ;#####################################################################################
-; FUNCTIONS
-;#####################################################################################
-;
-; UpdateLayeredWindow(hwnd, hdc, x:="", y:="", w:="", h:="", Alpha:=255)
-; BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, Raster:="")
-; StretchBlt(dDC, dx, dy, dw, dh, sDC, sx, sy, sw, sh, Raster:="")
-; SetImage(hwnd, hBitmap)
-; Gdip_BitmapFromScreen(Screen:=0, Raster:="")
-; CreateRectF(ByRef RectF, x, y, w, h)
-; CreateSizeF(ByRef SizeF, w, h)
-; CreateDIBSection
-;
+; FUNCTIONS LIST
+; See functions-list.txt file.
 ;#####################################################################################
 
 ; Function:             UpdateLayeredWindow
@@ -263,10 +255,15 @@ StretchBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, sw, sh, Raster:="") {
 
 SetStretchBltMode(hdc, iStretchMode:=4) {
 ; iStretchMode options:
-; STRETCH_ANDSCANS      = 0x01
-; STRETCH_ORSCANS       = 0x02
-; STRETCH_DELETESCANS   = 0x03
-; STRETCH_HALFTONE      = 0x04
+; BLACKONWHITE = 1
+; COLORONCOLOR = 3
+; HALFTONE = 4
+; WHITEONBLACK = 2
+; STRETCH_ANDSCANS = BLACKONWHITE
+; STRETCH_DELETESCANS = COLORONCOLOR
+; STRETCH_HALFTONE = HALFTONE
+; STRETCH_ORSCANS = WHITEONBLACK
+
    return DllCall("gdi32\SetStretchBltMode"
                , A_PtrSize ? "UPtr" : "UInt", hdc
                , "int", iStretchMode)
@@ -532,17 +529,18 @@ CreatePointsF(ByRef PointsF, inPoints) {
 ; notes              ppvBits will receive the location of the pixels in the DIB
 
 CreateDIBSection(w, h, hdc:="", bpp:=32, ByRef ppvBits:=0) {
-   Ptr := A_PtrSize ? "UPtr" : "UInt"
+; A GDI function that creates a new hBitmap,
+; a device-independent bitmap [DIB].
 
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
    hdc2 := hdc ? hdc : GetDC()
    VarSetCapacity(bi, 40, 0)
-
+   NumPut(40, bi, 0, "uint")
    NumPut(w, bi, 4, "uint")
-   , NumPut(h, bi, 8, "uint")
-   , NumPut(40, bi, 0, "uint")
-   , NumPut(1, bi, 12, "ushort")
-   , NumPut(0, bi, 16, "uInt")
-   , NumPut(bpp, bi, 14, "ushort")
+   NumPut(h, bi, 8, "uint")
+   NumPut(1, bi, 12, "ushort")
+   NumPut(bpp, bi, 14, "ushort")
+   NumPut(0, bi, 16, "uInt")
 
    hbm := DllCall("CreateDIBSection"
                , Ptr, hdc2
@@ -595,8 +593,7 @@ DestroyIcon(hIcon) {
 ; Description:       Retrieves a given icon/cursor's width and height 
 ;
 ; hIcon              Pointer to an icon or cursor
-; Width              ByRef variable. This variable is set to the icon's width
-; Height             ByRef variable. This variable is set to the icon's height
+; Width, Height      ByRef variables. These variables are set to the icon's width and height
 ;
 ; return             If the function succeeds, the return value is zero, otherwise:
 ;                    -1 = Could not retrieve the icon's info. Check A_LastError for extended information
@@ -632,10 +629,6 @@ GetIconDimensions(hIcon, ByRef Width, ByRef Height) {
 
 PaintDesktop(hdc) {
    return DllCall("PaintDesktop", A_PtrSize ? "UPtr" : "UInt", hdc)
-}
-
-CreateCompatibleBitmap(hdc, w, h) {
-   return DllCall("gdi32\CreateCompatibleBitmap", A_PtrSize ? "UPtr" : "UInt", hdc, "int", w, "int", h)
 }
 
 ;#####################################################################################
@@ -678,7 +671,6 @@ CreateCompatibleDC(hdc:=0) {
 
 SelectObject(hdc, hgdiobj) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("SelectObject", Ptr, hdc, Ptr, hgdiobj)
 }
 
@@ -710,8 +702,7 @@ GetDC(hwnd:=0) {
    return DllCall("GetDC", A_PtrSize ? "UPtr" : "UInt", hwnd)
 }
 
-;#####################################################################################
-
+; Device Context extended flags:
 ; DCX_CACHE = 0x2
 ; DCX_CLIPCHILDREN = 0x8
 ; DCX_CLIPSIBLINGS = 0x10
@@ -728,7 +719,6 @@ GetDC(hwnd:=0) {
 
 GetDCEx(hwnd, flags:=0, hrgnClip:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("GetDCEx", Ptr, hwnd, Ptr, hrgnClip, "int", flags)
 }
 
@@ -789,10 +779,10 @@ Gdip_LibraryVersion() {
 ;
 ; notes           This is the sub-version currently maintained by Rseding91
 ;                 Updated by guest3456 preliminary AHK v2 support
-;                 Updated by Marius Șucan reflecting the work on Gdip_all compilation
+;                 Updated by Marius Șucan reflecting the work on Gdip_all extended compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.73
+   return 1.74
 }
 
 ;#####################################################################################
@@ -1534,7 +1524,10 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
 }
 
 Gdip_DrawImageFast(pGraphics, pBitmap, X, Y) {
-; this function performs faster than Gdip_DrawImage()
+; This function performs faster than Gdip_DrawImage().
+; X, Y - the coordinates of the destination upper-left corner
+; where the pBitmap will be drawn.
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    _E := DllCall("gdiplus\GdipDrawImage"
             , Ptr, pGraphics
@@ -1545,7 +1538,10 @@ Gdip_DrawImageFast(pGraphics, pBitmap, X, Y) {
 }
 
 Gdip_DrawImageRect(pGraphics, pBitmap, X, Y, W, H) {
-; this function performs faster than Gdip_DrawImage()
+; X, Y - the coordinates of the destination upper-left corner
+; where the pBitmap will be drawn.
+; W, H - the width and height of the destination rectangle, where the pBitmap will be drawn.
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    _E := DllCall("gdiplus\GdipDrawImageRect"
             , Ptr, pGraphics
@@ -1775,18 +1771,14 @@ Gdip_GraphicsFromHDC(hdc) {
    return pGraphics
 }
 
-Gdip_GraphicsFromHWND(HWND) {
-   pGraphics := ""
-   DllCall("gdiplus\GdipCreateFromHWND", A_PtrSize ? "UPtr" : "UInt", HWND, A_PtrSize ? "UPtr*" : "UInt*", pGraphics)
-   return pGraphics
-}
-
-Gdip_GraphicsFromHWNDicm(HWND) {
+Gdip_GraphicsFromHWND(HWND, useICM:=0) {
 ; Creates a pGraphics object that is associated with a specified window handle [HWND]
-; The created graphics uses ICM [color management - (International Color Consortium = ICC)].
-
+; If useICM=1, the created graphics uses ICM [color management - (International Color Consortium = ICC)].
    pGraphics := ""
-   DllCall("gdiplus\GdipCreateFromHWNDICM", A_PtrSize ? "UPtr" : "UInt", HWND, A_PtrSize ? "UPtr*" : "UInt*", pGraphics)
+   If (useICM=1)
+      DllCall("gdiplus\GdipCreateFromHWNDICM", A_PtrSize ? "UPtr" : "UInt", HWND, A_PtrSize ? "UPtr*" : "UInt*", pGraphics)
+   Else
+      DllCall("gdiplus\GdipCreateFromHWND", A_PtrSize ? "UPtr" : "UInt", HWND, A_PtrSize ? "UPtr*" : "UInt*", pGraphics)
    return pGraphics
 }
 
@@ -2245,10 +2237,14 @@ Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="") {
    return pBitmap
 }
 
-Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0) {
+Gdip_CreateBitmapFromHBITMAP(hBitmap, hPalette:=0) {
+; Creates a Bitmap GDI+ object from a GDI bitmap handle.
+; hPalette - Handle to a GDI palette used to define the bitmap colors
+; if the hBitmap is a device-dependent bitmap [DDB].
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    pBitmap := ""
-   DllCall("gdiplus\GdipCreateBitmapFromHBITMAP", Ptr, hBitmap, Ptr, Palette, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
+   DllCall("gdiplus\GdipCreateBitmapFromHBITMAP", Ptr, hBitmap, Ptr, hPalette, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
    return pBitmap
 }
 
@@ -2269,11 +2265,14 @@ Gdip_CreateHICONFromBitmap(pBitmap) {
    return hIcon
 }
 
-Gdip_CreateBitmap(Width, Height, Format:=0x26200A) {
+Gdip_CreateBitmap(Width, Height, PixelFormat:=0) {
 ; By default, this function creates a new 32-ARGB bitmap.
 
    pBitmap := ""
-   DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", 0, "int", Format, A_PtrSize ? "UPtr" : "UInt", 0, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
+   If !PixelFormat
+      PixelFormat := 0x26200A  ; 32-ARGB
+
+   DllCall("gdiplus\GdipCreateBitmapFromScan0", "int", Width, "int", Height, "int", 0, "int", PixelFormat, A_PtrSize ? "UPtr" : "UInt", 0, A_PtrSize ? "UPtr*" : "uint*", pBitmap)
    Return pBitmap
 }
 
@@ -2342,25 +2341,31 @@ Gdip_SetBitmapToClipboard(pBitmap) {
    Return E
 }
 
-Gdip_CloneBitmapArea(pBitmap, x, y, w, h, Format:=0x26200A) {
+Gdip_CloneBitmapArea(pBitmap, x, y, w, h, PixelFormat:=0, KeepPixelFormat:=0) {
 ; The new pBitmap is by default in the 32-ARGB PixelFormat.
 ;
 ; If the specified coordinates exceed the boundaries of pBitmap
 ; the resulted pBitmap is erroneuous / defective.
+
+   If !PixelFormat
+      PixelFormat := 0x26200A    ; 32-ARGB
+
+   If (KeepPixelFormat=1)
+      PixelFormat := Gdip_GetImagePixelFormat(pBitmap, 1)
 
    E := DllCall("gdiplus\GdipCloneBitmapArea"
                , "float", x
                , "float", y
                , "float", w
                , "float", h
-               , "int", Format
+               , "int", PixelFormat
                , A_PtrSize ? "UPtr" : "UInt", pBitmap
                , A_PtrSize ? "UPtr*" : "UInt*", pBitmapDest)
    return pBitmapDest
 }
 
 Gdip_CloneBitmap(pBitmap) {
-; the PixelFormat remains the same on cloning
+; the new pBitmap will have the same PixelFormat, unchanged.
 
    E := DllCall("gdiplus\GdipCloneImage"
                , A_PtrSize ? "UPtr" : "UInt", pBitmap
@@ -2448,14 +2453,15 @@ Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1) {
    return DllCall("gdiplus\GdipImageRotateFlip", A_PtrSize ? "UPtr" : "UInt", pBitmap, "int", RotateFlipType)
 }
 
-Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0) {
+Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7) {
 ; the pBrush will be used to fill the background of the image
 ; by default, it is black
+; It returns the pointer to a new pBitmap.
 
     If !Angle
     {
-       newBitmap := Gdip_CloneBitmap(pBitmap)
-       Return newBitmap
+       clonedBitmap := Gdip_CloneBitmap(pBitmap)
+       Return clonedBitmap
     }
 
     If !pBrush
@@ -2467,23 +2473,40 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0) {
     Gdip_GetImageDimensions(pBitmap, Width, Height)
     Gdip_GetRotatedDimensions(Width, Height, Angle, RWidth, RHeight)
     Gdip_GetRotatedTranslation(Width, Height, Angle, xTranslation, yTranslation)
-    hbm := CreateDIBSection(RWidth, RHeight)
-    hdc := CreateCompatibleDC()
-    obm := SelectObject(hdc, hbm)
-    G := Gdip_GraphicsFromHDC(hdc)
-    Gdip_SetInterpolationMode(G, 7)
+    newBitmap := Gdip_CreateBitmap(RWidth, RHeight)
+    G := Gdip_GraphicsFromImage(newBitmap)
+    Gdip_SetInterpolationMode(G, InterpolationMode)
     Gdip_FillRectangle(G, pBrush, 0, 0, Width, Height)
     Gdip_TranslateWorldTransform(G, xTranslation, yTranslation)
     Gdip_RotateWorldTransform(G, Angle)
-    Gdip_DrawImage(G, pBitmap, 0, 0, Width, Height, 0, 0, Width, Height)
-    newBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
-    SelectObject(hdc, obm)
-    DeleteObject(hbm)
-    DeleteDC(hdc)
+    Gdip_DrawImageRect(G, pBitmap, 0, 0, Width, Height)
     Gdip_DeleteGraphics(G)
     If (defaultBrush=1)
        Gdip_DeleteBrush(pBrush)
 
+    Return newBitmap
+}
+
+Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, KeepPixelFormat:=0) {
+; It returns a pointer to a new pBitmap.
+
+    Gdip_GetImageDimensions(pBitmap, Width, Height)
+    If (KeepRatio=1)
+    {
+       calcIMGdimensions(Width, Height, givenW, givenH, ResizedW, ResizedH)
+    } Else
+    {
+       ResizedW := givenW
+       ResizedH := givenH
+    }
+
+    If (KeepPixelFormat=1)
+       PixelFormat := Gdip_GetImagePixelFormat(pBitmap, 1)
+    newBitmap := Gdip_CreateBitmap(ResizedW, ResizedH, PixelFormat)
+    G := Gdip_GraphicsFromImage(newBitmap)
+    Gdip_SetInterpolationMode(G, InterpolationMode)
+    Gdip_DrawImageRect(G, pBitmap, 0, 0, ResizedW, ResizedH)
+    Gdip_DeleteGraphics(G)
     Return newBitmap
 }
 
@@ -4411,9 +4434,9 @@ Gdip_SetSmoothingMode(pGraphics, SmoothingMode) {
    return DllCall("gdiplus\GdipSetSmoothingMode", A_PtrSize ? "UPtr" : "UInt", pGraphics, "int", SmoothingMode)
 }
 
-Gdip_SetCompositingMode(pGraphics, CompositingMode:=0) {
-; CompositingModeSourceOver = 0 (blended)
-; CompositingModeSourceCopy = 1 (overwrite)
+Gdip_SetCompositingMode(pGraphics, CompositingMode) {
+; CompositingMode_SourceOver = 0 (blended / default)
+; CompositingMode_SourceCopy = 1 (overwrite)
 
    return DllCall("gdiplus\GdipSetCompositingMode", A_PtrSize ? "UPtr" : "UInt", pGraphics, "int", CompositingMode)
 }
@@ -6095,13 +6118,21 @@ Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor) {
   Gdip_DeletePen(pPen) 
 }
 
+CreateCompatibleBitmap(hdc, w, h) {
+; Creates a GDI bitmap; it can be a DIB or DDB.
+   return DllCall("gdi32\CreateCompatibleBitmap", A_PtrSize ? "UPtr" : "UInt", hdc, "int", w, "int", h)
+}
+
 Gdi_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) {
-; This function creates a hBitmap from a pointer of data-bits [pBits]
+; This function creates a hBitmap, a device-dependent bitmap [DDB]
+; from a pointer of data-bits [pBits].
+;
 ; The hBitmap is created according to the information found in
-; BITMAPINFO and bmpInfoHeader pointers.
+; the BITMAPINFO and bmpInfoHeader pointers.
+;
 ; If the function fails, the return value is NULL,
 ; otherwise a handle to the hBitmap
-
+;
 ; Function written by Marius Șucan.
 ; Many thanks to Drugwash for the help offered.
 
@@ -6123,11 +6154,34 @@ Gdip_CreateBitmapFromGdiDib(BITMAPINFO, BitmapData) {
    Return pBitmap
 }
 
+Gdi_StretchDIBits(hDestDC, dX, dY, dW, dH, sX, sY, sW, sH, tBITMAPINFO, Usage, pBits, Rop) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("StretchDIBits"
+      , Ptr, hDestDC, "int", dX, "int", dY
+      , "int", dW, "int", dH, "int", sX, "int", sY
+      , "int", sW, "int", sH, Ptr, pBits, Ptr, tBITMAPINFO
+      , "int", Usage, "uint", Rop)
+}
+
+Gdi_SetDIBitsToDevice(hDC, dX, dY, Width, Height, sX, sY, StartScan, ScanLines, pBits, BITMAPINFO, DIB_COLORS) {
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   Return DllCall("SetDIBitsToDevice", Ptr, hDC
+         , "int", dX, "int", dY
+         , "uint", Width, "uint", Height
+         , "int", sX, "int", sY
+         , "uint", StartScan, "uint", ScanLines
+         , Ptr, pBits, Ptr, BITMAPINFO, "uint", DIB_COLORS)
+}
+
 Gdi_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
-; This function returns the data-bits from a hBitmap
-; into the pBits pointer.
+; hdc     - A handle to the device context.
+; hBitmap - A handle to the GDI bitmap. This must be a compatible bitmap (DDB).
+;
+; This function returns the data-bits as device-independent bitmap
+; from a hBitmap into the pBits pointer.
+;
 ; Return: if the function fails, the return value is zero.
-; It can also return ERROR_INVALID_PARAMETER
+; It can also return ERROR_INVALID_PARAMETER.
 ; Function written by Marius Șucan.
 
    Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -6504,4 +6558,76 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
     }
     Return matrix
 }
+
+Gdip_CompareBitmaps(pBitmapA, pBitmapB, accuracy:=25) {
+; On success, it returns the percentage of similarity between the given pBitmaps.
+; If the given pBitmaps do not have the same resolution, 
+; the return value is -1.
+;
+; Function by Tic, from June 2010
+; Source: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-27
+;
+; Warning: it can be very slow with really large images and high accuracy.
+;
+; Updated and modified by Marius Șucan in September 2019.
+; Added accuracy factor.
+
+   If (accuracy>99)
+      accuracy := 99
+   Else If (accuracy<5)
+      accuracy := 5
+
+   Gdip_GetImageDimensions(pBitmapA, WidthA, HeightA)
+   Gdip_GetImageDimensions(pBitmapB, WidthB, HeightB)
+   pBitmap1 := Gdip_ResizeBitmap(pBitmapA, Floor(WidthA*(accuracy/100)), Floor(HeightA*(accuracy/100)), 0, 5)
+   pBitmap2 := Gdip_ResizeBitmap(pBitmapB, Floor(WidthB*(accuracy/100)), Floor(HeightB*(accuracy/100)), 0, 5)
+
+   Gdip_GetImageDimensions(pBitmap1, Width1, Height1)
+   Gdip_GetImageDimensions(pBitmap2, Width2, Height2)
+   if (!Width1 || !Height1 || !Width2 || !Height2
+   || Width1 != Width2 || Height1 != Height2)
+      Return -1
+
+   E1 := Gdip_LockBits(pBitmap1, 0, 0, Width1, Height1, Stride1, Scan01, BitmapData2)
+   E2 := Gdip_LockBits(pBitmap2, 0, 0, Width2, Height2, Stride2, Scan02, BitmapData2)
+   z := 0
+   Loop, %Height1%
+   {
+      y++
+      Loop, %Width1%
+      {
+         Gdip_FromARGB(Gdip_GetLockBitPixel(Scan01, A_Index-1, y-1, Stride1), A1, R1, G1, B1)
+         Gdip_FromARGB(Gdip_GetLockBitPixel(Scan02, A_Index-1, y-1, Stride2), A2, R2, G2, B2)
+         z += Abs(A2-A1) + Abs(R2-R1) + Abs(G2-G1) + Abs(B2-B1)
+      }
+   }
+
+   Gdip_UnlockBits(pBitmap1, BitmapData1), Gdip_UnlockBits(pBitmap2, BitmapData2)
+   Gdip_DisposeImage(pBitmap1), Gdip_DisposeImage(pBitmap2)
+   return z/(Width1*Width2*3*255/100)
+}
+
+calcIMGdimensions(imgW, imgH, givenW, givenH, ByRef ResizedW, ByRef ResizedH) {
+   PicRatio := Round(imgW/imgH, 5)
+   givenRatio := Round(givenW/givenH, 5)
+   If (imgW <= givenW) && (imgH <= givenH)
+   {
+      ResizedW := givenW
+      ResizedH := Round(ResizedW / PicRatio)
+      If (ResizedH>givenH)
+      {
+         ResizedH := (imgH <= givenH) ? givenH : imgH
+         ResizedW := Round(ResizedH * PicRatio)
+      }   
+   } Else If (PicRatio > givenRatio)
+   {
+      ResizedW := givenW
+      ResizedH := Round(ResizedW / PicRatio)
+   } Else
+   {
+      ResizedH := (imgH >= givenH) ? givenH : imgH         ;set the maximum picture height to the original height
+      ResizedW := Round(ResizedH * PicRatio)
+   }
+}
+
 
