@@ -8,7 +8,7 @@
 SetBatchLines, -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-;#Include, Gdip.ahk
+#Include, ..\Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
@@ -86,6 +86,7 @@ Return
 
 ;#######################################################################
 
+Esc::
 Exit:
 ; gdi+ may now be shutdown on exiting the program
 Gdip_Shutdown(pToken)

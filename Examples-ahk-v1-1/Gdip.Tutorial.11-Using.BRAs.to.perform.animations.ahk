@@ -7,7 +7,7 @@
 #NoEnv
 
 ; Uncomment if Gdip.ahk is not in your standard library
-;#Include, Gdip.ahk
+#Include, ..\Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
@@ -303,14 +303,15 @@ return
 ;#######################################################################
 
 ; Our function for WM_LBUTTONDOWN allowing us to drag. works on last found window
-WM_LBUTTONDOWN()
-{
+
+WM_LBUTTONDOWN() {
 	PostMessage, 0xA1, 2
 }
 
 ;#######################################################################
 
 ; On Exit clean up resources
+Esc::
 Exit:
 ; Select the object back into the hdc
 SelectObject(hdc, obm)

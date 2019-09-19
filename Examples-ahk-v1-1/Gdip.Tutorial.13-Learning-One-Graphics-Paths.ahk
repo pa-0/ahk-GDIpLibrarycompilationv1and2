@@ -7,12 +7,10 @@ Gui 1: Show, NA
 w := 550, h := 280
 OnMessage(0x201, "WM_LBUTTONDOWN")
 
-
 ;===GDI+ prepare ===
 pToken := Gdip_Startup()
 hbm := CreateDIBSection(w, h), hdc := CreateCompatibleDC(), obm := SelectObject(hdc, hbm)
 G := Gdip_GraphicsFromHDC(hdc), Gdip_SetSmoothingMode(G, 4)
-
 
 ;=== Background ===
 pBrush := Gdip_CreateLineBrushFromRect(0, 0, w, h, 0xff555555, 0xff050505)
@@ -58,7 +56,6 @@ Gdip_DeletePen(pPen)
 
 Gdip_DeletePath(pPath) ; delete the Path as it is no longer needed and wastes memory
 
-
 ;=== Update, Delete, Shutdown ===
 UpdateLayeredWindow(hGui, hdc, (A_ScreenWidth-w)//2, (A_ScreenHeight-h)//2, w, h)
 SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
@@ -66,12 +63,10 @@ Gdip_DeleteGraphics(G)
 Gdip_Shutdown(pToken)
 return
 
-
 Esc::ExitApp
-
 
 ;===Functions===========================================================================
 
 WM_LBUTTONDOWN() {
-PostMessage, 0xA1, 2
+    PostMessage, 0xA1, 2
 }

@@ -8,7 +8,7 @@
 SetBatchLines, -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-;#Include, Gdip.ahk
+#Include, ..\Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
@@ -82,13 +82,14 @@ Return
 
 ; This function is called every time the user clicks on the gui
 ; The PostMessage will act on the last found window (this being the gui that launched the subroutine, hence the last parameter not being needed)
-WM_LBUTTONDOWN()
-{
+
+WM_LBUTTONDOWN() {
 	PostMessage, 0xA1, 2
 }
 
 ;#######################################################################
 
+Esc::
 Exit:
 ; gdi+ may now be shutdown on exiting the program
 Gdip_Shutdown(pToken)

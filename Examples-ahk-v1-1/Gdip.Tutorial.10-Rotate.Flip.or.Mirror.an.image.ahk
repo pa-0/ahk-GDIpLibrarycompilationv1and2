@@ -8,7 +8,7 @@
 SetBatchLines, -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-;#Include, Gdip.ahk
+#Include, ..\Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
@@ -152,10 +152,9 @@ Return
 ;#####################################################################
 
 ; This is the function to allow the user to drag the image drawn on the screen (this being gui 2)
-WM_LBUTTONDOWN()
-{
+WM_LBUTTONDOWN() {
 	If (A_Gui = 2)
-	PostMessage, 0xA1, 2
+   	PostMessage, 0xA1, 2
 }
 
 ;#####################################################################

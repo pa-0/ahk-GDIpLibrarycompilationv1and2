@@ -57,6 +57,7 @@ Gdip_DeleteGraphics(G)
 Gdip_Shutdown(pToken)
 Gui Mapper: Destroy
 ExitApp
+Return
 
 ;HitTest if the mouse in inside the graphicspath
 OnWM_MOUSEMOVE(wParam, lParam, msg, hWnd) {

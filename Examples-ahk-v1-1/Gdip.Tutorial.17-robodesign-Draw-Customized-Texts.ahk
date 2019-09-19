@@ -47,7 +47,7 @@ G := Gdip_GraphicsFromHDC(hdc)
 Gdip_SetSmoothingMode(G, 4)
 
 ; fill the background 
-pBrushBgr := Gdip_BrushCreateSolid(0x88eeffee)
+pBrushBgr := Gdip_BrushCreateSolid(0xddeeffee)
 Gdip_FillRectangle(G, pBrushBgr, 1, 1, 990, 990)
 
 ; Create a slightly transparent (66) blue brush (ARGB = Transparency, red, green, blue) to draw a rectangle

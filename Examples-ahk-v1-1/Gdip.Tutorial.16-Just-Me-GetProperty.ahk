@@ -10,9 +10,11 @@ Gui, Show, , Pictures
 GoSub, SelectPics
 Return
 ;_______________________________________________________________________________________________________________________
+Esc::
 GuiClose:
    Gdip_Shutdown(GDIPToken)
 ExitApp
+Return
 ;_______________________________________________________________________________________________________________________
 SelectPics:
    StartingFolder := PicFolder <> "" ? "*" . PicFolder : ""

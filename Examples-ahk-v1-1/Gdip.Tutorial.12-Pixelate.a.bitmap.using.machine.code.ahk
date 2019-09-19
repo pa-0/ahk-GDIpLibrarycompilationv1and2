@@ -8,7 +8,7 @@
 SetBatchLines, -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-;#Include, Gdip.ahk
+#Include, ..\Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
@@ -84,8 +84,8 @@ return
 ;#######################################################################
 
 ; This is called on left click to allow to drag
-WM_LBUTTONDOWN()
-{
+
+WM_LBUTTONDOWN() {
    PostMessage, 0xA1, 2
 }
 

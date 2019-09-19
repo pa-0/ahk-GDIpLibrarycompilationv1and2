@@ -11,7 +11,7 @@ W := 200
 H := 200
 
 GdipToken := Gdip_Startup()
-Gui, New, hwndHGUI +LabelGUI, PathGradientBrush
+Gui, New, hwndHGUI -DPIScale +LabelGUI, PathGradientBrush
 Gui, Add, Pic, w%W% h%H% hwndHPIC
 ScaleX := 0.0 ; focus scale for x-axis (0.0 - 1.0)
 ScaleY := 0.0 ; focus scale for y-axis (0.0 - 1.0)
@@ -25,17 +25,15 @@ GoSub, PathGradientBrush
 Gui, Show
 Return
 
-GuiClose:
-GuiEscape:
-Gdip_ShutDown(GdipToken)
-ExitApp
-
 PathGradientBrush:
    PBitMap := Gdip_CreateBitmap(W, H)
    PGraphics := Gdip_GraphicsFromImage(PBitMap)
    Gdip_SetSmoothingMode(PGraphics, 4)
    PPath := Gdip_CreatePath(PGraphics)
-   Gdip_AddPathRectangle(PPath, 0, 0, W, H)
+   If (BlendFocus=0.5)
+      Gdip_AddPathRectangle(PPath, 0, 0, W, H)
+   Else
+      Gdip_AddPathEllipse(PPath, 0, 0, W, H)
    PBrush := Gdip_PathGradientCreateFromPath(PPath)
    Gdip_PathGradientSetCenterPoint(PBrush, W / 2, H / 2)
    Gdip_PathGradientSetCenterColor(PBrush, 0xFFFFFFFF)
@@ -57,5 +55,10 @@ PathGradientBrush:
    ; Done!
    DeleteObject(HBitmap)
 Return
-; ----------------------------------------------------------------------------------------------------------------------
 
+Esc::
+GuiClose:
+GuiEscape:
+Gdip_ShutDown(GdipToken)
+ExitApp
+Return
