@@ -367,7 +367,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=1, hMatrix:=0)
  - Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
  - Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
- - Gdip_DrawImageFast(pGraphics, pBitmap, X, Y)
+ - Gdip_DrawImageFast(pGraphics, pBitmap, X:=0, Y:=0)
  - Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, ImageAttr:=0, hMatrix:=0)
  - Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
  - Gdip_DrawImageRect(pGraphics, pBitmap, X, Y, W, H)

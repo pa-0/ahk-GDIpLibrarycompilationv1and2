@@ -1518,7 +1518,7 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
    return _E
 }
 
-Gdip_DrawImageFast(pGraphics, pBitmap, X, Y) {
+Gdip_DrawImageFast(pGraphics, pBitmap, X:=0, Y:=0) {
 ; This function performs faster than Gdip_DrawImage().
 ; X, Y - the coordinates of the destination upper-left corner
 ; where the pBitmap will be drawn.
@@ -6460,17 +6460,17 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
     {
        Ga := 0, Ba := 0, GGA := 0
        Ra := bright
-       matrix := Ra "|" Ra "|" Ra "|0|0|" Ga "|" Ga "|" Ga "|0|0|" Ba "|" Ba "|" Ba "|0|0|0|0|0|" alph "|0|" GGA+0.01 "|" GGA "|" GGA "|0|1"
+       matrix := Ra "|" Ra "|" Ra "|0|0|" Ga "|" Ga "|" Ga "|0|0|" Ba "|" Ba "|" Ba "|0|0|0|0|0|25|0|" GGA+0.01 "|" GGA "|" GGA "|0|1"
     } Else If (modus=4)       ; grayscale G
     {
        Ra := 0, Ba := 0, GGA := 0
        Ga := bright
-       matrix := Ra "|" Ra "|" Ra "|0|0|" Ga "|" Ga "|" Ga "|0|0|" Ba "|" Ba "|" Ba "|0|0|0|0|0|" alph "|0|" GGA "|" GGA+0.01 "|" GGA "|0|1"
+       matrix := Ra "|" Ra "|" Ra "|0|0|" Ga "|" Ga "|" Ga "|0|0|" Ba "|" Ba "|" Ba "|0|0|0|0|0|25|0|" GGA "|" GGA+0.01 "|" GGA "|0|1"
     } Else If (modus=5)       ; grayscale B
     {
        Ra := 0, Ga := 0, GGA := 0
        Ba := bright
-       matrix := Ra "|" Ra "|" Ra "|0|0|" Ga "|" Ga "|" Ga "|0|0|" Ba "|" Ba "|" Ba "|0|0|0|0|0|" alph "|0|" GGA "|" GGA "|" GGA+0.01 "|0|1"
+       matrix := Ra "|" Ra "|" Ra "|0|0|" Ga "|" Ga "|" Ga "|0|0|" Ba "|" Ba "|" Ba "|0|0|0|0|0|25|0|" GGA "|" GGA "|" GGA+0.01 "|0|1"
     } Else If (modus=6)  ; negative / invert
     {
        matrix := "-1|0|0|0|0|0|-1|0|0|0|0|0|-1|0|0|0|0|0|" alph "|0|1|1|1|0|1"
@@ -6678,6 +6678,9 @@ Gdip_RenderPixelsOpaque(pBitmap, pBrush:=0, alphaLevel:=0) {
        matrix := GenerateColorMatrix(0, 0, 0, 1, alphaLevel)
     Else
        matrix := GenerateColorMatrix(0, 0, 0, 1, 25)
+    If pBrush
+       Gdip_FillRectangle(G, pBrush, 0, 0, imgW, imgH)
+
     Gdip_DrawImage(G, pBitmap, 0, 0, imgW, imgH, 0, 0, imgW, imgH, matrix)
     Gdip_DeleteGraphics(G)
     Return newBitmap
