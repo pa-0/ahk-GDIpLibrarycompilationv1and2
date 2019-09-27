@@ -201,7 +201,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_RenderPixelsOpaque(pBitmap, pBrush:=0, alphaLevel:=0)
  - Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, KeepPixelFormat:=0)
  - Gdip_RetrieveBitmapChannel(pBitmap, channel)
- - Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7)
+ - Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, PixelFormat:=0)
  - Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75)
  - Gdip_SetBitmapAlphaChannel(pBitmap, AlphaMaskBitmap)
  - Gdip_SetBitmapToClipboard(pBitmap)

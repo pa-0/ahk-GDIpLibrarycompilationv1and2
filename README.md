@@ -51,6 +51,4 @@ See functions-list.txt for more details.
   - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
 
-## Last updated on: lundi 23 septembre 2019, v1.75
-
-
+## Last updated on: vendredi 27 septembre 2019, v1.76

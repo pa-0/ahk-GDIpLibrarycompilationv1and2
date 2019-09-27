@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.76 on 09/27/2019
 ; - v1.75 on 09/23/2019
 ; - v1.74 on 09/19/2019
 ; - v1.73 on 09/17/2019
@@ -45,6 +46,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 09/27/2019 = bug fixes...
 ; - 09/23/2019 = Added 4 new functions and improved Gdip_CreateBitmap() [ Marius Șucan ]
 ; - 09/19/2019 = Added 4 new functions and improved Gdip_RotateBitmapAtCenter() [ Marius Șucan ]
 ; - 09/17/2019 = Added 6 new GDI+ functions and renamed curve related functions [ Marius Șucan ]
@@ -777,7 +779,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all extended compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.75
+   return 1.76
 }
 
 ;#####################################################################################
@@ -1142,7 +1144,6 @@ Gdip_DrawPie(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle) {
 
 Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipDrawLine"
                , Ptr, pGraphics
                , Ptr, pPen
@@ -2079,7 +2080,7 @@ Gdip_GetImagePixelFormat(pBitmap, mode:=0) {
 ; Mode options 
 ; 0 - in decimal
 ; 1 - in hex
-; 2 - in human readable string
+; 2 - in human readable format
 ;
 ; PXF01INDEXED = 0x00030101  ; 1 bpp, indexed
 ; PXF04INDEXED = 0x00030402  ; 4 bpp, indexed
@@ -2456,7 +2457,7 @@ Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1) {
    return DllCall("gdiplus\GdipImageRotateFlip", A_PtrSize ? "UPtr" : "UInt", pBitmap, "int", RotateFlipType)
 }
 
-Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7) {
+Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, PixelFormat:=0) {
 ; the pBrush will be used to fill the background of the image
 ; by default, it is black
 ; It returns the pointer to a new pBitmap.
@@ -2467,7 +2468,7 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7) {
        Return clonedBitmap
     }
 
-    If !pBrush
+    If (pBrush=0)
     {
        pBrush := Gdip_BrushCreateSolid("0xFF000000")
        defaultBrush := 1
@@ -2476,10 +2477,11 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7) {
     Gdip_GetImageDimensions(pBitmap, Width, Height)
     Gdip_GetRotatedDimensions(Width, Height, Angle, RWidth, RHeight)
     Gdip_GetRotatedTranslation(Width, Height, Angle, xTranslation, yTranslation)
-    newBitmap := Gdip_CreateBitmap(RWidth, RHeight)
+    newBitmap := Gdip_CreateBitmap(RWidth, RHeight, PixelFormat)
     G := Gdip_GraphicsFromImage(newBitmap)
     Gdip_SetInterpolationMode(G, InterpolationMode)
-    Gdip_FillRectangle(G, pBrush, 0, 0, Width, Height)
+    If pBrush
+       Gdip_FillRectangle(G, pBrush, 0, 0, RWidth, RHeight)
     Gdip_TranslateWorldTransform(G, xTranslation, yTranslation)
     Gdip_RotateWorldTransform(G, Angle)
     Gdip_DrawImageRect(G, pBitmap, 0, 0, Width, Height)
@@ -2491,7 +2493,8 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7) {
 }
 
 Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, KeepPixelFormat:=0) {
-; It returns a pointer to a new pBitmap.
+; KeepPixelFormat can receive a specific PixelFormat.
+; The function returns a pointer to a new pBitmap.
 
     Gdip_GetImageDimensions(pBitmap, Width, Height)
     If (KeepRatio=1)
@@ -2505,6 +2508,9 @@ Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, Keep
 
     If (KeepPixelFormat=1)
        PixelFormat := Gdip_GetImagePixelFormat(pBitmap, 1)
+    If Strlen(KeepPixelFormat)>3
+       PixelFormat := KeepPixelFormat
+
     newBitmap := Gdip_CreateBitmap(ResizedW, ResizedH, PixelFormat)
     G := Gdip_GraphicsFromImage(newBitmap)
     Gdip_SetInterpolationMode(G, InterpolationMode)
@@ -3117,6 +3123,13 @@ Gdip_ResetTextureTransform(pTexBrush) {
 }
 
 Gdip_SetTextureWrapMode(pTexBrush, WrapMode) {
+; WrapMode options:
+; 0 - Tiling without flipping
+; 1 - Tiles are flipped horizontally as you move from one tile to the next in a row
+; 2 - Tiles are flipped vertically as you move from one tile to the next in a column
+; 3 - Tiles are flipped horizontally as you move along a row and flipped vertically as you move along a column
+; 4 - No tiling takes place
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    return DllCall("gdiplus\GdipSetTextureWrapMode", Ptr, pTexBrush, "int", WrapMode)
 }
@@ -5894,7 +5907,7 @@ Gdip_CreatePathGradient(Points, WrapMode) {
 ; Points array format:
 ; Points := "x1,y1|x2,y2|x3,y3|x4,y4" [... and so on]
 ;
-; WrapMode: specifies how an area is tiled when it is painted with a brush:
+; WrapMode options: specifies how an area is tiled when it is painted with a brush:
 ; 0 - Tiling without flipping
 ; 1 - Tiles are flipped horizontally as you move from one tile to the next in a row
 ; 2 - Tiles are flipped vertically as you move from one tile to the next in a column
@@ -6005,7 +6018,7 @@ Gdip_PathGradientSetGammaCorrection(pPathGradientBrush, UseGammaCorrection) {
 }
 
 Gdip_PathGradientSetWrapMode(pPathGradientBrush, WrapMode) {
-; WrapMode: specifies how an area is tiled when it is painted with a brush:
+; WrapMode options: specifies how an area is tiled when it is painted with a brush:
 ; 0 - Tiling without flipping
 ; 1 - Tiles are flipped horizontally as you move from one tile to the next in a row
 ; 2 - Tiles are flipped vertically as you move from one tile to the next in a column
