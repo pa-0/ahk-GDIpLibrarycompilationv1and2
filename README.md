@@ -22,9 +22,9 @@ I re-added the original examples From Tic in Examples-ahk-v1-1 folder and severa
 - 19 LinearGradient brush functions
 - 10 Texture brush functions
 - 10 SolidFill and hatch brush functions
-- 43 pBitmap functions
+- 47 pBitmap functions
 - 16 ImageAttributes and Effects functions
-- 37 Fonts and StringFormat functions
+- 38 Fonts and StringFormat functions
 - 39 pGraphics functions
 - 21 Region functions
 - 10 Clip functions
@@ -40,7 +40,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 
 ## 22 MODIFIED FUNCTIONS
 
-## 280 NEW FUNCTIONS
+## 285 NEW FUNCTIONS
 
 See functions-list.txt for more details.
 
@@ -51,4 +51,4 @@ See functions-list.txt for more details.
   - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
 
-## Last updated on: dimanche 6 octobre 2019, v1.77
+## Last updated on: dimanche 27 octobre 2019, v1.78

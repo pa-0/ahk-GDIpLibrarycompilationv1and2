@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.78 on 10/27/2019
 ; - v1.77 on 10/06/2019
 ; - v1.76 on 09/27/2019
 ; - v1.75 on 09/23/2019
@@ -47,6 +48,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 10/27/2019 = Added 5 new GDI+ functions and bug fixes for Gdip_TestBitmapUniformity(), Gdip_RotateBitmapAtCenter() and Gdip_ResizeBitmap()
 ; - 10/06/2019 = Added more parameters to Gdip_GraphicsFromImage/HDC/HWND and added Gdip_GetPixelColor()
 ; - 09/27/2019 = bug fixes...
 ; - 09/23/2019 = Added 4 new functions and improved Gdip_CreateBitmap() [ Marius Șucan ]
@@ -447,7 +449,8 @@ Gdip_BitmapFromHWND(hwnd) {
 
 CreateRectF(ByRef RectF, x, y, w, h) {
    VarSetCapacity(RectF, 16)
-   NumPut(x, RectF, 0, "float"), NumPut(y, RectF, 4, "float"), NumPut(w, RectF, 8, "float"), NumPut(h, RectF, 12, "float")
+   NumPut(x, RectF, 0, "float"), NumPut(y, RectF, 4, "float")
+   NumPut(w, RectF, 8, "float"), NumPut(h, RectF, 12, "float")
 }
 
 ;#####################################################################################
@@ -481,7 +484,8 @@ CreateRect(ByRef Rect, x, y, x2, y2) {
 
 CreateSizeF(ByRef SizeF, w, h) {
    VarSetCapacity(SizeF, 8)
-   NumPut(w, SizeF, 0, "float"), NumPut(h, SizeF, 4, "float")
+   NumPut(w, SizeF, 0, "float")
+   NumPut(h, SizeF, 4, "float")
 }
 
 ;#####################################################################################
@@ -496,7 +500,8 @@ CreateSizeF(ByRef SizeF, w, h) {
 
 CreatePointF(ByRef PointF, x, y) {
    VarSetCapacity(PointF, 8)
-   NumPut(x, PointF, 0, "float"), NumPut(y, PointF, 4, "float")
+   NumPut(x, PointF, 0, "float")
+   NumPut(y, PointF, 4, "float")
 }
 
 CreatePointsF(ByRef PointsF, inPoints) {
@@ -572,7 +577,6 @@ CreateDIBSection(w, h, hdc:="", bpp:=32, ByRef ppvBits:=0) {
 
 PrintWindow(hwnd, hdc, Flags:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("PrintWindow", Ptr, hwnd, Ptr, hdc, "uint", Flags)
 }
 
@@ -740,7 +744,6 @@ GetDCEx(hwnd, flags:=0, hrgnClip:=0) {
 
 ReleaseDC(hdc, hwnd:=0) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("ReleaseDC", Ptr, hwnd, Ptr, hdc)
 }
 
@@ -784,7 +787,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all extended compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.77
+   return 1.78
 }
 
 ;#####################################################################################
@@ -824,7 +827,7 @@ Gdip_BitmapFromBRA(ByRef BRAFromMemIn, File, Alternate := 0) {
       Offset := OffsetData + FileInfo.1
       Size := FileInfo.2
    }
-   If (Size = 0)
+   If (Size=0)
       Return -4
    hData := DllCall("GlobalAlloc", "UInt", 2, "UInt", Size, "UPtr")
    pData := DllCall("GlobalLock", "Ptr", hData, "UPtr")
@@ -971,7 +974,6 @@ Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r) {
 
 Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipDrawEllipse", Ptr, pGraphics, Ptr, pPen, "float", x, "float", y, "float", w, "float", h)
 }
 
@@ -995,7 +997,6 @@ Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h) {
 
 Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipDrawBezier"
                , Ptr, pGraphics
                , Ptr, pPen
@@ -1189,7 +1190,6 @@ Gdip_DrawLines(pGraphics, pPen, Points) {
 
 Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h) {
    Ptr := A_PtrSize ? "UPtr" : "UInt"
-
    return DllCall("gdiplus\GdipFillRectangle"
                , Ptr, pGraphics
                , Ptr, pBrush
@@ -1492,7 +1492,7 @@ Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="
          ImageAttr := Gdip_SetImageAttributesColorMatrix("1|0|0|0|0|0|1|0|0|0|0|0|1|0|0|0|0|0|" Matrix "|0|0|0|0|0|1")
    } Else usrImageAttr := 1
 
-   If (dx && dy && sx="" && sy="" && sw="" && sh="")
+   If (dx!="" && dy!="" && sx="" && sy="" && sw="" && sh="")
    {
       sx := sy := 0
       sw := dw := Gdip_GetImageWidth(pBitmap)
@@ -2036,7 +2036,7 @@ Gdip_GetPixel(pBitmap, x, y) {
    ; should use Format("{1:#x}", ARGB)
 }
 
-Gdip_GetPixelColor(pBitmap, x, y, format) {
+Gdip_GetPixelColor(pBitmap, x, y, Format) {
    ARGBdec := Gdip_GetPixel(pBitmap, x, y)
    If (format=1)  ; in HEX
    {
@@ -2133,6 +2133,21 @@ Gdip_GetImageBounds(pBitmap) {
   return rData
 }
 
+Gdip_GetImageRawFormat(pBitmap) {
+; retrieves the pBitmap [file] format
+
+  Static RawFormatsList := {"{B96B3CA9-0728-11D3-9D7B-0000F81EF32E}":"Undefined", "{B96B3CAA-0728-11D3-9D7B-0000F81EF32E}":"MemoryBMP", "{B96B3CAB-0728-11D3-9D7B-0000F81EF32E}":"BMP", "{B96B3CAC-0728-11D3-9D7B-0000F81EF32E}":"EMF", "{B96B3CAD-0728-11D3-9D7B-0000F81EF32E}":"WMF", "{B96B3CAE-0728-11D3-9D7B-0000F81EF32E}":"JPEG", "{B96B3CAF-0728-11D3-9D7B-0000F81EF32E}":"PNG", "{B96B3CB0-0728-11D3-9D7B-0000F81EF32E}":"GIF", "{B96B3CB1-0728-11D3-9D7B-0000F81EF32E}":"TIFF", "{B96B3CB2-0728-11D3-9D7B-0000F81EF32E}":"EXIF", "{B96B3CB5-0728-11D3-9D7B-0000F81EF32E}":"Icon"}
+  Ptr := A_PtrSize ? "UPtr" : "UInt"
+  VarSetCapacity(pGuid, 16, 0)
+  E1 := DllCall("gdiplus\GdipGetImageRawFormat", Ptr, pBitmap, "Ptr", &pGuid)
+
+  size := VarSetCapacity(sguid, (38 << !!A_IsUnicode) + 1, 0)
+  E2 := DllCall("ole32.dll\StringFromGUID2", "ptr", &pguid, "ptr", &sguid, "int", size)
+  R1 := E2 ? StrGet(&sguid) : E2
+  R2 := RawFormatsList[R1]
+  Return R2 ? R2 : R1
+}
+
 Gdip_GetImagePixelFormat(pBitmap, mode:=0) {
 ; Mode options 
 ; 0 - in decimal
@@ -2153,6 +2168,14 @@ Gdip_GetImagePixelFormat(pBitmap, mode:=0) {
 ; PXF48RGB = 0x0010300C   ; 48 bpp; 16 bits for each RGB
 ; PXF64ARGB = 0x0034400D  ; 64 bpp; 16 bits for each RGB and alpha
 ; PXF64PARGB = 0x001A400E ; 64 bpp; 16 bits for each RGB and alpha, pre-multiplied
+
+; INDEXED [1-bits, 4-bits and 8-bits] pixel formats rely on color palettes.
+; The color information for the pixels is stored in palettes.
+; Indexed images always contain a palette - a special table of colors.
+; Each pixel is an index in this table. Usually a palette contains 256
+; or less entries. That's why the maximum depth of an indexed pixel is 8 bpp.
+; Using palettes is a common practice when working with small color depths.
+
 ; modified by Marius Șucan
 
    Static PixelFormatsList := {0x30101:"1-INDEXED", 0x30402:"4-INDEXED", 0x30803:"8-INDEXED", 0x101004:"16-GRAYSCALE", 0x021005:"16-RGB555", 0x21006:"16-RGB565", 0x61007:"16-ARGB1555", 0x21808:"24-RGB", 0x22009:"32-RGB", 0x26200A:"32-ARGB", 0xE200B:"32-PARGB", 0x10300C:"48-RGB", 0x34400D:"64-ARGB", 0x1A400E:"64-PARGB"}
@@ -2533,14 +2556,37 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, Pixel
     Gdip_GetImageDimensions(pBitmap, Width, Height)
     Gdip_GetRotatedDimensions(Width, Height, Angle, RWidth, RHeight)
     Gdip_GetRotatedTranslation(Width, Height, Angle, xTranslation, yTranslation)
-    newBitmap := Gdip_CreateBitmap(RWidth, RHeight, PixelFormat)
-    G := Gdip_GraphicsFromImage(newBitmap)
+
+    PixelFormatReadable := Gdip_GetImagePixelFormat(pBitmap, 2)
+    If InStr(PixelFormatReadable, "indexed")
+    {
+       hbm := CreateDIBSection(RWidth, RHeight,,24)
+       hdc := CreateCompatibleDC()
+       obm := SelectObject(hdc, hbm)
+       G := Gdip_GraphicsFromHDC(hdc)
+       indexedMode := 1
+    } Else
+    {
+       newBitmap := Gdip_CreateBitmap(RWidth, RHeight, PixelFormat)
+       G := Gdip_GraphicsFromImage(newBitmap)
+    }
+
     Gdip_SetInterpolationMode(G, InterpolationMode)
+    Gdip_SetSmoothingMode(G, 4)
     If pBrush
        Gdip_FillRectangle(G, pBrush, 0, 0, RWidth, RHeight)
     Gdip_TranslateWorldTransform(G, xTranslation, yTranslation)
     Gdip_RotateWorldTransform(G, Angle)
     Gdip_DrawImageRect(G, pBitmap, 0, 0, Width, Height)
+
+    If (indexedMode=1)
+    {
+       newBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
+       SelectObject(hdc, obm)
+       DeleteObject(hbm)
+       DeleteDC(hdc)
+    }
+
     Gdip_DeleteGraphics(G)
     If (defaultBrush=1)
        Gdip_DeleteBrush(pBrush)
@@ -2562,15 +2608,35 @@ Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, Keep
        ResizedH := givenH
     }
 
+    PixelFormatReadable := Gdip_GetImagePixelFormat(pBitmap, 2)
     If (KeepPixelFormat=1)
        PixelFormat := Gdip_GetImagePixelFormat(pBitmap, 1)
     If Strlen(KeepPixelFormat)>3
        PixelFormat := KeepPixelFormat
 
-    newBitmap := Gdip_CreateBitmap(ResizedW, ResizedH, PixelFormat)
-    G := Gdip_GraphicsFromImage(newBitmap)
-    Gdip_SetInterpolationMode(G, InterpolationMode)
-    Gdip_DrawImageRect(G, pBitmap, 0, 0, ResizedW, ResizedH)
+    If InStr(PixelFormatReadable, "indexed")
+    {
+       hbm := CreateDIBSection(ResizedW, ResizedH,,24)
+       hdc := CreateCompatibleDC()
+       obm := SelectObject(hdc, hbm)
+       G := Gdip_GraphicsFromHDC(hdc)
+       Gdip_SetInterpolationMode(G, InterpolationMode)
+       Gdip_SetSmoothingMode(G, 4)
+       Gdip_DrawImageRect(G, pBitmap, 0, 0, ResizedW, ResizedH)
+       newBitmap := Gdip_CreateBitmapFromHBITMAP(hbm)
+       If (KeepPixelFormat=1)
+          Gdip_BitmapSetColorDepth(newBitmap, SubStr(PixelFormatReadable, 1, 1), 1)
+       SelectObject(hdc, obm)
+       DeleteObject(hbm)
+       DeleteDC(hdc)
+    } Else
+    {
+       newBitmap := Gdip_CreateBitmap(ResizedW, ResizedH, PixelFormat)
+       G := Gdip_GraphicsFromImage(newBitmap)
+       Gdip_SetInterpolationMode(G, InterpolationMode)
+       Gdip_DrawImageRect(G, pBitmap, 0, 0, ResizedW, ResizedH)
+    }
+
     Gdip_DeleteGraphics(G)
     Return newBitmap
 }
@@ -3449,6 +3515,9 @@ Gdip_DeleteMatrix(hMatrix) {
 ;#####################################################################################
 
 Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, Height, Angle:=0, pBrush:=0, pPen:=0, Align:=0, ScaleX:=1) {
+; FontName can be a name of an already installed font or it can point to a font file
+; to be loaded and used to draw the string.
+
 ; Size   - in em, in world units [font size]
 ; Remarks: a high value might be required; over 60, 90... to see the text.
 ; X, Y   - coordinates for the rectangle where the text will be drawn
@@ -3482,7 +3551,11 @@ Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, H
    If (!pBrush && !pPen)
       Return -3
 
-   hFontFamily := Gdip_FontFamilyCreate(FontName)
+   If RegExMatch(Font, "^(.\:\\.)")
+      hFontFamily := Gdip_CreateFontFamilyFromFile(Font)
+   Else
+      hFontFamily := Gdip_FontFamilyCreate(FontName)
+
    If !hFontFamily
       hFontFamily := Gdip_FontFamilyCreateGeneric(1)
  
@@ -3526,6 +3599,9 @@ Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, H
 }
 
 Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0, Unit:=0) {
+; Font parameter can be a name of an already installed font or it can point to a font file
+; to be loaded and used to draw the string.
+;
 ; Set Unit to 3 [Pts] to have the texts rendered at the same size
 ; with the texts rendered in GUIs with -DPIscale
 ;
@@ -3586,8 +3662,11 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
       Colour := "0x" (Colour && Colour[2] ? Colour[2] : "ff000000")
    Rendering := (Rendering && (Rendering[1] >= 0) && (Rendering[1] <= 5)) ? Rendering[1] : 4
    Size := (Size && (Size[1] > 0)) ? Size[2] ? IHeight*(Size[1]/100) : Size[1] : 12
+   If RegExMatch(Font, "^(.\:\\.)")
+      hFontFamily := Gdip_CreateFontFamilyFromFile(Font)
+   Else
+      hFontFamily := Gdip_FontFamilyCreate(Font)
 
-   hFontFamily := Gdip_FontFamilyCreate(Font)
    If !hFontFamily
       hFontFamily := Gdip_FontFamilyCreateGeneric(1)
 
@@ -3699,6 +3778,8 @@ Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush
 ; If given, a pPath object will be segmented according to the precision defined by «flatness».
 ;
 ; pGraphics    - a pointer to a pGraphics object where to draw the text
+; FontName       can be the name of an already installed font or it can point to a font file
+;                to be loaded and used to draw the string.
 ; FontSize     - in em, in world units
 ;                a high value might be required; over 60, 90... to see the text.
 ; pBrush       - a pointer to a pBrush object to fill the text with
@@ -3744,9 +3825,14 @@ Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush
    If (!pPath && !DriverPoints)
       Return -4
 
-   hFontFamily := Gdip_FontFamilyCreate(FontName)
+   If RegExMatch(Font, "^(.\:\\.)")
+      hFontFamily := Gdip_CreateFontFamilyFromFile(Font)
+   Else
+      hFontFamily := Gdip_FontFamilyCreate(FontName)
+
    If !hFontFamily
       hFontFamily := Gdip_FontFamilyCreateGeneric(1)
+
    If !hFontFamily
       Return -1
 
@@ -4022,8 +4108,32 @@ Gdip_FontFamilyCreate(FontName) {
    return hFontFamily
 }
 
+Gdip_CreateFontFamilyFromFile(FontFile, FontName := "") {
+; function by tmplinshi
+; source: https://www.autohotkey.com/boards/viewtopic.php?f=6&t=813&p=298435#p297794
+
+   DllCall("gdiplus\GdipNewPrivateFontCollection", "ptr*", hCollection)
+   ; FileRead, fontData, *c %FontFile%
+   ; DllCall("gdiplus\GdipPrivateAddMemoryFont", "ptr", hCollection, "ptr", &fontData, "uint", VarSetCapacity(fontData))
+   E := DllCall("gdiplus\GdipPrivateAddFontFile", "ptr", hCollection, "str", FontFile)
+
+   if (FontName="" && !E)
+   {
+      VarSetCapacity(pFontFamily, 10, 0)
+      DllCall("gdiplus\GdipGetFontCollectionFamilyList", "ptr", hCollection, "int", 1, "ptr", &pFontFamily, "int*", found)
+
+      VarSetCapacity(FontName, 100)
+      DllCall("gdiplus\GdipGetFamilyName", "ptr", NumGet(pFontFamily, 0, "ptr"), "str", FontName, "ushort", 1033)
+   }
+
+   If (hCollection && !E)
+      DllCall("gdiplus\GdipCreateFontFamilyFromName", "str", FontName, "ptr", hCollection, "uint*", hFontFamily)
+   Return hFontFamily
+}
+
+
 Gdip_FontFamilyCreateGeneric(whichStyle) {
-; This function returns a hFamily font object that uses a generic font.
+; This function returns a hFontFamily font object that uses a generic font.
 ;
 ; whichStyle options:
 ; 0 - monospace generic font 
@@ -4248,6 +4358,8 @@ Gdip_AddPathRectangle(pPath, x, y, w, h) {
 }
 
 Gdip_AddPathPolygon(pPath, Points) {
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]
+
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    iCount := CreatePointsF(PointsF, Points)
    return DllCall("gdiplus\GdipAddPathPolygon", Ptr, pPath, Ptr, &PointsF, "int", iCount)
@@ -5748,17 +5860,17 @@ Gdip_GetLastStatus(pMatrix) {
 ; Updated on 14/08/2019 by Marius Șucan
 ;#####################################################################################
 ;
-; Function Gdip_AddPathBeziers
-; Description Adds a sequence of connected Bézier splines to the current figure of this path.
+; Function:    Gdip_AddPathBeziers
+; Description: Adds a sequence of connected Bézier splines to the current figure of this path.
 ; A Bezier spline does not pass through its control points. The control points act as magnets, pulling the curve
 ; in certain directions to influence the way the spline bends.
 ;
-; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
+; pPath:  Pointer to the GraphicsPath.
+; Points: The coordinates of all the points passed as x1,y1|x2,y2|x3,y3...
 ;
-; return: status enumeration. 0 = success
+; Return: Status enumeration. 0 = success.
 ;
-; notes: The first spline is constructed from the first point through the fourth point in the array and uses the second and third points as control points. Each subsequent spline in the sequence needs exactly three more points: the ending point of the previous spline is used as the starting point, the next two points in the sequence are control points, and the third point is the ending point.
+; Notes: The first spline is constructed from the first point through the fourth point in the array and uses the second and third points as control points. Each subsequent spline in the sequence needs exactly three more points: the ending point of the previous spline is used as the starting point, the next two points in the sequence are control points, and the third point is the ending point.
 
 Gdip_AddPathBeziers(pPath, Points) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -5775,13 +5887,13 @@ Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4) {
 }
 
 ;#####################################################################################
-; Function Gdip_AddPathLines
-; Description Adds a sequence of connected lines to the current figure of this path.
+; Function: Gdip_AddPathLines
+; Description: Adds a sequence of connected lines to the current figure of this path.
 ;
 ; pPath: Pointer to the GraphicsPath
 ; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3.....
 ;
-; return status enumeration. 0 = success
+; Return: status enumeration. 0 = success.
 
 Gdip_AddPathLines(pPath, Points) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -5825,7 +5937,7 @@ Gdip_ClosePathFigure(pPath) {
 ; pPen: Pointer to a pen object
 ; pPath: Pointer to a Path object
 ;
-; return: status enumeration. 0 = success
+; Return: status enumeration. 0 = success.
 
 Gdip_DrawPath(pGraphics, pPen, pPath) {
   Ptr := A_PtrSize ? "UPtr" : "UInt"
@@ -6162,8 +6274,8 @@ Gdip_GetHistogram(pBitmap, whichFormat, ByRef newArrayA, ByRef newArrayB, ByRef 
    VarSetCapacity(ch2, numEntries * sizeofUInt)
    If (whichFormat=2)
       r := DllCall("gdiplus\GdipBitmapGetHistogram", "Ptr", pBitmap, "UInt", whichFormat, "UInt", numEntries, "Ptr", &ch0, "Ptr", &ch1, "Ptr", &ch2, "Ptr", 0)
-   Else If (whichFormat=3)
-      r:= DllCall("gdiplus\GdipBitmapGetHistogram", "Ptr", pBitmap, "UInt", whichFormat, "UInt", numEntries, "Ptr", &ch0, "Ptr", 0, "Ptr", 0, "Ptr", 0)
+   Else If (whichFormat>2)
+      r := DllCall("gdiplus\GdipBitmapGetHistogram", "Ptr", pBitmap, "UInt", whichFormat, "UInt", numEntries, "Ptr", &ch0, "Ptr", 0, "Ptr", 0, "Ptr", 0)
 
    Loop %numEntries%
    {
@@ -6764,37 +6876,43 @@ Gdip_RenderPixelsOpaque(pBitmap, pBrush:=0, alphaLevel:=0) {
     Return newBitmap
 }
 
-Gdip_TestBitmapUniformity(pBitmap, ByRef maxLevelIndex, ByRef maxLevelPixels) {
+Gdip_TestBitmapUniformity(pBitmap, HistogramFormat:=3, ByRef maxLevelIndex:=0, ByRef maxLevelPixels:=0) {
 ; This function tests whether the given pBitmap 
 ; is in a single shade [color] or not.
-; It retrieves the intensity/gray histogram and
-; checks how many pixels are for each level [0, 255].
+
+; If HistogramFormat parameter is set to 3, the function 
+; retrieves the intensity/gray histogram and checks
+; how many pixels are for each level [0, 255].
+;
 ; If all pixels are found at a single level,
 ; the return value is 1, because the pBitmap is considered
 ; uniform, in a single shade.
+;
+; One can set the HistogramFormat to 4 [R], 5 [G], 6 [B] or 7 [A]
+; to test for the uniformity of a specific channel.
+;
 ; A threshold value of 0.0005% of all the pixels, is used.
 ; This is to ensure that a few pixels do not change the status.
 
    LevelsArray := []
-   maxLevelIndex := maxLevelPixels := nrPixels := ""
+   maxLevelIndex := maxLevelPixels := nrPixels := 9
    Gdip_GetImageDimensions(pBitmap, Width, Height)
-   Gdip_GetHistogram(pBitmap, 3, LevelsArray, 0, 0)
+   Gdip_GetHistogram(pBitmap, HistogramFormat, LevelsArray, 0, 0)
    Loop, 256
    {
        nrPixels := Round(LevelsArray[A_Index - 1])
-       histoList .= nrPixels "|"
-       If (!maxLevel || nrPixels>maxLevel)
-       {
-          maxLevelPixels := nrPixels
-          maxLevelIndex := A_Index - 1
-       }
+       If (nrPixels>0)
+          histoList .= nrPixels "." A_Index - 1 "|"
    }
    Sort, histoList, NURD|
    histoList := Trim(histoList, "|")
    histoListSortedArray := StrSplit(histoList, "|")
-
+   maxLevel := StrSplit(histoListSortedArray[1], ".")
+   maxLevelIndex := maxLevel[2]
+   maxLevelPixels := maxLevel[1]
+   ; ToolTip, % maxLevelIndex " -- " maxLevelPixels " | " histoListSortedArray[1] "`n" histoList, , , 3
    pixelsThreshold := Round((Width * Height) * 0.0005) + 1
-   If (histoListSortedArray[2]<pixelsThreshold)
+   If (Floor(histoListSortedArray[2])<pixelsThreshold)
       Return 1
    Else 
       Return 0
@@ -6813,7 +6931,7 @@ Gdip_SetBitmapAlphaChannel(pBitmap, AlphaMaskBitmap) {
       Return -1
 
    newBitmap := Gdip_RenderPixelsOpaque(pBitmap)
-   alphaUniform := Gdip_TestBitmapUniformity(AlphaMaskBitmap, maxLevelIndex, maxLevelPixels)
+   alphaUniform := Gdip_TestBitmapUniformity(AlphaMaskBitmap, 3, maxLevelIndex, maxLevelPixels)
    If (alphaUniform=1)
    {
       ; if the given AlphaMaskBitmap is only in a single shade,
@@ -6852,6 +6970,11 @@ Gdip_SetBitmapAlphaChannel(pBitmap, AlphaMaskBitmap) {
 }
 
 calcIMGdimensions(imgW, imgH, givenW, givenH, ByRef ResizedW, ByRef ResizedH) {
+; imgW, imgH    - original image width and height
+; givenW, givenH  - the width and height [in pixels] to adapt to
+; ResizedW, ResizedH - the width and height resulted from adapting imgW, imgH to givenW, givenH
+;                      by keeping the aspect ratio
+
    PicRatio := Round(imgW/imgH, 5)
    givenRatio := Round(givenW/givenH, 5)
    If (imgW <= givenW) && (imgH <= givenH)
@@ -6880,3 +7003,121 @@ GetWindowRect(hwnd, ByRef W, ByRef H) {
    W := NumGet(winRect, 8, "UInt") - NumGet(winRect, 0, "UInt")
    H := NumGet(winRect, 12, "UInt") - NumGet(winRect, 4, "UInt")
 }
+
+Gdip_BitmapConvertGray(pBitmap, hue:=0, vibrance:=-40, brightness:=1, contrast:=0, KeepPixelFormat:=0) {
+; hue, vibrance, contrast and brightness parameters
+; influence the resulted new grayscale pBitmap.
+;
+; KeepPixelFormat can receive a specific PixelFormat.
+; The function returns a pointer to a new pBitmap.
+
+    Gdip_GetImageDimensions(pBitmap, Width, Height)
+
+    If (KeepPixelFormat=1)
+       PixelFormat := Gdip_GetImagePixelFormat(pBitmap, 1)
+    If StrLen(KeepPixelFormat)>3
+       PixelFormat := KeepPixelFormat
+
+    newBitmap := Gdip_CreateBitmap(Width, Height, PixelFormat)
+    G := Gdip_GraphicsFromImage(newBitmap)
+    Gdip_SetInterpolationMode(G, InterpolationMode)
+    pEffect := Gdip_CreateEffect(6, hue, vibrance, 0)
+    matrix := GenerateColorMatrix(2, brightness, contrast)
+    r1 := Gdip_DrawImageFX(G, pBitmap, 0, 0, Width, Height, matrix, pEffect)
+    Gdip_DisposeEffect(pEffect)
+    Gdip_DeleteGraphics(G)
+    Return newBitmap
+}
+
+Gdip_BitmapSetColorDepth(pBitmap, bitsDepth, useDithering:=1) {
+; Return 0 = OK - Success
+
+   ditheringMode := (useDithering=1) ? 9 : 1
+   If (useDithering=1 && bitsDepth=16)
+      ditheringMode := 2
+
+   Colors := 2**bitsDepth
+   If bitsDepth Between 2 and 4
+      bitsDepth := "40s"
+   If bitsDepth Between 5 and 8
+      bitsDepth := "80s"
+   If (bitsDepth="BW")
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x30101, ditheringMode, 2, 2, 2, 2, 0, 0)
+   Else If (bitsDepth=1)
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x30101, ditheringMode, 1, 2, 1, 2, 0, 0)
+   Else If (bitsDepth="40s")
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x30402, ditheringMode, 1, Colors, 1, Colors, 0, 0)
+   Else If (bitsDepth="80s")
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x30803, ditheringMode, 1, Colors, 1, Colors, 0, 0)
+   Else If (bitsDepth=16)
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x21005, ditheringMode, 1, Colors, 1, Colors, 0, 0)
+   Else If (bitsDepth=24)
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x21808, 2, 1, 0, 0, 0, 0, 0)
+   Else
+      E := -1
+   Return E
+}
+
+Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0) {
+; pBitmap - Handle to a pBitmap object on which the color conversion is applied.
+
+; PixelFormat options: see Gdip_GetImagePixelFormat()
+; Pixel format constant that specifies the new pixel format.
+
+; PaletteEntries    Number of Entries.
+; OptimalColors   - Integer that specifies the number of colors you want to have in an optimal palette based on a specified pBitmap.
+;                   This parameter is relevant if PaletteType parameter is set to PaletteTypeOptimal [1].
+; UseTransparentColor     Boolean value that specifies whether to include the transparent color in the palette.
+; AlphaThresholdPercent - Real number in the range 0.0 through 100.0 that specifies which pixels in the source bitmap will map to the transparent color in the converted bitmap.
+;
+; PaletteType options:
+; Custom = 0   ; Arbitrary custom palette provided by caller.
+; Optimal = 1   ; Optimal palette generated using a median-cut algorithm.
+; FixedBW = 2   ; Black and white palette.
+;
+; Symmetric halftone palettes. Each of these halftone palettes will be a superset of the system palette.
+; e.g. Halftone8 will have its 8-color on-off primaries and the 16 system colors added. With duplicates removed, that leaves 16 colors.
+; FixedHalftone8 = 3   ; 8-color, on-off primaries
+; FixedHalftone27 = 4   ; 3 intensity levels of each color
+; FixedHalftone64 = 5   ; 4 intensity levels of each color
+; FixedHalftone125 = 6   ; 5 intensity levels of each color
+; FixedHalftone216 = 7   ; 6 intensity levels of each color
+;
+; Assymetric halftone palettes. These are somewhat less useful than the symmetric ones, but are included for completeness.
+; These do not include all of the system colors.
+; FixedHalftone252 = 8   ; 6-red, 7-green, 6-blue intensities
+; FixedHalftone256 = 9   ; 8-red, 8-green, 4-blue intensities
+;
+; DitherType options:
+; None = 0
+; Solid = 1
+; - it picks the nearest matching color with no attempt to halftone or dither. May be used on an arbitrary palette.
+;
+; Ordered dithers and spiral dithers must be used with a fixed palette.
+; NOTE: DitherOrdered4x4 is unique in that it may apply to 16bpp conversions also.
+; Ordered4x4 = 2
+; Ordered8x8 = 3
+; Ordered16x16 = 4
+; Ordered91x91 = 5
+; Spiral4x4 = 6
+; Spiral8x8 = 7
+; DualSpiral4x4 = 8
+; DualSpiral8x8 = 9
+; ErrorDiffusion = 10   ; may be used with any palette
+; Return 0 = OK - Success
+
+   VarSetCapacity(hPalette, 4 * PaletteEntries + 8, 0)
+
+;   tPalette := DllStructCreate("uint Flags; uint Count; uint ARGB[" & $iEntries & "];")
+   NumPut(PaletteType, &hPalette, 0, "uint")
+   NumPut(PaletteEntries, &hPalette, 4, "uint")
+   NumPut(0, &hPalette, 8, "uint")
+
+   Ptr := A_PtrSize ? "UPtr" : "UInt"
+   E1 := DllCall("gdiplus\GdipInitializePalette", "UPtr", &hPalette, "uint", PaletteType, "uint", OptimalColors, "Int", UseTransparentColor, Ptr, pBitmap)
+   E2 := DllCall("gdiplus\GdipBitmapConvertFormat", Ptr, pBitmap, "uint", PixelFormat, "uint", DitherType, "uint", DitherPaletteType, "uPtr", &hPalette, "float", AlphaThresholdPercent)
+   E := E1 ? E2
+   Return E
+}
+
+
