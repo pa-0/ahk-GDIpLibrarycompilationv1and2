@@ -45,7 +45,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_TransformPath(pPath, hMatrix)
  - Gdip_WidenPath(pPath, pPen, hMatrix:=0, Flatness:=1)
 
-## 42 Pen object functions
+## 43 Pen object functions
  - Gdip_ClonePen(pPen)
  - Gdip_CreatePen(ARGB, w, Unit:=2)
  - Gdip_CreatePenFromBrush(pBrush, w, Unit:=2)
@@ -68,6 +68,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetPenTransform(pPen)
  - Gdip_GetPenUnit(pPen)
  - Gdip_GetPenWidth(pPen)
+ - Gdip_MultiplyPenTransform(pPen, hMatrix, matrixOrder:=0)
  - Gdip_ResetPenTransform(pPen)
  - Gdip_RotatePenTransform(pPen, Angle, matrixOrder:=0)
  - Gdip_ScalePenTransform(pPen, ScaleX, ScaleY, matrixOrder:=0)
@@ -89,7 +90,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetPenWidth(pPen, width)
  - Gdip_TranslatePenTransform(pPen, X, Y, matrixOrder:=0)
 
-## 27 PathGradient brush functions
+## 28 PathGradient brush functions
  - Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, ScaleX, ScaleY, Shape, Angle:=0)
  - Gdip_CreatePathGradient(Points, WrapMode)
  - Gdip_GetPathGradientSurroundColors(pPathGradientBrush)
@@ -103,6 +104,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_PathGradientGetSurroundColorCount(pPathGradientBrush)
  - Gdip_PathGradientGetTransform(pPathGradientBrush)
  - Gdip_PathGradientGetWrapMode(pPathGradientBrush)
+ - Gdip_PathGradientMultiplyTransform(pPathGradientBrush, hMatrix, matrixOrder:=0)
  - Gdip_PathGradientResetTransform(pPathGradientBrush)
  - Gdip_PathGradientRotateTransform(pPathGradientBrush, Angle, matrixOrder:=0)
  - Gdip_PathGradientScaleTransform(pPathGradientBrush, ScaleX, ScaleY, matrixOrder:=0)
@@ -118,7 +120,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_PathGradientTranslateTransform(pPathGradientBrush, X, Y, matrixOrder:=0)
  - Gdip_RotatePathGradientAtCenter(pPathGradientBrush, Angle, MatrixOrder:=1)
 
-## 19 LinearGradient brush functions
+## 20 LinearGradient brush functions
  - Gdip_CreateLinearGrBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode:=1)
  - Gdip_CreateLinearGrBrushFromRect(x, y, w, h, ARGB1, ARGB2, LinearGradientMode:=1, WrapMode:=1)
  - Gdip_GetLinearGrBrushBlendCount(pLinearGradientBrush)
@@ -127,6 +129,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetLinearGrBrushRect(pLinearGradientBrush)
  - Gdip_GetLinearGrBrushTransform(pLineGradientBrush)
  - Gdip_GetLinearGrBrushWrapMode(pLinearGradientBrush)
+ - Gdip_MultiplyLinearGrBrushTransform(pLinearGradientBrush, hMatrix, matrixOrder:=0)
  - Gdip_ResetLinearGrBrushTransform(pLinearGradientBrush)
  - Gdip_RotateLinearGrBrushAtCenter(pLinearGradientBrush, Angle, MatrixOrder:=1)
  - Gdip_RotateLinearGrBrushTransform(pLinearGradientBrush, Angle, matrixOrder:=0)
@@ -139,11 +142,12 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetLinearGrBrushWrapMode(pLinearGradientBrush, WrapMode)
  - Gdip_TranslateLinearGrBrushTransform(pLinearGradientBrush, X, Y, matrixOrder:=0)
 
-## 10 Texture brush functions
+## 11 Texture brush functions
  - Gdip_CreateTextureBrush(pBitmap, WrapMode:=1, x:=0, y:=0, w:="", h:="", matrix:="", ScaleX:="", ScaleY:="", Angle:=0, ImageAttr:=0)
  - Gdip_GetTextureImage(pTexBrush)
  - Gdip_GetTextureTransform(pTexBrush)
  - Gdip_GetTextureWrapMode(pTexBrush)
+ - Gdip_MultiplyTextureTransform(pTexBrush, hMatrix, matrixOrder:=0)
  - Gdip_ResetTextureTransform(pTexBrush)
  - Gdip_RotateTextureTransform(pTexBrush, Angle, MatrixOrder:=0)
  - Gdip_ScaleTextureTransform(pTexBrush, ScaleX, ScaleY, MatrixOrder:=0)
@@ -230,14 +234,15 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DisposeEffect(pEffect)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
 
-## 38 Fonts and StringFormat functions
- - Gdip_CloneFont(hfont)
+## 40 Fonts and StringFormat functions
+ - Gdip_CloneFont(hFont)
  - Gdip_CloneFontFamily(hFontFamily)
  - Gdip_CloneStringFormat(hStringFormat)
+ - Gdip_CreateFontFamilyFromFile(FontFile, hFontCollection, FontName:="")
  - Gdip_CreateFontFromDC(hDC)
- - Gdip_CreateFontFamilyFromFile(FontFile, FontName := "")
  - Gdip_DeleteFont(hFont)
  - Gdip_DeleteFontFamily(hFontFamily)
+ - Gdip_DeletePrivateFontCollection(hFontCollection)
  - Gdip_DeleteStringFormat(hStringFormat)
  - Gdip_FontCreate(hFontFamily, Size, Style:=0, Unit:=0)
  - Gdip_FontFamilyCreate(FontName)
@@ -259,6 +264,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetStringFormatTrimming(hStringFormat)
  - Gdip_IsFontStyleAvailable(hFontFamily, Style)
  - Gdip_MeasureString(pGraphics, sString, hFont, hStringFormat, ByRef RectF)
+ - Gdip_NewPrivateFontCollection()
  - Gdip_SetStringFormatAlign(hStringFormat, Align)
  - Gdip_SetStringFormatDigitSubstitution(hStringFormat, DigitSubstitute, LangID:=0)
  - Gdip_SetStringFormatFlags(hStringFormat, Flags)
@@ -270,7 +276,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_StringFormatCreate(FormatFlags:=0, LangID:=0)
  - Gdip_StringFormatGetGeneric(whichFormat:=0)
 
-## 39 pGraphics functions
+## 40 pGraphics functions
  - Gdip_DeleteGraphics(pGraphics)
  - Gdip_GetCompositingMode(pGraphics)
  - Gdip_GetCompositingQuality(pGraphics)
@@ -293,6 +299,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_IsVisibleGraphPoint(pGraphics, X, Y)
  - Gdip_IsVisibleGraphRect(pGraphics, X, Y, Width, Height)
  - Gdip_IsVisibleGraphRectEntirely(pGraphics, X, Y, Width, Height)
+ - Gdip_MultiplyWorldTransform(pGraphics, hMatrix, matrixOrder:=0)
  - Gdip_ReleaseDC(pGraphics, hdc)
  - Gdip_ResetPageTransform(pGraphics)
  - Gdip_ResetWorldTransform(pGraphics)
@@ -458,7 +465,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
  - SetSysColorToControl()
  - UpdateLayeredWindow()
 
-## 285 NEW FUNCTIONS:
+## 292 NEW FUNCTIONS:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
@@ -534,7 +541,14 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_FromRect()
     - MDMF_GetInfo()
  
-- 219 by Marius Șucan [robodesign.ro]:
+- 226 by Marius Șucan [robodesign.ro]:
+  - Gdip_NewPrivateFontCollection()
+  - Gdip_DeletePrivateFontCollection()
+  - Gdip_MultiplyPenTransform()
+  - Gdip_PathGradientMultiplyTransform()
+  - Gdip_MultiplyLinearGrBrushTransform()
+  - Gdip_MultiplyTextureTransform()
+  - Gdip_MultiplyWorldTransform()
   - Gdip_BitmapConvertGray()
   - Gdip_BitmapSetColorDepth()
   - Gdip_BitmapConvertFormat()
@@ -771,8 +785,8 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetPenBrushFill()
   - Gdip_CreateFontFromDC()
 
-# 167 GDI+ functions still missing
-In short, functions related to CustomCaps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
+# 158 GDI+ functions still missing
+In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
  - GdipAddPathRectangles
@@ -781,7 +795,6 @@ In short, functions related to CustomCaps for lines, ImagePalette management, Pa
  - GdipClearPathMarkers
  - GdipCloneCustomLineCap
  - GdipClosePathFigures
- - GdipComment
  - GdipCreateBitmapFromFileICM
  - GdipCreateBitmapFromResource
  - GdipCreateCustomLineCap
@@ -802,7 +815,6 @@ In short, functions related to CustomCaps for lines, ImagePalette management, Pa
  - GdipCreateRegionRgnData
  - GdipCreateStreamOnFile
  - GdipDeletePathIter
- - GdipDeletePrivateFontCollection
  - GdipDrawCurve3
  - GdipDrawImagePointRect
  - GdipDrawRectangles
@@ -865,11 +877,6 @@ In short, functions related to CustomCaps for lines, ImagePalette management, Pa
  - GdipLoadImageFromStreamICM
  - GdipMeasureCharacterRanges
  - GdipMeasureDriverString
- - GdipMultiplyLineTransform
- - GdipMultiplyPathGradientTransform
- - GdipMultiplyPenTransform
- - GdipMultiplyTextureTransform
- - GdipMultiplyWorldTransform
  - GdipNewInstalledFontCollection
  - GdipPathIterCopyData
  - GdipPathIterEnumerate
@@ -918,7 +925,6 @@ In short, functions related to CustomCaps for lines, ImagePalette management, Pa
  - GdipTransformMatrixPointsI
  - GdipTransformPoints
  - GdipTransformPointsI
- - GdipTranslateTextureTransform
  - GdipVectorTransformMatrixPoints
  - GdipVectorTransformMatrixPointsI
  - GdipWarpPath
@@ -941,4 +947,3 @@ In short, functions related to CustomCaps for lines, ImagePalette management, Pa
  - GdipSetAdjustableArrowCapMiddleInset
  - GdipSetAdjustableArrowCapWidth
  - GdipSetPenCustomEndCap
- - SetBitmapBits
