@@ -6,6 +6,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.80 on 11/01/2019
 ; - v1.79 on 10/28/2019
 ; - v1.78 on 10/27/2019
 ; - v1.77 on 10/06/2019
@@ -30,9 +31,9 @@
 ; - v1.58 on 08/29/2019
 ; - v1.57 on 08/23/2019
 ; - v1.56 on 08/21/2019
+; - v1.55 on 08/14/2019
 ;
 ; bug fixes and AHK v2 compatibility by mmikeww and others
-; - v1.55 on 08/14/2019
 ; - v1.54 on 11/15/2017
 ; - v1.53 on 06/19/2017
 ; - v1.52 on 06/11/2017
@@ -49,6 +50,7 @@
 ; - v1.01 on 31/05/2008
 ;
 ; Detailed history:
+; - 11/01/2019 = Implemented support for a private font file for Gdip_AddPathStringSimplified()
 ; - 10/28/2019 = Added 7 new GDI+ functions and fixes related to Gdip_CreateFontFamilyFromFile()
 ; - 10/27/2019 = Added 5 new GDI+ functions and bug fixes for Gdip_TestBitmapUniformity(), Gdip_RotateBitmapAtCenter() and Gdip_ResizeBitmap()
 ; - 10/06/2019 = Added more parameters to Gdip_GraphicsFromImage/HDC/HWND and added Gdip_GetPixelColor()
@@ -789,7 +791,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all extended compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.79
+   return 1.80
 }
 
 ;#####################################################################################
@@ -4482,6 +4484,7 @@ Gdip_AddPathToPath(pPathA, pPathB, fConnect) {
 Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0) {
 ; Adds the outline of a given string with the given font name, size and style 
 ; to a Path object.
+
 ; Size - in em, in world units [font size]
 ; Remarks: a high value might be required; over 60, 90... to see the text.
 
@@ -4502,12 +4505,21 @@ Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, 
 ; Strikeout = 8
 
    FormatStyle := NoWrap ? 0x4000 | 0x1000 : 0x4000
-   hFontFamily := Gdip_FontFamilyCreate(FontName)
+   If RegExMatch(FontName, "^(.\:\\.)")
+   {
+      hFontCollection := Gdip_NewPrivateFontCollection()
+      hFontFamily := Gdip_CreateFontFamilyFromFile(FontName, hFontCollection)
+   } Else hFontFamily := Gdip_FontFamilyCreate(FontName)
+
    If !hFontFamily
       hFontFamily := Gdip_FontFamilyCreateGeneric(1)
  
    If !hFontFamily
+   {
+      If hFontCollection
+         Gdip_DeletePrivateFontCollection(hFontCollection)
       Return -1
+   }
 
    hStringFormat := Gdip_StringFormatCreate(FormatStyle)
    If !hStringFormat
@@ -4516,6 +4528,8 @@ Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, 
    If !hStringFormat
    {
       Gdip_DeleteFontFamily(hFontFamily)
+      If hFontCollection
+         Gdip_DeletePrivateFontCollection(hFontCollection)
       Return -2
    }
 
@@ -4524,6 +4538,8 @@ Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, 
    E := Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, Width, Height)
    Gdip_DeleteStringFormat(hStringFormat)
    Gdip_DeleteFontFamily(hFontFamily)
+   If hFontCollection
+      Gdip_DeletePrivateFontCollection(hFontCollection)
    Return E
 }
 
@@ -6969,13 +6985,13 @@ Gdip_TestBitmapUniformity(pBitmap, HistogramFormat:=3, ByRef maxLevelIndex:=0, B
    maxLevelIndex := maxLevelPixels := nrPixels := 9
    Gdip_GetImageDimensions(pBitmap, Width, Height)
    Gdip_GetHistogram(pBitmap, HistogramFormat, LevelsArray, 0, 0)
-   Loop, 256
+   Loop 256
    {
        nrPixels := Round(LevelsArray[A_Index - 1])
        If (nrPixels>0)
           histoList .= nrPixels "." A_Index - 1 "|"
    }
-   Sort, histoList, NURD|
+   Sort histoList, NURD|
    histoList := Trim(histoList, "|")
    histoListSortedArray := StrSplit(histoList, "|")
    maxLevel := StrSplit(histoListSortedArray[1], ".")
@@ -7187,8 +7203,6 @@ Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, Pa
    Ptr := A_PtrSize ? "UPtr" : "UInt"
    E1 := DllCall("gdiplus\GdipInitializePalette", "UPtr", &hPalette, "uint", PaletteType, "uint", OptimalColors, "Int", UseTransparentColor, Ptr, pBitmap)
    E2 := DllCall("gdiplus\GdipBitmapConvertFormat", Ptr, pBitmap, "uint", PixelFormat, "uint", DitherType, "uint", DitherPaletteType, "uPtr", &hPalette, "float", AlphaThresholdPercent)
-   E := E1 ? E2
+   E := E1 ? E1 : E2
    Return E
 }
-
-
