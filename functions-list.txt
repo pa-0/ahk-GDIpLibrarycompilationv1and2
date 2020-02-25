@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list
+- Functions list [v1.81 - 25/02/2020]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 
 # FUNCTIONS LIST
@@ -9,7 +9,7 @@ of what is available in the Gdip_all.ahk extended compilation.
 
 Please note, this is not a complete list of all the functions.
 
-## 34 GraphicsPath object functions
+## 35 GraphicsPath object functions
  - Gdip_AddPathArc(pPath, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4)
  - Gdip_AddPathBeziers(pPath, Points)
@@ -21,6 +21,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_AddPathPie(pPath, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_AddPathPolygon(pPath, Points)
  - Gdip_AddPathRectangle(pPath, x, y, w, h)
+ - Gdip_AddPathRoundedRectangle(pPath, x, y, w, h, r)
  - Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, W, H)
  - Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0)
  - Gdip_AddPathToPath(pPathA, pPathB, fConnect)
@@ -33,7 +34,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetPathLastPoint(pPath, ByRef X, ByRef Y)
  - Gdip_GetPathPoints(pPath)
  - Gdip_GetPathPointsCount(pPath)
- - Gdip_GetPathWorldBounds(pPath)
+ - Gdip_GetPathWorldBounds(pPath, hMatrix:=0, pPen:=0)
  - Gdip_IsOutlineVisiblePathPoint(pGraphics, pPath, pPen, X, Y)
  - Gdip_IsVisiblePathPoint(pPath, x, y, pGraphics)
  - Gdip_PathOutline(pPath, flatness:=1, hMatrix:=0)
@@ -120,7 +121,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_PathGradientTranslateTransform(pPathGradientBrush, X, Y, matrixOrder:=0)
  - Gdip_RotatePathGradientAtCenter(pPathGradientBrush, Angle, MatrixOrder:=1)
 
-## 20 LinearGradient brush functions
+## 21 LinearGradient brush functions
  - Gdip_CreateLinearGrBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode:=1)
  - Gdip_CreateLinearGrBrushFromRect(x, y, w, h, ARGB1, ARGB2, LinearGradientMode:=1, WrapMode:=1)
  - Gdip_GetLinearGrBrushBlendCount(pLinearGradientBrush)
@@ -137,6 +138,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetLinearGrBrushColors(pLinearGradientBrush, ARGB1, ARGB2)
  - Gdip_SetLinearGrBrushGammaCorrection(pLinearGradientBrush, UseGammaCorrection)
  - Gdip_SetLinearGrBrushLinearBlend(pLinearGradientBrush, nFocus, nScale)
+ - Gdip_SetLinearGrBrushPresetBlend(pBrush, pA, pB, pC, pD, clr1, clr2, clr3, clr4)
  - Gdip_SetLinearGrBrushSigmaBlend(pLinearGradientBrush, nFocus, nScale)
  - Gdip_SetLinearGrBrushTransform(pLinearGradientBrush, pMatrix)
  - Gdip_SetLinearGrBrushWrapMode(pLinearGradientBrush, WrapMode)
@@ -167,7 +169,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 47 pBitmap functions
+## 48 pBitmap functions
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
  - Gdip_BitmapConvertGray(pBitmap, hue:=0, vibrance:=-40, brightness:=1, contrast:=0, KeepPixelFormat:=0)
@@ -180,7 +182,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_BitmapSetResolution(pBitmap, dpix, dpiy)
  - Gdip_BlurBitmap(pBitmap, BlurAmount)
  - Gdip_CloneBitmap(pBitmap)
- - Gdip_CloneBitmapArea(pBitmap, x, y, w, h, PixelFormat:=0, KeepPixelFormat:=0)
+ - Gdip_CloneBitmapArea(pBitmap, x:="", y:="", w:=0, h:=0, PixelFormat:=0, KeepPixelFormat:=0)
  - Gdip_CompareBitmaps(pBitmapA, pBitmapB, accuracy:=25)
  - Gdip_CreateBitmap(Width, Height, PixelFormat:=0)
  - Gdip_CreateBitmapFromClipboard()
@@ -196,13 +198,14 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetImageBounds(pBitmap)
  - Gdip_GetImageDimensions(pBitmap, ByRef Width, ByRef Height)
  - Gdip_GetImageHeight(pBitmap)
- - Gdip_GetImageHorizontalResolution(pBitmap)
  - Gdip_GetImagePixelFormat(pBitmap, mode:=0)
  - Gdip_GetImageRawFormat(pBitmap)
  - Gdip_GetImageType(pBitmap)
- - Gdip_GetImageVerticalResolution(pBitmap)
+ - Gdip_BitmapGetDPIResolution(pBitmap, ByRef dpix, ByRef dpiy)
+ - Gdip_CreateBitmapFromHBITMAPalpha(hImage)
  - Gdip_GetImageWidth(pBitmap)
  - Gdip_GetPixelColor(pBitmap, x, y, Format)
+ - Gdip_GetImageThumbnail(pBitmap, W, H)
  - Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1)
  - Gdip_LoadImageFromFile(sFile)
  - Gdip_PixelateBitmap(pBitmap, ByRef pBitmapOut, BlockSize)
@@ -380,7 +383,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
  - Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
  - Gdip_DrawImageFast(pGraphics, pBitmap, X:=0, Y:=0)
- - Gdip_DrawImageFX(pGraphics, pBitmap, sX:=0, sY:=0, sW:="", sH:="", matrix:="", pEffect:="", Unit:=2, ImageAttr:=0, hMatrix:=0)
+ - Gdip_DrawImageFX(pGraphics, pBitmap, dX:="", dY:="", sX:="", sY:="", sW:="", sH:="", matrix:="", pEffect:="", ImageAttr:=0, hMatrix:=0, Unit:=2)
  - Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
  - Gdip_DrawImageRect(pGraphics, pBitmap, X, Y, W, H)
  - Gdip_DrawLine(pGraphics, pPen, x1, y1, x2, y2)
@@ -392,7 +395,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
  - Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor)
  - Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r)
- - Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r)
+ - Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r, angle:=0)
  - Gdip_DrawString(pGraphics, sString, hFont, hStringFormat, pBrush, ByRef RectF)
  - Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, flatness:=4, hMatrix:=0, Unit:=0)
  - Gdip_FillClosedCurve(pGraphics, pBrush, Points, Tension:="", FillMode:=0)
@@ -406,12 +409,27 @@ Please note, this is not a complete list of all the functions.
  - Gdip_FillRoundedRectangle2(pGraphics, pBrush, x, y, w, h, r)
  - Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0, Unit:=0)
 
-## 29 Other functions [selection]
+## 18 GDI functions [selection]
  - CreateDIBSection(w, h, hdc:="", bpp:=32, ByRef ppvBits:=0)
  - Gdi_CreateDIBitmap(hdc, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS)
  - Gdi_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS)
  - Gdi_StretchDIBits(hDestDC, dX, dY, dW, dH, sX, sY, sW, sH, tBITMAPINFO, Usage, pBits, Rop)
  - Gdi_SetDIBitsToDevice(hDC, dX, dY, Width, Height, sX, sY, StartScan, ScanLines, pBits, BITMAPINFO, DIB_COLORS)
+ - PaintDesktop(hdc)
+ - PrintWindow(hwnd, hdc, Flags:=0)
+ - BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, raster:="")
+ - StretchBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, sw, sh, Raster:="")
+ - SetStretchBltMode(hdc, iStretchMode:=4)
+ - UpdateLayeredWindow(hwnd, hdc, x:="", y:="", w:="", h:="", Alpha:=255)
+ - CreateCompatibleDC(hdc:=0)
+ - SelectObject(hdc, hgdiobj)
+ - DeleteObject(hObject)
+ - GetDC(hwnd:=0)
+ - GetDCEx(hwnd, flags:=0, hrgnClip:=0)
+ - ReleaseDC(hdc, hwnd:=0)
+ - DeleteDC(hdc)
+
+## 22 Other functions [selection]
  - Gdip_CreateCachedBitmap(pBitmap, pGraphics)
  - Gdip_DeleteCachedBitmap(pCachedBitmap)
  - Gdip_CreateHICONFromBitmap(pBitmap)
@@ -423,6 +441,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetPropertyTagName(PropID)
  - Gdip_GetPropertyTagType(PropType)
  - Gdip_GetRotatedDimensions(Width, Height, Angle, ByRef RWidth, ByRef RHeight)
+ - Gdip_GetRotatedEllipseDimensions(Width, Height, Angle, ByRef RWidth, ByRef RHeight)
  - Gdip_GetRotatedTranslation(Width, Height, Angle, ByRef xTranslation, ByRef yTranslation)
  - Gdip_GetLockBitPixel(Scan0, x, y, Stride)
  - Gdip_LockBits(pBitmap, x, y, w, h, ByRef Stride, ByRef Scan0, ByRef BitmapData, LockMode := 3, PixelFormat := 0x26200a)
@@ -432,19 +451,17 @@ Please note, this is not a complete list of all the functions.
  - GetMonitorCount()
  - GetMonitorInfo(MonitorNum)
  - GetPrimaryMonitor()
- - PaintDesktop(hdc)
- - PrintWindow(hwnd, hdc, Flags:=0)
  - SetImage(hwnd, hBitmap)
- - UpdateLayeredWindow(hwnd, hdc, x:="", y:="", w:="", h:="", Alpha:=255)
 
 # COMPARISIONS
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## 22 MODIFIED FUNCTIONS:
+## 23 MODIFIED FUNCTIONS:
  - Gdip_BitmapFromBRA()
  - Gdip_BitmapFromHWND()
  - Gdip_BitmapFromScreen()
+ - Gdip_CloneBitmapArea()
  - Gdip_CreateBitmap()
  - Gdip_CreateBitmapFromClipboard()
  - Gdip_CreateBitmapFromFile()
@@ -541,7 +558,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_FromRect()
     - MDMF_GetInfo()
  
-- 226 by Marius Șucan [robodesign.ro]:
+- 228 by Marius Șucan [robodesign.ro]:
+  - Gdip_AddPathRoundedRectangle()
+  - Gdip_GetRotatedEllipseDimensions()
   - Gdip_NewPrivateFontCollection()
   - Gdip_DeletePrivateFontCollection()
   - Gdip_MultiplyPenTransform()
@@ -785,7 +804,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetPenBrushFill()
   - Gdip_CreateFontFromDC()
 
-# 158 GDI+ functions still missing
+# 157 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
@@ -839,7 +858,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetImageAttributesAdjustedPalette
  - GdipGetImagePalette
  - GdipGetImagePaletteSize
- - GdipGetImageThumbnail
  - GdipGetLineBlend
  - GdipGetLinePresetBlend
  - GdipGetLinePresetBlendCount
@@ -911,7 +929,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipSetImageAttributesRemapTable
  - GdipSetImagePalette
  - GdipSetLineBlend
- - GdipSetLinePresetBlend
  - GdipSetMetafileDownLevelRasterizationLimit
  - GdipSetPathGradientBlend
  - GdipSetPathGradientPresetBlend
