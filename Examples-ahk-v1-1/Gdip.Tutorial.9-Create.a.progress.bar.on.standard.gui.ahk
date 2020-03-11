@@ -3,20 +3,20 @@
 ;
 ; Example to create a progress bar in a standard gui
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-	MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
 	ExitApp
 }
-OnExit, Exit
+OnExit("ExitFunc")
 
 ; Before we start there are some design elements we must consider.
 ; We can either make the script faster. Creating the bitmap 1st and just write the new progress bar onto it every time and updating it on the gui
@@ -25,33 +25,36 @@ OnExit, Exit
 ; This will be slower, but will use less RAM and will be modular (can all be put into a function)
 ; I will go with the 2nd option, but if more speed is a requirement then choose the 1st
 
-Gui, 1: -DPIScale
 ; I am first creating a slider, just as a way to change the percentage on the progress bar
-Gui, 1: Add, Slider, x10 y10 w400 Range0-100 vPercentage gSlider Tooltip, 50
-
 ; The progress bar needs to be added as a picture, as all we are doing is creating a gdi+ bitmap and setting it to this control
 ; Note we have set the 0xE style for it to accept an hBitmap later and also set a variable in order to reference it (could also use hwnd)
-Gui, 1: Add, Picture, x10 y+30 w400 h50 0xE vProgressBar
 ; We will set the initial image on the control before showing the gui
-GoSub, Slider
+
+Gui, 1: -DPIScale
+Gui, 1: Add, Slider, x10 y10 w400 Range0-100 vPercentage gSlider Tooltip, 50
+Gui, 1: Add, Picture, x10 y+30 w400 h50 0xE vProgressBar
+GoSub Slider
 Gui, 1: Show, AutoSize, Example 9 - gdi+ progress bar
+
 Return
 
 ;#######################################################################
 
 ; This subroutine is activated every time we move the slider as I used gSlider in the options of the slider
 Slider:
-Gui, 1: Default
-Gui, 1: Submit, NoHide
-Gdip_SetProgress(ProgressBar, Percentage, 0xff0993ea, 0xffbde5ff, Percentage "`%")
+	Gui, 1: Default
+	Gui, 1: Submit, NoHide
+	Gdip_SetProgress(ProgressBar, Percentage, 0xff0993ea, 0xffbde5ff, Percentage "`%")
 Return
+
 
 ;#######################################################################
 
-Gdip_SetProgress(ByRef Variable, Percentage, Foreground, Background=0x00000000, Text="", TextOptions="x0p y15p s60p Center cff000000 r4 Bold", Font="Arial")
+Gdip_SetProgress(ByRef Variable, Percentage, Foreground, Background:=0x00000000, Text:="", TextOptions:="x0p y15p s60p Center cff000000 r4 Bold", Font:="Arial")
 {
 	; We first want the hwnd (handle to the picture control) so that we know where to put the bitmap we create
 	; We also want to width and height (posw and Posh)
+
 	GuiControlGet, Pos, Pos, Variable
 	GuiControlGet, hwnd, hwnd, Variable
 
@@ -88,15 +91,21 @@ Gdip_SetProgress(ByRef Variable, Percentage, Foreground, Background=0x00000000, 
 	; Then we can delete the graphics, our gdi+ bitmap and the gdi bitmap
 	Gdip_DeleteBrush(pBrushFront), Gdip_DeleteBrush(pBrushBack)
 	Gdip_DeleteGraphics(G), Gdip_DisposeImage(pBitmap), DeleteObject(hBitmap)
-	Return, 0
+	Return 0
 }
 
 ;#######################################################################
 
-Esc::
+Gui_Close(GuiObj) {
 GuiClose:
-Exit:
-; gdi+ may now be shutdown
-Gdip_Shutdown(pToken)
-ExitApp
-Return
+   ExitApp
+return
+}
+
+ExitFunc(ExitReason, ExitCode)
+{
+   global
+   ; gdi+ may now be shutdown
+   Gdip_Shutdown(pToken)
+}
+

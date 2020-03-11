@@ -184,9 +184,9 @@ Please note, this is not a complete list of all the functions.
  - Gdip_CloneBitmap(pBitmap)
  - Gdip_CloneBitmapArea(pBitmap, x:="", y:="", w:=0, h:=0, PixelFormat:=0, KeepPixelFormat:=0)
  - Gdip_CompareBitmaps(pBitmapA, pBitmapB, accuracy:=25)
- - Gdip_CreateBitmap(Width, Height, PixelFormat:=0)
+ - Gdip_CreateBitmap(Width, Height, PixelFormat:=0, Stride:=0, Scan0:=0)
  - Gdip_CreateBitmapFromClipboard()
- - Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="")
+ - Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="", useICM:=0)
  - Gdip_CreateBitmapFromGdiDib(BITMAPINFO, BitmapData)
  - Gdip_CreateBitmapFromGraphics(pGraphics, Width, Height)
  - Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0)
@@ -207,7 +207,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetPixelColor(pBitmap, x, y, Format)
  - Gdip_GetImageThumbnail(pBitmap, W, H)
  - Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1)
- - Gdip_LoadImageFromFile(sFile)
+ - Gdip_LoadImageFromFile(sFile, useICM:=0)
  - Gdip_PixelateBitmap(pBitmap, ByRef pBitmapOut, BlockSize)
  - Gdip_RenderPixelsOpaque(pBitmap, pBrush:=0, alphaLevel:=0)
  - Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, KeepPixelFormat:=0)
@@ -804,7 +804,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetPenBrushFill()
   - Gdip_CreateFontFromDC()
 
-# 157 GDI+ functions still missing
+# 155 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
@@ -814,7 +814,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipClearPathMarkers
  - GdipCloneCustomLineCap
  - GdipClosePathFigures
- - GdipCreateBitmapFromFileICM
  - GdipCreateBitmapFromResource
  - GdipCreateCustomLineCap
  - GdipCreateFontFromLogfontA
@@ -890,7 +889,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetStringFormatTabStopCount
  - GdipGetStringFormatTabStops
  - GdipImageForceValidation
- - GdipLoadImageFromFileICM
  - GdipLoadImageFromStream
  - GdipLoadImageFromStreamICM
  - GdipMeasureCharacterRanges

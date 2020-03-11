@@ -3,29 +3,29 @@
 ;
 ; Example to take files from disk, load them onto a background and save back to disk
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Specify both of the files we are going to use
-File1 = mario.png
-File2 = link.png
+File1 := "needle.png"
+File2 := "background.png"
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-	MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
 	ExitApp
 }
 
 ; If the images we want to work with do not exist on disk, then download them...
 If !(FileExist(File1) && FileExist(File2))
 {
-	UrlDownloadToFile, http://www.autohotkey.net/~tic/mario.png, mario.png
-	UrlDownloadToFile, http://www.autohotkey.net/~tic/link.png, link.png
+	MsgBox "Cannot find files 'needle.png' and 'background.png' in this same directory"
+	ExitApp
 }
 
 
@@ -69,6 +69,8 @@ Gdip_DisposeImage(pBitmapFile1), Gdip_DisposeImage(pBitmapFile2)
 ; Save the bitmap to file "File.png" (extension can be .png,.bmp,.jpg,.tiff,.gif)
 ; Bear in mind transparencies may be lost with some image formats and will appear black
 Gdip_SaveBitmapToFile(pBitmap, "FinalImage.png")
+
+MsgBox "Image saved as 'FinalImage.png' "
 
 ; The bitmap can be deleted
 Gdip_DisposeImage(pBitmap)

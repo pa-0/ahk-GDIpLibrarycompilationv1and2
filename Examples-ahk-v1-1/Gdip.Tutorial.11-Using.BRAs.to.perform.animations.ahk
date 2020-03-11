@@ -3,33 +3,37 @@
 ;
 ; Tutorial to demonstrate how to use BRA files, in this instance for animation
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-	MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
 	ExitApp
 }
 ; On exiting the program we will go to Exit subroutine to clean up any resources
-OnExit, Exit
+; OnExit, Exit
+OnExit("AppExit")  ; Requires [v1.1.20+]
 
 ; I've added a simple new function here, just to ensure if anyone is having any problems then to make sure they are using the correct library version
-if (Gdip_LibraryVersion() < 1.30)
+if (Gdip_LibrarySubVersion() < 1.50)
 {
-	MsgBox, 48, version error!, Please download the latest version of the gdi+ library
+	MsgBox "This example requires v1.50 of the Gdip library"
 	ExitApp
 }
 
 ; Get the dimensions of the work area of the primary monitor
-SysGet, MonitorPrimary, MonitorPrimary
-SysGet, WA, MonitorWorkArea, %MonitorPrimary%
-WAWidth := WARight-WALeft
-WAHeight := WABottom-WATop
+MonInfo  := GetMonitorInfo(GetPrimaryMonitor())
+WALeft   := MonInfo.WALeft
+WATop    := MonInfo.WATop
+WARight  := MonInfo.WARight
+WABottom := MonInfo.WABottom
+WAWidth  := WARight - WALeft
+WAHeight := WABottom- WATop
 
 ; Create our gui with WS_EX_LAYERED style = 0x80000
 Gui, 1: -Caption +E0x80000 +LastFound +OwnDialogs +Owner
@@ -50,28 +54,29 @@ hwnd1 := WinExist()
 
 ; If the image we want to work with does not exist on disk, then download it...
 If !FileExist("Gdip.tutorial.file-fish.bra")
-UrlDownloadToFile, http://www.autohotkey.net/~tic/Gdip.tutorial.file-fish.bra, Gdip.tutorial.file-fish.bra
-
-; First you will need to read the BRA into a variable. It is now stored in the variable BRA
-FileRead, BRA, Gdip.tutorial.file-fish.bra
-If ErrorLevel
 {
-	MsgBox, 48, File error!, Please download Gdip.tutorial.file-fish.bra
+	MsgBox "Could not read file 'Gdip.tutorial.file-fish.bra' in the current directory"
 	ExitApp
 }
+; UrlDownloadToFile, http://www.autohotkey.net/~tic/Gdip.tutorial.file-fish.bra, Gdip.tutorial.file-fish.bra
 
-; using BRA_ListFiles we can get a list of all the files contained within our BRA
-; BRAs can contain folders. The returned file names will include the relative folders
-BRAFiles := BRA_ListFiles(BRA, "", 1)
-; Perform a StringSplit to get a count of the number of files
-StringSplit, BRAFile, BRAFiles, |
+; First you will need to read the BRA into a variable. It is now stored in the variable BRA
+If !(FileObject := FileOpen("Gdip.tutorial.file-fish.bra", "r")) {
+	MsgBox "Error opening Gdip.tutorial.file-fish.bra for reading"
+	ExitApp
+}
+FileObjLength := (A_AhkVersion < "2") ? FileObject.Length() : FileObject.Length
+FileObject.RawRead(BRA, FileObjLength)
+FileObject.Close()
+
+; Get a count of the number of files contained in the BRA
+ImageCount := BRA_GetCount(BRA)
 
 ; Built into the Gdip library is the ability to directly get a pointer to a bitmap from a BRA
 ; Gdip_BitmapFromBRA(ByRef BRAFromMemIn, File, Alternate=0)
-; The 1st parameter is the BRA in memory
+; The 1st parameter is the BRA in memory from FileObject.RawRead()
 ; The 2nd parameter is the name of the file you wish to get a bitmap for
 ; If the 3rd parameter is true (as it is here) then the name (2nd parameter) doesn't go by file name, but instead by file number
-
 ; So we take a pointer to the bitmap of the 1st file
 ; I am doing this to get the dimensions of an image. We could have taken any file as they are all the same dimension in this particular BRA
 pBitmap := Gdip_BitmapFromBRA(BRA, 1, 1)
@@ -83,7 +88,7 @@ pBitmap := Gdip_BitmapFromBRA(BRA, 1, 1)
 ; a negative number means that the function has returned an error
 If (pBitmap < 1)
 {
-	MsgBox, 48, File loading error!, Could not load the image specified
+	MsgBox "Could not load the image specified! Error: " pBitmap
 	ExitApp
 }
 
@@ -122,12 +127,12 @@ pBrush := Gdip_CreateLineBrushFromRect(0, 0, WinWidth, WinHeight, 0xee000000, 0x
 Gdip_FillRoundedRectangle(G, pBrush, 0, 0, WinWidth, WinHeight, 20)
 
 ; We can specify the font to use. Here we use Arial as most systems should have this installed
-Font = Arial
+Font := "Arial"
 ; Next we can check that the user actually has the font that we wish them to use
 ; If they do not then we can do something about it. I choose to give a wraning and exit!
-If !Gdip_FontFamilyCreate(Font)
+If !(hFamily := Gdip_FontFamilyCreate(Font))
 {
-   MsgBox, 48, Font error!, The font you have specified does not exist on the system
+   MsgBox "The font you have specified does not exist on the system"
    ExitApp
 }
 ; Delete font family as we now know the font does exist
@@ -140,21 +145,21 @@ Gdip_DeleteFontFamily(hFamily)
 ; I put all the same options that I will use later, except I just put an arbitrary colour in and also just wrote the letter T as that will be the tallest letter
 ; Most importantly is the last parameter that is new. It is the measure parameter
 ; If specified then it will still get you the dimensions of the text, but will not actually draw it
-Options = x10p y60p w80p Centre cff000000 r4 s18p Bold
+Options := "x10p y60p w80p Centre cff000000 r4 s18p Bold"
 RC := Gdip_TextToGraphics(G, "T", Options, Font, WinWidth, WinHeight, 1)
 ; StringSplit RC to get the dimensions of the text. The width is not important to me, just the starting y and height
 ; x = RC1, y = RC2, width = RC3, height = RC4, number of characters = RC5, number of lines = RC6
-StringSplit, RC, RC, |
+RC := StrSplit(RC, "|")
 
 ; I can now create a gradient brush for the text (to be used with another new addition to Gdip_TextToGraphics
 ; I am going to create it using the y and height we just got. The width doesnt matter as I will make the brush the same width as the gui
 ; so no matter how wide the writing it will still be within the brushes width
-pTextBrush := Gdip_CreateLineBrushFromRect(0, RC2, WinWidth, RC4, 0xffDDF7F7, 0x774549DF)
+pTextBrush := Gdip_CreateLineBrushFromRect(0, RC[2], WinWidth, RC[4], 0xffDDF7F7, 0x774549DF)
 
 ; In the options for Gdip_TextToGraphics we can now specify the brush we just created rather than just specifying the argb as we normally do
 ; We literally pass the pointer to the brush (so our brush variable) after the c
 ; These options will be used for the duration of the program now for writing text
-Options = x10p y60p w80p Centre c%pTextBrush% r4 s18p Bold
+Options := "x10p y60p w80p Centre c" . pTextBrush . " r4 s18p Bold"
 
 ; We can dispose of the bitmap we got from the bra. We just needed it for its dimensions
 Gdip_DisposeImage(pBitmap)
@@ -172,28 +177,32 @@ UpdateLayeredWindow(hwnd1, hdc, (WAWidth-WinWidth)//2, (WAHeight-WinHeight)//2, 
 ; Set the timers
 ; UpdateTime to draw the time onto the gui
 ; Play to change the image for the fish video
-GoSub, UpDateTime
+UpdateTime()
 SetTimer, UpdateTime, 950
 SetTimer, Play, 70
 return
 
 ;######################################################################
 
+UpdateTime()
+{
+global
 UpdateTime:
 
 ; We should probably put critical here so that it isnt interrupted, but the subroutines are so quick that its very unlikely
 
 ; Get the time in the format of 16:05 06 January 2010 (oops...caught me commenting this at work!)
 FormatTime, Time
+
 if (Time = OldTime)
 	return
 
 ; We are going to get the dimensions of the text for the time
 RC := Gdip_TextToGraphics(G, Time, Options, Font, WinWidth, WinHeight, 1)
-StringSplit, RC, RC, |
+RC := StrSplit(RC, "|")
 
 ; We can then clip a rectangle so that we only need to redraw what is contained within it
-Gdip_SetClipRect(G, RC1, RC2, RC3, RC4)
+Gdip_SetClipRect(G, RC[1], RC[2], RC[3], RC[4])
 
 ; Gdip_SetCompositingMode to 1, which overwrites anything inside the rectangle
 Gdip_SetCompositingMode(G, 1)
@@ -216,6 +225,24 @@ Gdip_ResetClip(G)
 ; Save the time so that we dont redraw until the time changes
 OldTime := Time
 return
+}
+
+;######################################################################
+
+BRA_GetCount(ByRef BRAFromMemIn) {
+	If !(BRAFromMemIn)
+		Return -1
+	Headers := StrSplit(StrGet(&BRAFromMemIn, 256, "CP0"), "`n")
+	Header := StrSplit(Headers[1], "|")
+	HeaderLength := (A_AhkVersion < "2") ? Header.Length() : Header.Length
+	If (HeaderLength != 4) || (Header[2] != "BRA!")
+		Return -2
+	Info := StrSplit(Headers[2], "|")
+	InfoLength := (A_AhkVersion < "2") ? Info.Length() : Info.Length
+	If (InfoLength != 3)
+		Return -3
+	Return (Info[1] + 0)
+}
 
 ;######################################################################
 
@@ -223,13 +250,15 @@ return
 Fade(InOut)
 {
 	global
-	
+
 	; We will create a simple fade effect when starting or ending the video
 	; We need to know whether it will start opaque or transparent
 	Trans := (InOut = "In") ? 0 : 0.8
-	
+
 	; Loop the number of times until it is at the specified opacity
-	Loop, % 0.8/0.05		;%
+	numLoops := 0.8/0.05
+	N := (A_AhkVersion < 2) ? numLoops : "numLoops"
+	Loop %N%
 	{
 		; Clip to the area we are drawing for the fish, so that only this rectangle gets drawn to
 		; We could do this once at the top of this function, but it is safer to do it each loop so that nothing else can modify it during the sleep
@@ -240,48 +269,51 @@ Fade(InOut)
 		Gdip_FillRectangle(G, pBrush, 0, 0, WinWidth, WinHeight)
 		; Gdip_SetCompositingMode back to 0 so that the fish are drawn onto the background and dont erase it
 		Gdip_SetCompositingMode(G, 0)
-		
+
 		; Increment index by 1 so that we get the next image in the sequence
 		Index++
 		; Again use alternate mode so that we only specify the file number and get a pBitmap for it
 		pBitmap := Gdip_BitmapFromBRA(BRA, Index, 1)
-		
+
 		; Draw this image onto our graphics context for the gui (this being our canvas) with the current transparency
 		Gdip_DrawImage(G, pBitmap, (WinWidth-NewWidth)//2, (WinWidth-NewWidth)//2, NewWidth, NewHeight, 0, 0, Width, Height, Trans)
-		
+
 		; Now update the window with the dc as usual
 		UpdateLayeredWindow(hwnd1, hdc)
-		
+
 		; We can dispose of the fish bitmap we just retrieved now that it is drawn
 		Gdip_DisposeImage(pBitmap)
-		
+
 		; Increase or decrease opacity depending on whether we are fading in or out
 		Trans := (InOut = "In") ? Trans+0.05 : Trans-0.05
 
 		; Reset the clipping region so that another function if called can still update the window
 		Gdip_ResetClip(G)
-		
+
 		; A sleep to match the length of the Play timer
-		Sleep, 70
+		Sleep 70
 	}
-	
+
 	; If we have reached the end of the video then put it back to the beginning after the fade
-	Index := (Index >= BRAFile0) ? 0 : Index
+	Index := (Index >= ImageCount) ? 0 : Index
 	return
 }
 
 ;#######################################################################
 
+Play()
+{
+global
 Play:
 ; Check if we need to fade in or whether we are close enough to the end to have to fade out
 if (Index = 0)
 	Fade("In")
-else if (Index = BRAFile0-(0.8/0.05))
+else if (Index = ImageCount-(0.8/0.05))
 	Fade("Out")
 else
 {
 	; If we are doing no fading and we are just playing the video....
-	
+
 	; We do the same here as we did inside the function
 	; We are setting a clipping area for just the fish, then filling the background in (overwiting anything that was there)
 	; We set Gdip_SetCompositingMode back to 0 and then get a bitmap for the next fish image and draw it over our background
@@ -299,20 +331,21 @@ else
 	Gdip_ResetClip(G)
 }
 return
+}
 
 ;#######################################################################
 
 ; Our function for WM_LBUTTONDOWN allowing us to drag. works on last found window
-
-WM_LBUTTONDOWN() {
-	PostMessage, 0xA1, 2
+WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
+{
+	PostMessage 0xA1, 2
 }
 
 ;#######################################################################
 
 ; On Exit clean up resources
-Esc::
-Exit:
+AppExit(ExitReason, ExitCode) {
+global
 ; Select the object back into the hdc
 SelectObject(hdc, obm)
 
@@ -328,5 +361,5 @@ Gdip_DeleteGraphics(G)
 ; Also delete the 2 brushes we created
 Gdip_DeleteBrush(pBrush), Gdip_DeleteBrush(pTextBrush)
 Gdip_Shutdown(pToken)
-ExitApp
-Return
+Return 0
+}

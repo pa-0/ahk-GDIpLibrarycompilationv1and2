@@ -3,28 +3,27 @@
 ;
 ; Tutorial to write text onto a gui
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-   MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
-   ExitApp
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
+	ExitApp
 }
-OnExit, Exit
+OnExit("ExitFunc")
 
 ; Set the width and height we want as our drawing area, to draw everything in. This will be the dimensions of our bitmap
 Width := 300, Height := 200
 
 ; Create a layered window (+E0x80000 : must be used for UpdateLayeredWindow to work!) that is always on top (+AlwaysOnTop), has no taskbar entry or caption
 Gui, 1: -Caption +E0x80000 +LastFound +AlwaysOnTop +ToolWindow +OwnDialogs
-Gui, 1: Add, Edit, w%Width% h20 y300, vMeEdit
-; Show the window
+Gui, 1: Add, Edit, w%Width% h20 y300 vMeEdit
 Gui, 1: Show, NA
 
 ; Get a handle to this window we have created in order to update it later
@@ -57,13 +56,13 @@ Gdip_FillRoundedRectangle(G, pBrush, 0, 0, Width, Height, 20)
 Gdip_DeleteBrush(pBrush)
 
 ; We can specify the font to use. Here we use Arial as most systems should have this installed
-Font = Arial
+Font := "Arial"
 ; Next we can check that the user actually has the font that we wish them to use
 ; If they do not then we can do something about it. I choose to give a wraning and exit!
 If !Gdip_FontFamilyCreate(Font)
 {
-   MsgBox, 48, Font error!, The font you have specified does not exist on the system
-   ExitApp
+	MsgBox "The font you have specified does not exist on the system"
+	ExitApp
 }
 
 ; There are a lot of things to cover with the function Gdip_TextToGraphics
@@ -100,7 +99,7 @@ If !Gdip_FontFamilyCreate(Font)
 
 ; As mentioned previously, you don not need to specify the last 2 parameters, the width and height, unless
 ; you are planning on using the p option with the x,y,w,h to use the percentage
-Options = x10p y30p w80p Centre cbbffffff r4 s20 Underline Italic
+Options := "x10p y30p w80p Centre cbbffffff r4 s20 Underline Italic"
 Gdip_TextToGraphics(G, "Tutorial 8`n`nThank you for trying this example", Options, Font, Width, Height)
 
 
@@ -129,16 +128,17 @@ Return
 
 ; This function is called every time the user clicks on the gui
 ; The PostMessage will act on the last found window (this being the gui that launched the subroutine, hence the last parameter not being needed)
-WM_LBUTTONDOWN()
+WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
 {
-   PostMessage, 0xA1, 2
+   PostMessage 0xA1, 2
 }
 
 ;#######################################################################
 
-Esc::
-Exit:
-; gdi+ may now be shutdown on exiting the program
-Gdip_Shutdown(pToken)
-ExitApp
-Return
+ExitFunc(ExitReason, ExitCode)
+{
+   global
+   ; gdi+ may now be shutdown on exiting the program
+   Gdip_Shutdown(pToken)
+}
+

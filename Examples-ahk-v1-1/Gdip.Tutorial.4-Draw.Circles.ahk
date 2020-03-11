@@ -3,31 +3,34 @@
 ;
 ; Tutorial to fill the screen with randomly hatched ellipses
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-	MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
 	ExitApp
 }
-OnExit, Exit
+OnExit("ExitFunc")
 
 ; Get the dimensions of the primary monitor
-SysGet, MonitorPrimary, MonitorPrimary
-SysGet, WA, MonitorWorkArea, %MonitorPrimary%
-WAWidth := WARight-WALeft
-WAHeight := WABottom-WATop
+; these funcs are based off MDMF lib and are now included in the Gdip_All library 
+MonitorPrimary := GetPrimaryMonitor()
+M := GetMonitorInfo(MonitorPrimary)
+WALeft := M.WALeft 
+WATop := M.WATop
+WARight := M.WARight
+WABottom := M.WABottom
+WAWidth := M.WARight-M.WALeft
+WAHeight := M.WABottom-M.WATop
 
 ; Create a layered window (+E0x80000) that is always on top (+AlwaysOnTop), has no taskbar entry or caption
 Gui, 1: -Caption +E0x80000 +LastFound +AlwaysOnTop +ToolWindow +OwnDialogs
-
-; Show the window
 Gui, 1: Show, NA
 
 ; Get a handle to this window we have created in order to update it later
@@ -49,21 +52,25 @@ G := Gdip_GraphicsFromHDC(hdc)
 Gdip_SetSmoothingMode(G, 4)
 
 ; Set a timer to draw a new ellipse every 200ms
-SetTimer, DrawCircle, 200
+SetTimer DrawCircle, 200
 Return
 
 ;#######################################################################
 
+DrawCircle()
+{
+global
 DrawCircle:
 ; Get a random colour for the background and foreground of hatch style used to fill the ellipse,
 ; as well as random brush style, x and y coordinates and width/height
-Random, RandBackColour, 0x00000000, 0xffffffff
-Random, RandForeColour, 0x00000000, 0xffffffff
+
+Random, RandBackColour, 0.0, 0xffffffff
+Random, RandForeColour, 0.0, 0xffffffff
 Random, RandBrush, 0, 53
 Random, RandElipseWidth, 1, 200
 Random, RandElipseHeight, 1, 200
-Random, RandElipsexPos, %WALeft%, % WAWidth-RandElipseWidth			;%
-Random, RandElipseyPos, %WATop%, % WAHeight-RandElipseHeight		;%
+Random, RandElipsexPos, %WALeft%, % WAWidth-RandElipseWidth
+Random, RandElipseyPos, %WATop%, % WAHeight-RandElipseHeight
 
 ; Create the random brush
 pBrush := Gdip_BrushCreateHatch(RandBackColour, RandForeColour, RandBrush)
@@ -77,23 +84,26 @@ UpdateLayeredWindow(hwnd1, hdc, WALeft, WATop, WAWidth, WAHeight)
 ; Delete the brush as it is no longer needed and wastes memory
 Gdip_DeleteBrush(pBrush)
 Return
+}
 
 ;#######################################################################
-Esc::
-Exit:
-; Select the object back into the hdc
-SelectObject(hdc, obm)
 
-; Now the bitmap may be deleted
-DeleteObject(hbm)
+ExitFunc(ExitReason, ExitCode)
+{
+   global
+   ; Select the object back into the hdc
+   SelectObject(hdc, obm)
 
-; Also the device context related to the bitmap may be deleted
-DeleteDC(hdc)
+   ; Now the bitmap may be deleted
+   DeleteObject(hbm)
 
-; The graphics may now be deleted
-Gdip_DeleteGraphics(G)
+   ; Also the device context related to the bitmap may be deleted
+   DeleteDC(hdc)
 
-; ...and gdi+ may now be shutdown
-Gdip_Shutdown(pToken)
-ExitApp
-Return
+   ; The graphics may now be deleted
+   Gdip_DeleteGraphics(G)
+
+   ; ...and gdi+ may now be shutdown
+   Gdip_Shutdown(pToken)
+}
+

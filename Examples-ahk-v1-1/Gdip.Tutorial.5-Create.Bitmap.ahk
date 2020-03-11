@@ -3,17 +3,17 @@
 ;
 ; Example to create a bitmap, fill it with some shapes and save to file
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-	MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
 	ExitApp
 }
 
@@ -46,7 +46,7 @@ pBrushWhite := Gdip_BrushCreateSolid(0xffffffff)
 pBrushBlack := Gdip_BrushCreateSolid(0xff000000)
 
 ; Loop to draw 2 ellipses filling them with white then black in the centre of each
-Loop, 2
+Loop 2
 {
 	x := (A_Index = 1) ? 120 : 220, y := 100
 	Gdip_FillEllipse(G, pBrushWhite, x, y, 60, 60)
@@ -67,11 +67,11 @@ Gdip_DeleteBrush(pBrush)
 pPen := Gdip_CreatePen(0xbb000000, 3)
 
 ; Create some coordinates for the lines in format x1,y1,x2,y2 then loop and draw all the lines
-Lines = 180,200,130,220|180,190,130,195|220,200,270,220|220,190,270,195
-Loop, Parse, Lines, |
+Lines := "180,200,130,220|180,190,130,195|220,200,270,220|220,190,270,195"
+for k,v in StrSplit(Lines, "|")
 {
-	StringSplit, Pos, A_LoopField, `,
-	Gdip_DrawLine(G, pPen, Pos1, Pos2, Pos3, Pos4)
+	Pos := StrSplit(v, ",")
+	Gdip_DrawLine(G, pPen, Pos[1], Pos[2], Pos[3], Pos[4])
 }
 ; Delete the pen
 Gdip_DeletePen(pPen)
@@ -80,6 +80,8 @@ Gdip_DeletePen(pPen)
 ; Save the bitmap to file "File.png" (extension can be .png,.bmp,.jpg,.tiff,.gif)
 ; Bear in mind transparencies may be lost with some image formats and will appear black
 Gdip_SaveBitmapToFile(pBitmap, "File.png")
+
+MsgBox "Bitmap saved as 'File.png' "
 
 ; The bitmap can be deleted
 Gdip_DisposeImage(pBitmap)

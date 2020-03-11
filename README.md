@@ -49,8 +49,6 @@ See functions-list.txt for more details.
   - GetProperty() functions yield incorrect results for some meta-data/properties.
   - Gdip_PixelateBitmap() seems to not work for me [in any GDI+ library edition].
   - the newly added examples are not AHK v2 compatible
-  - all other tutorials / examples throw an error on script exit on AHK v2 a104; the same applies to @mmikeww's edition
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: mardi 25 février 2020, v1.81
-
+## Derniere mise à jour: mercredi 11 mars 2020, v1.82

@@ -3,28 +3,26 @@
 ;
 ; Tutorial to draw a single ellipse and rectangle to the screen, but just the outlines of these shapes
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-	MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+	MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
 	ExitApp
 }
-OnExit, Exit
+OnExit("ExitFunc")
 
 ; Set the width and height we want as our drawing area, to draw everything in. This will be the dimensions of our bitmap
 Width := 600, Height := 400
 
 ; Create a layered window (+E0x80000 : must be used for UpdateLayeredWindow to work!) that is always on top (+AlwaysOnTop), has no taskbar entry or caption
 Gui, 1: -Caption +E0x80000 +LastFound +AlwaysOnTop +ToolWindow +OwnDialogs
-
-; Show the window
 Gui, 1: Show, NA
 
 ; Get a handle to this window we have created in order to update it later
@@ -86,9 +84,10 @@ Return
 
 ;#######################################################################
 
-Esc::
-Exit:
-; gdi+ may now be shutdown on exiting the program
-Gdip_Shutdown(pToken)
-ExitApp
-Return
+ExitFunc(ExitReason, ExitCode)
+{
+   global
+   ; gdi+ may now be shutdown on exiting the program
+   Gdip_Shutdown(pToken)
+}
+

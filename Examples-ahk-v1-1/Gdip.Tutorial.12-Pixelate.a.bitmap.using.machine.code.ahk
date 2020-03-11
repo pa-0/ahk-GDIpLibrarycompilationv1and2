@@ -3,36 +3,33 @@
 ;
 ; Tutorial to pixelate a bitmap using machine code
 
-#SingleInstance, Force
+#SingleInstance Force
 #NoEnv
-SetBatchLines, -1
+SetBatchLines -1
 
 ; Uncomment if Gdip.ahk is not in your standard library
-#Include, ..\Gdip_All.ahk
+#Include ../Gdip_All.ahk
 
 ; Start gdi+
 If !pToken := Gdip_Startup()
 {
-   MsgBox, 48, gdiplus error!, Gdiplus failed to start. Please ensure you have gdiplus on your system
+   MsgBox "Gdiplus failed to start. Please ensure you have gdiplus on your system"
    ExitApp
 }
-OnExit, Exit
+OnExit("ExitFunc")
 
 ; Create a layered window that is always on top as usual and get a handle to the window
 Gui, 1: -Caption +E0x80000 +LastFound +OwnDialogs +Owner +AlwaysOnTop
 Gui, 1: Show, NA
 hwnd1 := WinExist()
 
-; If the image we want to work with does not exist on disk, then download it...
-If !FileExist("MJ.jpg")
-	UrlDownloadToFile, http://www.autohotkey.net/~tic/MJ.jpg, MJ.jpg
-
 ; Get a bitmap from the image
-pBitmap := Gdip_CreateBitmapFromFile("MJ.jpg")
+If FileExist("MJ.jpg")
+   pBitmap := Gdip_CreateBitmapFromFile("MJ.jpg")
 ;pBitmap := Gdip_BitmapFromScreen()
 If !pBitmap
 {
-	MsgBox, 48, File loading error!, Could not load the image specified
+	MsgBox "Could not load the image 'MJ.jpg' "
 	ExitApp
 }
 ; Get the width and height of the bitmap we have just created from the file
@@ -84,19 +81,24 @@ return
 ;#######################################################################
 
 ; This is called on left click to allow to drag
-
-WM_LBUTTONDOWN() {
-   PostMessage, 0xA1, 2
+WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
+{
+   PostMessage 0xA1, 2
 }
 
 ;#######################################################################
 
 ; On exit, dispose of everything created
 Esc::
-Exit:
-Gdip_DisposeImage(pBitmapOut), Gdip_DisposeImage(pBitmap)
-SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
-Gdip_DeleteGraphics(G)
-Gdip_Shutdown(pToken)
-ExitApp
+   ExitApp
 return
+
+ExitFunc(ExitReason, ExitCode)
+{
+   global
+   Gdip_DisposeImage(pBitmapOut), Gdip_DisposeImage(pBitmap)
+   SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
+   Gdip_DeleteGraphics(G)
+   Gdip_Shutdown(pToken)
+}
+
