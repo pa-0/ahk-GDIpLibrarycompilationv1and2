@@ -1,6 +1,8 @@
 # CONTENTS SUMMARY
-- Functions list [v1.81 - 25/02/2020]
+- Functions list [v1.82 - 11/03/2020]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
+- Credits [who made what]
+- What is still left to implement
 
 # FUNCTIONS LIST
 
@@ -482,30 +484,45 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
  - SetSysColorToControl()
  - UpdateLayeredWindow()
 
-## 292 NEW FUNCTIONS:
+## ~300 NEW FUNCTIONS [and credits]:
 
 - Unknown source [probably mmikeww]:
   - Gdip_BitmapFromBase64()
   - GetIconDimensions()     
 
 - by tmplinshi:
+  - Source: https://www.autohotkey.com/boards/viewtopic.php?f=6&t=813&p=298435#p297794
   - Gdip_CreateFontFamilyFromFile()
 
 - by Tariq Porter [tic]:
+  - Source:A: https://github.com/tariqporter/Gdip2/blob/master/lib/Object.ahk
+  - Source B: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-11
   - Gdip_FillRoundedRectangle2()
   - Gdip_DrawRoundedRectangle2()
   - Gdip_CompareBitmaps()
 
+- by iseahound:
+  - Source: https://www.autohotkey.com/boards/viewtopic.php?f=6&t=63345
+  - ... part of: https://github.com/iseahound/Graphics/blob/master/lib/Graphics.ahk
+  - Gdip_CreateBitmapFromHBITMAPalpha()
+
 - by DevX and Rabiator:
+  - Source: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-11
   - Gdip_DrawRoundedLine()
 
 - by SBC:
+  - Source: extracted from his «Picture Viewer» script https://autohotkey.com/board/topic/58226-ahk-picture-viewer/
   - Gdip_GetBitmapFramesCount()
+
+- by jballi:
+  - Source: https://www.autohotkey.com/boards/viewtopic.php?style=7&t=70508
+  - Gdip_GetImageThumbnail()
 
 - by iPhilip:
   - Gdip_SetPenDashStyle()
 
 - 9 by RazorHalo:
+  - Source: https://www.autohotkey.com/boards/viewtopic.php?f=6&t=6517&start=260
   - Gdip_RotatePathAtCenter()
   - Gdip_ResetMatrix()
   - Gdip_RotateMatrix()
@@ -517,6 +534,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_IsVisiblePathPoint()
 
 - 14 by "Learning one":
+  - Source: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-75
   - Gdip_AddPathBeziers()
   - Gdip_AddPathBezier()
   - Gdip_AddPathLines()
@@ -533,6 +551,8 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_CreateRegionPath()
 
 - 23 by "Just Me":
+  - Source A: [get image metadata using GDI+] https://autohotkey.com/board/topic/85238-get-image-metadata-using-gdi-ahk-l/
+  - Source B: [PathGradient functions] https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-65
   - Gdip_PathGradientCreateFromPath()
   - Gdip_PathGradientSetCenterPoint()
   - Gdip_PathGradientSetCenterColor()
@@ -550,6 +570,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_GetPropertyTagType()
   - Gdip_GetPropertyItemValue()
   - Multiple Display Monitors Functions by "Just me":
+    - Source: https://autohotkey.com/boards/viewtopic.php?f=6&t=4606
     - GetMonitorCount()
     - GetMonitorInfo()
     - GetPrimaryMonitor()
@@ -558,6 +579,26 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
     - MDMF_FromRect()
     - MDMF_GetInfo()
  
+- 4 by Tidbit:
+  - ConvertHSLtoRGB()
+  - ConvertHueToRGB()
+  - ConvertRGBtoHSL()
+
+- 12 by nnnik [extracted from his GDI+ class]:
+  - Source: https://github.com/nnnik/classGDIp
+  - Gdip_DrawBeziers()
+  - Gdip_SetLinearGrBrushColors()
+  - Gdip_GetLinearGrBrushColors()
+  - Gdip_SetSolidFillColor()
+  - Gdip_GetSolidFillColor()
+  - Gdip_ClonePen()
+  - Gdip_SetPenWidth()
+  - Gdip_GetPenWidth()
+  - Gdip_SetPenColor()
+  - Gdip_GetPenColor()
+  - Gdip_SetPenBrushFill()
+  - Gdip_CreateFontFromDC()
+
 - 228 by Marius Șucan [robodesign.ro]:
   - Gdip_AddPathRoundedRectangle()
   - Gdip_GetRotatedEllipseDimensions()
@@ -789,20 +830,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - GenerateColorMatrix()
 
 (*) mainly written by swagfag, but at my request and modified it further
-
-- 12 by nnnik [extracted from his GDI+ class]:
-  - Gdip_DrawBeziers()
-  - Gdip_SetLinearGrBrushColors()
-  - Gdip_GetLinearGrBrushColors()
-  - Gdip_SetSolidFillColor()
-  - Gdip_GetSolidFillColor()
-  - Gdip_ClonePen()
-  - Gdip_SetPenWidth()
-  - Gdip_GetPenWidth()
-  - Gdip_SetPenColor()
-  - Gdip_GetPenColor()
-  - Gdip_SetPenBrushFill()
-  - Gdip_CreateFontFromDC()
+    - https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
 
 # 155 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.

@@ -4,7 +4,7 @@ This is a compilation of user contributed functions for the GDI+ library wrapper
 
 This repository is a fork of https://github.com/mmikeww/AHKv2-Gdip/ . Some of the newly added functions are possibly not AHK v2 compatible.
 
-This Gdip_all.ahk file should be compatible with projects already relying on the original edition.
+This Gdip_all.ahk file should be compatible with projects already relying on the original edition. In other words, it is backwards compatible. If you this is not the case, please report the issue[s].
 
 I re-added the original examples From Tic in Examples-ahk-v1-1 folder and several new examples that showcase the newly supported GDI+ APIs. These are example scripts initially provided by those that coded the new functions.
 
@@ -41,9 +41,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 
 ## ~23 MODIFIED FUNCTIONS
 
-## ~298 NEW FUNCTIONS
+## ~300 NEW FUNCTIONS
 
-See functions-list.txt for more details.
+See functions-list.txt for more details and credits.
 
 ## NOTES:
   - GetProperty() functions yield incorrect results for some meta-data/properties.

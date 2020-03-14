@@ -3,7 +3,7 @@
 ; a fork from: https://github.com/mmikeww/AHKv2-Gdip
 ; based on https://github.com/tariqporter/Gdip
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
-
+;
 ; NOTES: The drawing of GDI+ Bitmaps is limited to a size
 ; of 32767 pixels in either direction (width, height).
 ; To calculate the largest bitmap you can create:
@@ -13,7 +13,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
-; - v1.81 on 11/03/2020
+; - v1.82 on 11/03/2020
 ; - v1.81 on 25/02/2020
 ; - v1.80 on 11/01/2019
 ; - v1.79 on 10/28/2019
@@ -2590,8 +2590,8 @@ Gdip_BitmapSelectActiveFrame(pBitmap, FrameIndex) {
 }
 
 Gdip_GetBitmapFramesCount(pBitmap) {
-; The function returns the number of frames or pages a given pBitmap has
-; For GDI+ only GIFs and TIFFs can have multiple frames/pages.
+; The function returns the number of frames or pages a given pBitmap has.
+; GDI+ only supports multi-frames/pages for GIFs and TIFFs.
 ; Function written by SBC in September 2010 and
 ; extracted from his «Picture Viewer» script.
 ; https://autohotkey.com/board/topic/58226-ahk-picture-viewer/
@@ -6354,7 +6354,7 @@ Gdip_ClonePath(pPath) {
 }
 
 ;######################################################################################################################################
-; The following PathGradient brush functions were written by Just Me in March 2012
+; The following PathGradient brush functions were written by 'Just Me' in March 2012
 ; source: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-65
 ;######################################################################################################################################
 
@@ -7554,6 +7554,9 @@ Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, Pa
 }
 
 Gdip_GetImageThumbnail(pBitmap, W, H) {
+; by jballi, source
+; https://www.autohotkey.com/boards/viewtopic.php?style=7&t=70508
+
     DllCall("gdiplus\GdipGetImageThumbnail"
         ,"UPtr",pBitmap                         ;-- *image
         ,"UInt",W                               ;-- thumbWidth
@@ -7564,6 +7567,11 @@ Gdip_GetImageThumbnail(pBitmap, W, H) {
 
    Return pThumbnail
 }
+
+; =================================================
+; The following functions were written by Tidbit
+; handed to me by himself to be included here.
+; =================================================
 
 ConvertRGBtoHSL(R, G, B) {
 ; http://www.easyrgb.com/index.php?X=MATH&H=18#text18
