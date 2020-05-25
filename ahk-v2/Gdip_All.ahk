@@ -3,7 +3,7 @@
 ; a fork from: https://github.com/mmikeww/AHKv2-Gdip
 ; based on https://github.com/tariqporter/Gdip
 ; Supports: AHK_L / AHK_H Unicode/ANSI x86/x64 and AHK v2 alpha
-; This file is the AHK v1.1 edition; for AHK v2 compatible edition, please see the repository.
+; This file is the AHK v2 edition; for AHK v1.1 compatible edition, please see the repository.
 ;
 ; NOTES: The drawing of GDI+ Bitmaps is limited to a size
 ; of 32767 pixels in either direction (width, height).

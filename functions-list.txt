@@ -843,7 +843,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 (*) mainly written by swagfag, but at my request and modified it further
     - https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
 
-# 154 GDI+ functions still missing
+# 147 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
@@ -852,12 +852,9 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipBeginContainer2
  - GdipClearPathMarkers
  - GdipCloneCustomLineCap
- - GdipClosePathFigures
  - GdipCreateBitmapFromResource
  - GdipCreateCustomLineCap
  - GdipCreateFontFromLogfontA
- - GdipCreateFontFromLogfontW
- - GdipCreateFromHDC2
  - GdipCreateHalftonePalette
  - GdipCreateLineBrushFromRectWithAngle
  - GdipCreateMatrix3
@@ -950,10 +947,8 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipRecordMetafileFileName
  - GdipRecordMetafileStream
  - GdipRemovePropertyItem
- - GdipRestoreGraphics
  - GdipSaveAdd
  - GdipSaveAddImage
- - GdipSaveGraphics
  - GdipSaveImageToStream
  - GdipSetClipHrgn
  - GdipSetCustomLineCapBaseCap
@@ -993,7 +988,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetEffectParameters
  - GdipGetImageDecoders
  - GdipGetImageDecodersSize
- - GdipGetImageFlags
  - GdipGetPenCustomEndCap
  - GdipSetAdjustableArrowCapFillState
  - GdipSetAdjustableArrowCapHeight
