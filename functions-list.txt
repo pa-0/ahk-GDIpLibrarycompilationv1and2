@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.82 - 11/03/2020]
+- Functions list [v1.84 - 05/06/2020]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
@@ -171,7 +171,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 49 pBitmap functions
+## 50 pBitmap functions
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
  - Gdip_BitmapConvertGray(pBitmap, hue:=0, vibrance:=-40, brightness:=1, contrast:=0, KeepPixelFormat:=0)
@@ -205,7 +205,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetImageType(pBitmap)
  - Gdip_GetImageFlags(pBitmap)
  - Gdip_BitmapGetDPIResolution(pBitmap, ByRef dpix, ByRef dpiy)
- - Gdip_CreateBitmapFromHBITMAPalpha(hImage)
+ - Gdip_CreateARGBBitmapFromHBITMAP(hImage)
+ - Gdip_CreateARGBHBITMAPFromBitmap(pBitmap)
  - Gdip_GetImageWidth(pBitmap)
  - Gdip_GetPixelColor(pBitmap, x, y, Format)
  - Gdip_GetImageThumbnail(pBitmap, W, H)
@@ -507,9 +508,8 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_CompareBitmaps()
 
 - by iseahound:
-  - Source: https://www.autohotkey.com/boards/viewtopic.php?f=6&t=63345
-  - ... part of: https://github.com/iseahound/Graphics/blob/master/lib/Graphics.ahk
-  - Gdip_CreateBitmapFromHBITMAPalpha()
+  - Gdip_CreateARGBBitmapFromHBITMAP()
+  - Gdip_CreateARGBHBITMAPFromBitmap()
 
 - by DevX and Rabiator:
   - Source: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-11
