@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.84 - 05/06/2020]
+- Functions list [v1.85 - 24/08/2020]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
@@ -171,7 +171,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 50 pBitmap functions
+## 53 pBitmap functions
+ - Gdip_BoxBlurBitmap(pBitmap, passes)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
  - Gdip_BitmapConvertGray(pBitmap, hue:=0, vibrance:=-40, brightness:=1, contrast:=0, KeepPixelFormat:=0)
@@ -182,7 +183,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_BitmapSelectActiveFrame(pBitmap, FrameIndex)
  - Gdip_BitmapSetColorDepth(pBitmap, bitsDepth, useDithering:=1)
  - Gdip_BitmapSetResolution(pBitmap, dpix, dpiy)
- - Gdip_BlurBitmap(pBitmap, BlurAmount)
+ - Gdip_BlurBitmap(pBitmap, BlurAmount, usePARGB:=0, quality:=6)
  - Gdip_CloneBitmap(pBitmap)
  - Gdip_CloneBitmapArea(pBitmap, x:="", y:="", w:=0, h:=0, PixelFormat:=0, KeepPixelFormat:=0)
  - Gdip_CompareBitmaps(pBitmapA, pBitmapB, accuracy:=25)
@@ -193,6 +194,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_CreateBitmapFromGraphics(pGraphics, Width, Height)
  - Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0)
  - Gdip_CreateBitmapFromHICON(hIcon)
+ - Gdip_CreateBitmapFromStream(pStream, ICM:=0)
  - Gdip_CreateHBITMAPFromBitmap(pBitmap, Background:=0xffffffff)
  - Gdip_DisposeImage(pBitmap, noErr:=0)
  - Gdip_GetBitmapFramesCount(pBitmap)
@@ -218,7 +220,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_RetrieveBitmapChannel(pBitmap, channel)
  - Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, PixelFormat:=0)
  - Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64:=0)
- - Gdip_SetBitmapAlphaChannel(pBitmap, AlphaMaskBitmap)
+ - Gdip_SetAlphaChannel(pBitmap, pBitmapMask, invertAlphaMask:=0, replaceSourceAlphaChannel:=0, whichChannel:=1)
+ - Gdip_BlendBitmaps(pBitmap, pBitmap2Blend, blendMode)
  - Gdip_SetBitmapToClipboard(pBitmap)
  - Gdip_SetPixel(pBitmap, x, y, ARGB)
  - Gdip_TestBitmapUniformity(pBitmap, HistogramFormat:=3, ByRef maxLevelIndex:=0, ByRef maxLevelPixels:=0)
@@ -228,7 +231,6 @@ Please note, this is not a complete list of all the functions.
  - Gdip_CreateImageAttributes()
  - Gdip_DisposeImageAttributes(ImageAttr)
  - Gdip_ResetImageAttributes(ImageAttr, ColorAdjustType)
- - GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0, chnBdec:=0)
  - Gdip_SetImageAttributesColorKeys(ImageAttr, ARGBLow, ARGBHigh, ColorAdjustType:=1, fEnable:=1)
  - Gdip_SetImageAttributesColorMatrix(clrMatrix, ImageAttr:=0, grayMatrix:=0, ColorAdjustType:=1, fEnable:=1, ColorMatrixFlag:=0)
  - Gdip_SetImageAttributesGamma(ImageAttr, Gamma, ColorAdjustType:=1, fEnable:=1)
@@ -240,6 +242,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_CreateEffect(whichFX, paramA, paramB, paramC:=0)
  - Gdip_DisposeEffect(pEffect)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
+ - GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0, chnBdec:=0)
 
 ## 41 Fonts and StringFormat functions
  - Gdip_CloneFont(hFont)
@@ -416,13 +419,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_FillRoundedRectangle2(pGraphics, pBrush, x, y, w, h, r)
  - Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0, Unit:=0)
 
-## 19 GDI functions [selection]
+## 14 GDI functions [selection]
  - CreateDIBSection(w, h, hDC:="", bpp:=32, ByRef ppvBits:=0)
- - Gdi_CreateDIBitmap(hDC, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS)
- - Gdi_CreateBitmap(hDC:="", w:=1, h:=1, BitCount:=32, Planes:=1, pBits:=0)
- - Gdi_GetDIBits(hdc, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS)
- - Gdi_StretchDIBits(hDestDC, dX, dY, dW, dH, sX, sY, sW, sH, tBITMAPINFO, Usage, pBits, Rop)
- - Gdi_SetDIBitsToDevice(hDC, dX, dY, Width, Height, sX, sY, StartScan, ScanLines, pBits, BITMAPINFO, DIB_COLORS)
  - PaintDesktop(hdc)
  - PrintWindow(hwnd, hdc, Flags:=2)
  - BitBlt(ddc, dx, dy, dw, dh, sdc, sx, sy, raster:="")
@@ -628,8 +626,6 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetBitmapAlphaChannel()
   - Gdip_RetrieveBitmapChannel()
   - Gdip_TestBitmapUniformity()
-  - Gdi_StretchDIBits()
-  - Gdi_SetDIBitsToDevice()
   - Gdip_ResizeBitmap()
   - Gdip_CreateBitmapFromGraphics()
   - Gdip_CreateBitmapFromGdiDib()
@@ -836,8 +832,6 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_BitmapApplyEffect()
   - Gdip_CreateEffect()
   - Gdip_DisposeEffect()
-  - Gdi_CreateDIBitmap()
-  - Gdi_GetDIBits()
   - GenerateColorMatrix()
 
 (*) mainly written by swagfag, but at my request and modified it further
