@@ -17,24 +17,25 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 - @Rseding91 updated it to make it compatible with unicode and x64 AHK versions and renamed the file `Gdip_All.ahk`
 - @mmikeww's repository updates @Rseding91's `Gdip_All.ahk` to make it compatible with AHK v2 and also fixes some bugs
 - this repository attempts to gather all the GDI+ functions contributed by various people that were missing, and further extend the coverage/support of GDI+ API functions
+- MCL created an object-based GDI+ wrapper for AHK v1.1 that covers even more GDI+ functions; repository available at: https://github.com/mcl-on-github/oGdip.ahk
 
 # FUNCTIONS LIST
 
-- 35 GraphicsPath object functions
+- 36 GraphicsPath object functions
 - 43 Pen object functions
-- 28 PathGradient brush functions
+- 29 PathGradient brush functions
 - 21 LinearGradient brush functions
 - 11 Texture brush functions
 - 10 SolidFill and hatch brush functions
 - 53 pBitmap functions
 - 16 ImageAttributes and Effects functions
-- 41 Fonts and StringFormat functions
+- 42 Fonts and StringFormat functions
 - 42 pGraphics functions
 - 21 Region functions
 - 10 Clip functions
 - 14 Transformation Matrix functions
 - 35 Draw/Fill on pGraphics functions
-- 14 GDI functions [selection]
+- 14 GDI functions [selection]; the repository now includes a GDI specialized library wrapper for AHK v1.1
 - 22 Other functions [selection]
 
 Please see functions-list.txt for the actual list of functions.
@@ -53,5 +54,4 @@ See functions-list.txt for more details and credits.
   - GetProperty() functions can yield incorrect results for some meta-data/properties.
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: dimanche 30 août 2020, v1.85
-
+## Derniere mise à jour: mercredi 29 septembre 2021, v1.87

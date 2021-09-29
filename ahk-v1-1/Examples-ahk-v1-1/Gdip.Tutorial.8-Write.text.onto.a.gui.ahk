@@ -128,17 +128,19 @@ Return
 
 ; This function is called every time the user clicks on the gui
 ; The PostMessage will act on the last found window (this being the gui that launched the subroutine, hence the last parameter not being needed)
-WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
-{
+WM_LBUTTONDOWN(wParam, lParam, msg, hwnd) {
    PostMessage 0xA1, 2
 }
 
 ;#######################################################################
 
-ExitFunc(ExitReason, ExitCode)
-{
+ExitFunc(ExitReason, ExitCode) {
    global
    ; gdi+ may now be shutdown on exiting the program
    Gdip_Shutdown(pToken)
 }
+
+~Esc::
+   ExitApp
+Return
 
