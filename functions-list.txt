@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.87 - 29/09/2021]
+- Functions list [v1.88 - 05/10/2021]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
@@ -23,7 +23,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_AddPathPie(pPath, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_AddPathPolygon(pPath, Points)
  - Gdip_AddPathRectangle(pPath, x, y, w, h)
- - Gdip_AddPathRoundedRectangle(pPath, x, y, w, h, r)
+ - Gdip_AddPathRoundedRectangle(pPath, x, y, w, h, r, angle:=0)
  - Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, W, H)
  - Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0)
  - Gdip_AddPathToPath(pPathA, pPathB, fConnect)
@@ -34,7 +34,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_FlattenPath(pPath, flatness, hMatrix:=0)
  - Gdip_GetPathFillMode(pPath)
  - Gdip_GetPathLastPoint(pPath, ByRef X, ByRef Y)
- - Gdip_GetPathPoints(pPath)
+ - Gdip_GetPathPoints(pPath, returnArray:=0)
  - Gdip_GetPathPointsCount(pPath)
  - Gdip_GetPathWorldBounds(pPath, hMatrix:=0, pPen:=0)
  - Gdip_IsOutlineVisiblePathPoint(pGraphics, pPath, pPen, X, Y)
@@ -173,7 +173,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 53 pBitmap functions
+## 54 pBitmap functions
  - Gdip_BoxBlurBitmap(pBitmap, passes)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
@@ -187,6 +187,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_BitmapSetColorDepth(pBitmap, bitsDepth, useDithering:=1)
  - Gdip_BitmapSetResolution(pBitmap, dpix, dpiy)
  - Gdip_BlurBitmap(pBitmap, BlurAmount, usePARGB:=0, quality:=6)
+ - Gdip_GaussianBlur(pBitmap, radius, fastMode:=0)
  - Gdip_CloneBitmap(pBitmap)
  - Gdip_CloneBitmapArea(pBitmap, x:="", y:="", w:=0, h:=0, PixelFormat:=0, KeepPixelFormat:=0)
  - Gdip_CompareBitmaps(pBitmapA, pBitmapB, accuracy:=25)
@@ -248,7 +249,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0, chnBdec:=0)
 
-## 42 Fonts and StringFormat functions
+## 45 Fonts and StringFormat functions
  - Gdip_CloneFont(hFont)
  - Gdip_CloneFontFamily(hFontFamily)
  - Gdip_CloneStringFormat(hStringFormat)
@@ -291,6 +292,9 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetTextRenderingHint(pGraphics, RenderingHint)
  - Gdip_StringFormatCreate(FormatFlags:=0, LangID:=0)
  - Gdip_StringFormatGetGeneric(whichFormat:=0)
+ - Gdip_SetStringFormatTabStops(hStringFormat, aTabStops)
+ - Gdip_GetStringFormatTabStopCount(hStringFormat)
+ - Gdip_GetStringFormatTabStops(hStringFormat)
 
 ## 42 pGraphics functions
  - Gdip_DeleteGraphics(pGraphics)
@@ -410,7 +414,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
  - Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor)
  - Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r)
- - Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r, angle:=0)
+ - Gdip_DrawRoundedRectanglePath(pGraphics, pPen, x, y, w, h, r, angle:=0)
  - Gdip_DrawString(pGraphics, sString, hFont, hStringFormat, pBrush, ByRef RectF)
  - Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, flatness:=4, hMatrix:=0, Unit:=0)
  - Gdip_FillClosedCurve(pGraphics, pBrush, Points, Tension:="", FillMode:=0)
@@ -421,7 +425,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h)
  - Gdip_FillRegion(pGraphics, pBrush, Region)
  - Gdip_FillRoundedRectangle(pGraphics, pBrush, x, y, w, h, r)
- - Gdip_FillRoundedRectangle2(pGraphics, pBrush, x, y, w, h, r)
+ - Gdip_FillRoundedRectanglePath(pGraphics, pBrush, x, y, w, h, r, angle:=0)
  - Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0, Unit:=0)
 
 ## 14 GDI functions [selection]
@@ -506,8 +510,6 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - by Tariq Porter [tic]:
   - Source:A: https://github.com/tariqporter/Gdip2/blob/master/lib/Object.ahk
   - Source B: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-11
-  - Gdip_FillRoundedRectangle2()
-  - Gdip_DrawRoundedRectangle2()
   - Gdip_CompareBitmaps()
 
 - by MCL:
@@ -617,7 +619,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_CreateFontFromDC()
 
 - 228 by Marius Șucan [robodesign.ro]:
-  - Gdip_AddPathRoundedRectangle()
+  - Gdip_GaussianBlur()
   - Gdip_GetRotatedEllipseDimensions()
   - Gdip_NewPrivateFontCollection()
   - Gdip_DeletePrivateFontCollection()
@@ -845,7 +847,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 (*) mainly written by swagfag, but at my request and modified it further
     - https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
 
-# 143 GDI+ functions still missing
+# 138 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
@@ -888,8 +890,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetCustomLineCapStrokeJoin
  - GdipGetCustomLineCapType
  - GdipGetCustomLineCapWidthScale
- - GdipGetFontCollectionFamilyCount
- - GdipGetFontCollectionFamilyList
  - GdipGetHemfFromMetafile
  - GdipGetImageAttributesAdjustedPalette
  - GdipGetImagePalette
@@ -923,8 +923,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetRegionScansCount
  - GdipGetStringFormatFlags
  - GdipGetStringFormatMeasurableCharacterRangeCount
- - GdipGetStringFormatTabStopCount
- - GdipGetStringFormatTabStops
  - GdipImageForceValidation
  - GdipLoadImageFromStream
  - GdipLoadImageFromStreamICM
@@ -967,7 +965,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipSetPenCustomStartCap
  - GdipSetPropertyItem
  - GdipSetStringFormatMeasurableCharacterRanges
- - GdipSetStringFormatTabStops
  - GdipShearMatrix
  - GdipTransformMatrixPoints
  - GdipTransformPoints
