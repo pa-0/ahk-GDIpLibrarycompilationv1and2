@@ -1,4 +1,4 @@
-# AHK GDI+ LIBRARY EXTENDED COMPILATION
+# AHK GDI+ LIBRARY EXTENDED COMPILATION v1.89
 
 This is a compilation of user contributed functions for the GDI+ library wrapper made by Tariq Porter [tic] that never made it into.
 
@@ -21,20 +21,20 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 
 # FUNCTIONS LIST
 
-- 36 GraphicsPath object functions
+- 39 GraphicsPath object functions
 - 43 Pen object functions
 - 29 PathGradient brush functions
 - 21 LinearGradient brush functions
 - 11 Texture brush functions
 - 10 SolidFill and hatch brush functions
-- 54 pBitmap functions
+- 57 pBitmap functions
 - 16 ImageAttributes and Effects functions
-- 42 Fonts and StringFormat functions
-- 42 pGraphics functions
-- 21 Region functions
-- 10 Clip functions
-- 14 Transformation Matrix functions
-- 35 Draw/Fill on pGraphics functions
+- 46 Fonts and StringFormat functions
+- 44 pGraphics functions
+- 24 Region functions
+- 11 Clip functions
+- 16 Transformation Matrix functions
+- 41 Draw/Fill on pGraphics functions
 - 14 GDI functions [selection]; the repository now includes a GDI specialized library wrapper for AHK v1.1
 - 22 Other functions [selection]
 
@@ -54,4 +54,4 @@ See functions-list.txt for more details and credits.
   - GetProperty() functions can yield incorrect results for some meta-data/properties.
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: mardi 5 octobre 2021 [05/10/2021], v1.88
+## Derniere mise à jour: vendredi 8 octobre 2021 [ 08/10/2021 ], v1.89
