@@ -33,7 +33,7 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 - 44 pGraphics functions
 - 24 Region functions
 - 11 Clip functions
-- 16 Transformation Matrix functions
+- 17 Transformation Matrix functions
 - 41 Draw/Fill on pGraphics functions
 - 14 GDI functions [selection]; the repository now includes a GDI specialized library wrapper for AHK v1.1
 - 22 Other functions [selection]
@@ -44,7 +44,7 @@ Please see functions-list.txt for the actual list of functions.
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## ~23 MODIFIED FUNCTIONS
+## ~24 MODIFIED FUNCTIONS
 
 ## ~300 NEW FUNCTIONS
 
@@ -54,4 +54,4 @@ See functions-list.txt for more details and credits.
   - GetProperty() functions can yield incorrect results for some meta-data/properties.
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: samedi 9 octobre 2021 [ 09/10/2021 ], v1.90
+## Derniere mise à jour: lundi 11 octobre 2021 [ 11/10/2021 ], v1.91

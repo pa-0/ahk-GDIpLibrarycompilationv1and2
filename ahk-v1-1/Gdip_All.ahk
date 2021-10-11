@@ -16,6 +16,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.91 [11/10/2021]
 ; - v1.90 [09/10/2021]
 ; - v1.89 [08/10/2021]
 ; - v1.88 [05/10/2021]
@@ -68,6 +69,7 @@
 ; - v1.01 [05/31/2008]
 ;
 ; Detailed history:
+; - 11/10/2021 = more bug fixes; Gdip_CreatePath() now accepts passing a flat array object that defines the new path; some functions will now return values separated by pipe | instead of a comma [for better consistency across functions]
 ; - 09/10/2021 = [important release] major bug fixes for regressions introduced in previous version
 ; - 08/10/2021 = added more functions
 ; - 05/10/2021 = all functions that rely on CreatePointsF() or AllocateBinArray() can now handle being given an array or a string [to maintain compatibility); added Gdip_GaussianBlur(), Gdip_FillRoundedRectanglePath(), Gdip_DrawRoundedRectanglePath()
@@ -481,10 +483,19 @@ Gdip_BitmapFromHWND(hwnd, clientOnly:=0) {
 ;
 ; return             No return value
 
-CreateRectF(ByRef RectF, x, y, w, h, dtype:="float") {
-   VarSetCapacity(RectF, 16)
-   NumPut(x, RectF, 0, dtype), NumPut(y, RectF, 4, dtype)
-   NumPut(w, RectF, 8, dtype), NumPut(h, RectF, 12, dtype)
+CreateRectF(ByRef RectF, x, y, w, h, dtype:="float", ds:=4) {
+   VarSetCapacity(RectF, ds*4)
+   NumPut(x, RectF, 0,    dtype), NumPut(y, RectF, ds,   dtype)
+   NumPut(w, RectF, ds*2, dtype), NumPut(h, RectF, ds*3, dtype)
+}
+
+RetrieveRectF(ByRef RectF, dtype:="float", ds:=4) {
+   rData := {}
+   rData.x := NumGet(&RectF, 0, dtype)
+   rData.y := NumGet(&RectF, ds, dtype)
+   rData.w := NumGet(&RectF, ds*2, dtype)
+   rData.h := NumGet(&RectF, ds*3, dtype)
+   return rData
 }
 
 ;#####################################################################################
@@ -497,49 +508,60 @@ CreateRectF(ByRef RectF, x, y, w, h, dtype:="float") {
 ;
 ; return             No Return value
 
-CreatePointF(ByRef PointF, x, y, dtype:="float") {
-   VarSetCapacity(PointF, 8)
+CreatePointF(ByRef PointF, x, y, dtype:="float", ds:=4) {
+   VarSetCapacity(PointF, ds*2)
    NumPut(x, PointF, 0, dtype)
-   NumPut(y, PointF, 4, dtype)
+   NumPut(y, PointF, ds, dtype)
 }
 
-CreatePointsF(ByRef PointsF, inPoints, dtype:="float") {
+CreatePointsF(ByRef PointsF, inPoints, dtype:="float", ds:=4) {
    If IsObject(inPoints)
    {
       PointsCount := inPoints.Length()
-      VarSetCapacity(PointsF, 4 * PointsCount, 0)
+      VarSetCapacity(PointsF, ds * PointsCount, 0)
       Loop % PointsCount
-          NumPut(inPoints[A_Index], &PointsF, 4*(A_Index-1), dtype)
+          NumPut(inPoints[A_Index], &PointsF, ds * (A_Index-1), dtype)
       Return PointsCount//2
    } Else 
    {
+      dss := ds*2
       Points := StrSplit(inPoints, "|")
       PointsCount := Points.Length()
-      VarSetCapacity(PointsF, 8 * PointsCount, 0)
+      VarSetCapacity(PointsF, dss * PointsCount, 0)
       for eachPoint, Point in Points
       {
           Coord := StrSplit(Point, ",")
-          NumPut(Coord[1], &PointsF, 8*(A_Index-1), dtype)
-          NumPut(Coord[2], &PointsF, (8*(A_Index-1))+4, dtype)
+          NumPut(Coord[1], &PointsF, dss * (A_Index-1), dtype)
+          NumPut(Coord[2], &PointsF, (dss * (A_Index-1)) + ds, dtype)
       }
       Return PointsCount
    }
 }
 
-AllocateBinArray(ByRef BinArray, inArray, dtype:="float") {
+AllocateBinArray(ByRef BinArray, inArray, dtype:="float", ds:=4) {
+   ; ds = data size
+   ; dtypes and their corresponding ds
+     ;    "Int64" : 8, "Char"  : 1
+     ; , "UChar"  : 1, "Short" : 2
+     ; , "UShort" : 2, "Int"   : 4
+     ; , "UInt"   : 4, "Float" : 4
+     ; , "Double" : 8, "Ptr"   : A_PtrSize
+     ;  , "UPtr"  : A_PtrSize
+   ; function inspired by MCL's CreateBinArray()
+
    If IsObject(inArray)
    {
       totals := inArray.Length()
-      VarSetCapacity(BinArray, 4 * totals, 0)
+      VarSetCapacity(BinArray, ds * totals, 0)
       Loop %totals%
-         NumPut(inArray[A_Index], &BinArray, 4*(A_Index - 1), dtype)
+         NumPut(inArray[A_Index], &BinArray, ds * (A_Index - 1), dtype)
    } Else 
    {
       arrayElements := StrSplit(inArray, "|")
       totals := arrayElements.Length()
-      VarSetCapacity(BinArray, 4 * totals, 0)
+      VarSetCapacity(BinArray, ds * totals, 0)
       Loop %totals%
-         NumPut(arrayElements[A_Index], &BinArray, 4*(A_Index - 1), dtype)
+         NumPut(arrayElements[A_Index], &BinArray, ds * (A_Index - 1), dtype)
    }
    Return totals
 }
@@ -813,7 +835,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all extended compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.90 ; 09/10/2021
+   return 1.91 ; 11/10/2021
 }
 
 ;#####################################################################################
@@ -2448,17 +2470,10 @@ Gdip_GetImageBounds(pBitmap) {
 
    VarSetCapacity(RectF, 16, 0)
    E := DllCall("gdiplus\GdipGetImageBounds", "UPtr", pBitmap, "UPtr", &RectF, "Int*", 0)
-
-   If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      Return rData
-   } Else {
+   If !E
+      Return RetrieveRectF(RectF)
+   Else
       Return E
-   }
 }
 
 Gdip_GetImageFlags(pBitmap) {
@@ -2866,6 +2881,12 @@ Gdip_CreateHICONFromBitmap(pBitmap) {
    return hIcon
 }
 
+Gdip_CreateBitmapFromDirectDrawSurface(IDirectDrawSurface) {
+   pBitmap := 0
+   gdipLastError := DllCall("GdiPlus\GdipCreateBitmapFromDirectDrawSurface", "UPtr", IDirectDrawSurface, "UPtr*", pBitmap)
+   return pBitmap          
+}
+
 Gdip_CreateBitmap(Width, Height, PixelFormat:=0, Stride:=0, Scan0:=0) {
 ; By default, this function creates a new 32-ARGB bitmap.
 ; modified by Marius Șucan
@@ -3132,6 +3153,7 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, Pixel
     Gdip_GetImageDimensions(pBitmap, Width, Height)
     Gdip_GetRotatedDimensions(Width, Height, Angle, RWidth, RHeight)
     Gdip_GetRotatedTranslation(Width, Height, Angle, xTranslation, yTranslation)
+
     If (RWidth*RHeight>536848912) || (Rwidth>32100) || (RHeight>32100)
        Return
 
@@ -3525,7 +3547,7 @@ Gdip_SetPenCompoundArray(pPen, inCompounds) {
    If totalCompounds
       Return DllCall("gdiplus\GdipSetPenCompoundArray", "UPtr", pPen, "UPtr", &pCompounds, "int", totalCompounds)
    Else
-      Return -2
+      Return 2
 }
 
 Gdip_SetPenDashStyle(pPen, DashStyle) {
@@ -3557,7 +3579,7 @@ Gdip_SetPenDashArray(pPen, Dashes) {
    If PointsCount
       Return DllCall("gdiplus\GdipSetPenDashArray", "UPtr", pPen, "UPtr", &pDashes, "int", PointsCount)
    Else
-      Return -2
+      Return 2
 }
 
 Gdip_SetPenDashOffset(pPen, Offset) {
@@ -3574,21 +3596,21 @@ Gdip_GetPenDashArray(pPen) {
       Return 0
 
    VarSetCapacity(PointsF, 4 * iCount, 0)
-   DllCall("gdiplus\GdipGetPenDashArray", "UPtr", pPen, "UPtr", &PointsF, "int", iCount)
+   gdipLastError := DllCall("gdiplus\GdipGetPenDashArray", "UPtr", pPen, "UPtr", &PointsF, "int", iCount)
    printList := ""
    Loop %iCount%
    {
        A := NumGet(&PointsF, 4*(A_Index-1), "float")
-       printList .= A ","
+       printList .= A "|"
    }
 
-   Return Trim(printList, ",")
+   Return Trim(printList, "|")
 }
 
 Gdip_GetPenCompoundArray(pPen) {
    iCount := Gdip_GetPenCompoundCount(pPen)
    VarSetCapacity(PointsF, 4 * iCount, 0)
-   DllCall("gdiplus\GdipGetPenCompoundArray", "UPtr", pPen, "uPtr", &PointsF, "int", iCount)
+   gdipLastError := DllCall("gdiplus\GdipGetPenCompoundArray", "UPtr", pPen, "uPtr", &PointsF, "int", iCount)
 
    printList := ""
    Loop %iCount%
@@ -3983,17 +4005,10 @@ Gdip_SetLinearGrBrushGammaCorrection(pLinearGradientBrush, UseGammaCorrection) {
 Gdip_GetLinearGrBrushRect(pLinearGradientBrush) {
   VarSetCapacity(RectF, 16, 0)
   E := DllCall("gdiplus\GdipGetLineRect", "UPtr", pLinearGradientBrush, "UPtr", &RectF)
-
-  If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      Return rData
-  } Else {
-      Return E
-  }
+  If !E
+     Return RetrieveRectF(RectF)
+  Else
+     Return E
 }
 
 Gdip_ResetLinearGrBrushTransform(pLinearGradientBrush) {
@@ -4817,7 +4832,7 @@ Gdip_SetStringFormatTabStops(hStringFormat, inTabStops, firstTabOffset:=0) {
    If totals
       return DllCall("gdiplus\GdipSetStringFormatTabStops", "UPtr", hStringFormat, "float", firstTabOffset, "int", totals, "ptr", &tabStops)
    Else
-      return -2
+      return 2
 }
 
 Gdip_GetStringFormatTabStopCount(hStringFormat) {
@@ -5120,16 +5135,26 @@ Gdip_GetFontFamilyName(hFontFamily) {
 }
 
 ;#####################################################################################
-; Matrix functions
+; Transformation matrix functions
 ;#####################################################################################
 
-Gdip_CreateAffineMatrix(m11, m12, m21, m22, x, y) {
+Gdip_CreateAffineMatrix(m11, m12, m21, m22, dx, dy) {
+   ; please see Gdip_SetMatrixElements() for details on the transformation matrix elements
+   ; function returns a Transformation Matrix
+
    hMatrix := 0
-   gdipLastError := DllCall("gdiplus\GdipCreateMatrix2", "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y, "UPtr*", hMatrix)
+   gdipLastError := DllCall("gdiplus\GdipCreateMatrix2", "float", m11, "float", m12, "float", m21, "float", m22, "float", dx, "float", dy, "UPtr*", hMatrix)
    return hMatrix
 }
 
-Gdip_CreateMatrix() {
+Gdip_CreateMatrix(mXel:=0) {
+   ; if an object with six elements is provided as a parameter to this function
+   ; Gdip_CreateAffineMatrix() is called
+   ; function returns a Transformation Matrix
+
+   if (IsObject(mXel) && mXel.Count()=6)
+      return Gdip_CreateAffineMatrix(mXel[1], mXel[2], mXel[3], mXel[4], mXel[5], mXel[6])
+
    hMatrix := 0
    gdipLastError := DllCall("gdiplus\GdipCreateMatrix", "UPtr*", hMatrix)
    return hMatrix
@@ -5202,7 +5227,7 @@ Gdip_TransformMatrixPoints(hMatrix, Points, vectors:=0) {
 
 Gdip_TransformMatrixVectors(hMatrix, Points) {
 ; Same as .TransformPoints method, but points are treated as vectors.
-; This means that given coordinates may be scaled and rotated but not translated.
+; This means that the given coordinates may be scaled and rotated but not translated.
    Return Gdip_TransformMatrixPoints(hMatrix, Points, 1)
 }
 
@@ -5222,11 +5247,38 @@ Gdip_TransformMatrixVectors(hMatrix, Points) {
 ; - b) Gdip_CreateRegionPath() to a region object
 ;#####################################################################################
 
-Gdip_CreatePath(BrushMode:=0) {
+Gdip_CreatePath(fillMode:=0, Points:=0, PointTypes:=0) {
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]; the parameter can also be a flat array object
+; PointTypes: the point types passed as p1|p2|p3..... [minimum three points must be given]; the parameter can also be a flat array object
+      ; Types:
+      ;   0x00 - Start of a figure;
+      ;   0x01 - Start/end of a straight line;
+      ;   0x03 - Bezier control/end point; usually in groups of 3 (C, C, E);
+      ;   0x10 - DashMode; undocumented and probably not implemented;
+      ;   0x20 - Marker;
+      ;   0x80 - Close subpath.
+
+; FillModes:
 ; Alternate = 0
 ; Winding = 1
+
    pPath := 0
-   gdipLastError := DllCall("gdiplus\GdipCreatePath", "int", BrushMode, "UPtr*", pPath)
+   If !Points
+   {
+      gdipLastError := DllCall("gdiplus\GdipCreatePath", "int", fillMode, "UPtr*", pPath)
+   } Else
+   {
+      iCount := CreatePointsF(PointsF, Points)
+      If !PointTypes
+      {
+         PointTypes := []
+         Loop % iCount
+            PointTypes[A_Index] := 1
+      }
+      yCount := AllocateBinArray(PointsTF, PointTypes, "UChar", 1)
+      fCount := min(iCount, yCount)
+      gdipLastError := DllCall("gdiplus\GdipCreatePath2", "UPtr", &PointsF, "UPtr", &PointsTF, "Int", fCount, "UInt", fillMode, "UPtr*", pPath)
+   }
    return pPath
 }
 
@@ -5292,11 +5344,14 @@ Gdip_AddPathClosedCurve(pPath, Points, Tension:=1) {
 ;
 ; Parameters:
 ; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]; the parameter can also be a flat array object
 ; Tension: Non-negative real number that controls the length of the curve and how the curve bends. A value of
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
 
   iCount := CreatePointsF(PointsF, Points)
+  If (iCount<3)
+     Return 2
+
   If Tension
      return DllCall("gdiplus\GdipAddPathClosedCurve2", "UPtr", pPath, "UPtr", &PointsF, "int", iCount, "float", Tension)
   Else
@@ -5309,11 +5364,14 @@ Gdip_AddPathCurve(pPath, Points, Tension:="") {
 ;
 ; Parameters:
 ; pPath: Pointer to the GraphicsPath
-; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]
+; Points: the coordinates of all the points passed as x1,y1|x2,y2|x3,y3..... [minimum three points must be given]; the parameter can also be a flat array object
 ; Tension: Non-negative real number that controls the length of the curve and how the curve bends. A value of
 ; zero specifies that the spline is a sequence of straight lines. As the value increases, the curve becomes fuller.
 
   iCount := CreatePointsF(PointsF, Points)
+  If (iCount<3)
+     Return 2
+
   If Tension
      return DllCall("gdiplus\GdipAddPathCurve2", "UPtr", pPath, "UPtr", &PointsF, "int", iCount, "float", Tension)
   Else
@@ -5461,7 +5519,7 @@ Gdip_GetPathPoints(pPath, returnArray:=0) {
        {
           newArray[A_Index*2 - 1] := X
           newArray[A_Index*2 + 1 - 1] := Y
-       } Else printList .= X "," B "Y"
+       } Else printList .= X "," Y "|"
    }
 
    If (returnArray=1)
@@ -5811,8 +5869,7 @@ Gdip_TranslateWorldTransform(pGraphics, x, y, MatrixOrder:=0) {
 }
 
 Gdip_MultiplyWorldTransform(pGraphics, hMatrix, matrixOrder:=0) {
-   Static Ptr := "UPtr"
-   Return DllCall("gdiplus\GdipMultiplyWorldTransform", Ptr, pGraphics, Ptr, hMatrix, "int", matrixOrder)
+   Return DllCall("gdiplus\GdipMultiplyWorldTransform", "UPtr", pGraphics, "UPtr", hMatrix, "int", matrixOrder)
 }
 
 Gdip_ResetWorldTransform(pGraphics) {
@@ -5824,12 +5881,12 @@ Gdip_ResetPageTransform(pGraphics) {
 }
 
 Gdip_SetWorldTransform(pGraphics, hMatrix) {
-   Static Ptr := "UPtr"
-   return DllCall("gdiplus\GdipSetWorldTransform", Ptr, pGraphics, Ptr, hMatrix)
+   return DllCall("gdiplus\GdipSetWorldTransform", "UPtr", pGraphics, "UPtr", hMatrix)
 }
 
 Gdip_GetRotatedTranslation(Width, Height, Angle, ByRef xTranslation, ByRef yTranslation) {
-   pi := 3.14159, TAngle := Angle*(pi/180)
+   Static pi := 3.14159
+   TAngle := Angle*(pi/180)
 
    Bound := (Angle >= 0) ? Mod(Angle, 360) : 360-Mod(-Angle, -360)
    if ((Bound >= 0) && (Bound <= 90))
@@ -5874,25 +5931,22 @@ Gdip_GetRotatedEllipseDimensions(Width, Height, Angle, ByRef RWidth, ByRef RHeig
 Gdip_GetWorldTransform(pGraphics) {
 ; Returns the world transformation matrix of a pGraphics object.
 ; On error, it returns -1
-   Static Ptr := "UPtr"
    hMatrix := 0
-   gdipLastError := DllCall("gdiplus\GdipGetWorldTransform", Ptr, pGraphics, "UPtr*", hMatrix)
+   gdipLastError := DllCall("gdiplus\GdipGetWorldTransform", "UPtr", pGraphics, "UPtr*", hMatrix)
    Return hMatrix
 }
 
 Gdip_IsVisibleGraphPoint(pGraphics, X, Y) {
-   Static Ptr := "UPtr"
    result := 0
-   E := DllCall("gdiplus\GdipIsVisiblePoint", Ptr, pGraphics, "float", X, "float", Y, "int*", result)
+   E := DllCall("gdiplus\GdipIsVisiblePoint", "UPtr", pGraphics, "float", X, "float", Y, "int*", result)
    If E
       Return -1
    Return result
 }
 
 Gdip_IsVisibleGraphRect(pGraphics, X, Y, Width, Height) {
-   Static Ptr := "UPtr"
    result := 0
-   E := DllCall("gdiplus\GdipIsVisibleRect", Ptr, pGraphics, "float", X, "float", Y, "float", Width, "float", Height, "int*", result)
+   E := DllCall("gdiplus\GdipIsVisibleRect", "UPtr", pGraphics, "float", X, "float", Y, "float", Width, "float", Height, "int*", result)
    If E
       Return -1
    Return result
@@ -5982,33 +6036,19 @@ Gdip_SetClipFromGraphics(pGraphics, pGraphicsSrc, CombineMode:=0) {
 Gdip_GetClipBounds(pGraphics) {
   VarSetCapacity(RectF, 16, 0)
   E := DllCall("gdiplus\GdipGetClipBounds", "UPtr", pGraphics, "UPtr", &RectF)
-
-  If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      Return rData
-  } Else {
-      Return E
-  }
+  If !E
+     Return RetrieveRectF(RectF)
+  Else
+     Return E
 }
 
 Gdip_GetVisibleClipBounds(pGraphics) {
   VarSetCapacity(RectF, 16, 0)
   E := DllCall("gdiplus\GdipGetVisibleClipBounds", "UPtr", pGraphics, "UPtr", &RectF)
-
-  If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      Return rData
-  } Else {
-      Return E
-  }
+  If !E
+     Return RetrieveRectF(RectF)
+  Else
+     Return E
 }
 
 Gdip_TranslateClip(pGraphics, dX, dY) {
@@ -6202,17 +6242,10 @@ Gdip_SetInfiniteRegion(hRegion) {
 Gdip_GetRegionBounds(pGraphics, hRegion) {
   VarSetCapacity(RectF, 16, 0)
   E := DllCall("gdiplus\GdipGetRegionBounds", "UPtr", hRegion, "UPtr", pGraphics, "UPtr", &RectF)
-
-  If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      Return rData
-  } Else {
-      Return E
-  }
+  If !E
+     Return RetrieveRectF(RectF)
+  Else
+     Return E
 }
 
 Gdip_TranslateRegion(hRegion, X, Y) {
@@ -7130,21 +7163,14 @@ Gdip_GetPathWorldBounds(pPath, hMatrix:=0, pPen:=0) {
 
   VarSetCapacity(RectF, 16, 0)
   E := DllCall("gdiplus\GdipGetPathWorldBounds", "UPtr", pPath, "UPtr", &RectF, "UPtr", hMatrix, "UPtr", pPen)
-
-  If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      return rData
-  } Else {
-      Return E
-  }
+  If !E
+     Return RetrieveRectF(RectF)
+  Else
+     Return E
 }
 
 Gdip_ShearMatrix(hMatrix, hx, hy, MatrixOrder:=0) {
-; Updates given hMatrix with the product of itself and a shearing matrix.
+; it updates given hMatrix with the product of itself and a shearing matrix.
    return  DllCall("gdiplus\GdipShearMatrix", "UPtr", hMatrix, "Float", hx, "Float", hy, "UInt", MatrixOrder)
 }
 
@@ -7160,12 +7186,46 @@ Gdip_TransformPath(pPath, hMatrix) {
   return DllCall("gdiplus\GdipTransformPath", "UPtr", pPath, "UPtr", hMatrix)
 }
 
-Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, x, y) {
-  return DllCall("gdiplus\GdipSetMatrixElements", "UPtr", hMatrix, "float", m11, "float", m12, "float", m21, "float", m22, "float", x, "float", y)
+Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, dx, dy) {
+; Parameters:
+;     hMatrix = pointer to a transformation matrix object
+
+;     m11 = first column, first line [scale factor on X axis]
+;     m12 = second column, first line [rotation factor on X axis]
+
+;     m21 = first column, second line [rotation factor on Y axis]
+;     m22 = second column, second line [scale factor on Y axis]
+
+;     dx = first column, third line [translation factor on X axis]
+;     dy = second column, third line [translation factor on Y axis]
+
+; Matrix visualization:
+; [    m11 = Sx,    m12 = Rx,   ]
+; [    m21 = Ry,    m22 = Sy,   ]
+; [    dx  = Tx,    dy  = Tx;   ]
+
+; Please note. There is a trigonometric relationship between the scale factors (m11, m22) and 
+; the rotation factors [m12, m21].
+
+   return DllCall("gdiplus\GdipSetMatrixElements", "UPtr", hMatrix, "float", m11, "float", m12, "float", m21, "float", m22, "float", dx, "float", dy)
 }
 
-Gdip_GetMatrixLastStatus(pMatrix) {
-  return DllCall("gdiplus\GdipGetLastStatus", "UPtr", pMatrix)
+Gdip_GetMatrixElements(hMatrix) {
+   ; function by MCL, modified by Marius Șucan
+   ; it returns an array of the Transformation Matrix elements
+
+   VarSetCapacity(binMxElems := "", 6*4, 0)
+   gdipLastError := DllCall("gdiplus\GdipGetMatrixElements", "UPtr", hMatrix, "Ptr", &binMxElems)
+   elemArray := []
+   Loop 6
+      elemArray[A_Index] := NumGet(binMxElems, (A_Index-1)*4, "Float")
+   
+   Return elemArray
+}
+
+Gdip_GetMatrixLastStatus(hMatrix) {
+  ; function nowhere found as documented;
+  return DllCall("gdiplus\GdipGetLastStatus", "UPtr", hMatrix)
 }
 
 ;#####################################################################################
@@ -7180,7 +7240,7 @@ Gdip_GetMatrixLastStatus(pMatrix) {
 ; in certain directions to influence the way the spline bends.
 ;
 ; pPath:  Pointer to the GraphicsPath.
-; Points: The coordinates of all the points passed as x1,y1|x2,y2|x3,y3...
+; Points: The coordinates of all the points passed as x1,y1|x2,y2|x3,y3... This can also be a flat array object
 ;
 ; Return: Status enumeration. 0 = success.
 ;
@@ -7422,17 +7482,10 @@ Gdip_PathGradientGetWrapMode(pPathGradientBrush) {
 Gdip_PathGradientGetRect(pPathGradientBrush) {
   VarSetCapacity(RectF, 16, 0)
   E := DllCall("gdiplus\GdipGetPathGradientRect", "UPtr", pPathGradientBrush, "UPtr", &RectF)
-
-  If (!E) {
-      rData := {}
-      rData.x := NumGet(&RectF, 0, "float")
-      rData.y := NumGet(&RectF, 4, "float")
-      rData.w := NumGet(&RectF, 8, "float")
-      rData.h := NumGet(&RectF, 12, "float")
-      return rData
-  } Else {
-      Return E
-  }
+  If !E
+     Return RetrieveRectF(RectF)
+  Else
+     Return E
 }
 
 Gdip_PathGradientResetTransform(pPathGradientBrush) {
@@ -7542,10 +7595,10 @@ Gdip_GetPathGradientSurroundColors(pPathGradientBrush) {
    Loop %iCount%
    {
        A := NumGet(&sColors, 8*(A_Index-1), "uint")
-       printList .= Format("{1:#x}", A) ","
+       printList .= Format("{1:#x}", A) "|"
    }
 
-   Return Trim(printList, ",")
+   Return Trim(printList, "|")
 }
 
 ;######################################################################################################################################

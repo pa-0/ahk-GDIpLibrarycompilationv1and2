@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.89 - 08/10/2021]
+- Functions list [v1.91 - 11/10/2021]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
@@ -32,7 +32,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_AddPathToPath(pPathA, pPathB, fConnect)
  - Gdip_ClonePath(pPath)
  - Gdip_ClosePathFigure(pPath, all:=0)
- - Gdip_CreatePath(BrushMode:=0)
+ - Gdip_CreatePath(fillMode:=0, Points:=0, PointTypes:=0)
  - Gdip_DeletePath(pPath)
  - Gdip_FlattenPath(pPath, flatness, hMatrix:=0)
  - Gdip_GetPathFillMode(pPath)
@@ -176,7 +176,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 57 pBitmap functions
+## 59 pBitmap functions
  - Gdip_BoxBlurBitmap(pBitmap, passes)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
@@ -197,6 +197,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_CreateBitmap(Width, Height, PixelFormat:=0, Stride:=0, Scan0:=0)
  - Gdip_CreateBitmapFromClipboard()
  - Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="", useICM:=0)
+ - Gdip_CreateBitmapFromDirectDrawSurface(IDirectDrawSurface)
  - Gdip_CreateBitmapFromGdiDib(BITMAPINFO, BitmapData)
  - Gdip_CreateBitmapFromGraphics(pGraphics, Width, Height)
  - Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0)
@@ -386,10 +387,10 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetClipHRGN(pGraphics, pHRGN, CombineMode:=0)
  - Gdip_TranslateClip(pGraphics, dX, dY)
 
-## 16 Transformation Matrix functions
+## 17 Transformation Matrix functions
  - Gdip_CloneMatrix(hMatrix)
- - Gdip_CreateAffineMatrix(m11, m12, m21, m22, x, y)
- - Gdip_CreateMatrix()
+ - Gdip_CreateAffineMatrix(m11, m12, m21, m22, dx, dy)
+ - Gdip_CreateMatrix(mXel:=0)
  - Gdip_DeleteMatrix(hMatrix)
  - Gdip_InvertMatrix(hMatrix)
  - Gdip_IsMatrixEqual(hMatrixA, hMatrixB)
@@ -400,7 +401,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_RotateMatrix(hMatrix, Angle, MatrixOrder:=0)
  - Gdip_ScaleMatrix(hMatrix, ScaleX, ScaleY, MatrixOrder:=0)
  - Gdip_ShearMatrix(hMatrix, hx, hy, MatrixOrder:=0)
- - Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, x, y)
+ - Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, dx, dy)
+ - Gdip_GetMatrixElements(hMatrix)
  - Gdip_TranslateMatrix(hMatrix, offsetX, offsetY, MatrixOrder:=0)
  - Gdip_TransformMatrixPoints(hMatrix, Points, vectors:=0)
 
@@ -491,7 +493,7 @@ Please note, this is not a complete list of all the functions.
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## ~23 MODIFIED FUNCTIONS:
+## ~24 MODIFIED FUNCTIONS:
  - Gdip_BitmapFromBRA()
  - Gdip_BitmapFromHWND()
  - Gdip_BitmapFromScreen()
@@ -500,6 +502,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
  - Gdip_CreateBitmapFromClipboard()
  - Gdip_CreateBitmapFromFile()
  - Gdip_CreateTextureBrush()
+ - Gdip_CreatePath()
  - Gdip_DrawImage()
  - Gdip_DrawImagePointsRect()
  - Gdip_DrawLines()
@@ -868,7 +871,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 (*) mainly written by swagfag, but at my request and modified it further
     - https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
 
-# 114 GDI+ functions still missing
+# 112 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
@@ -886,7 +889,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipCreateMetafileFromStream
  - GdipCreateMetafileFromWmf
  - GdipCreateMetafileFromWmfFile
- - GdipCreatePath2
  - GdipCreatePathIter
  - GdipDeletePathIter
  - GdipDrawCurve3
@@ -912,7 +914,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetLineBlend
  - GdipGetLinePresetBlend
  - GdipGetLinePresetBlendCount
- - GdipGetMatrixElements
  - GdipGetMetafileDownLevelRasterizationLimit
  - GdipGetMetafileHeaderFromEmf
  - GdipGetMetafileHeaderFromFile
