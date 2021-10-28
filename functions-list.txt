@@ -11,7 +11,7 @@ of what is available in the Gdip_all.ahk extended compilation.
 
 Please note, this is not a complete list of all the functions.
 
-## 39 GraphicsPath object functions
+## 42 GraphicsPath object functions
  - Gdip_AddPathArc(pPath, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4)
  - Gdip_AddPathBeziers(pPath, Points)
@@ -46,10 +46,13 @@ Please note, this is not a complete list of all the functions.
  - Gdip_PathOutline(pPath, flatness:=1, hMatrix:=0)
  - Gdip_ResetPath(pPath)
  - Gdip_ReversePath(pPath)
- - Gdip_RotatePathAtCenter(pPath, Angle, MatrixOrder:=1, withinBounds:=0, withinBkeepRatio:=1)
+ - Gdip_RotatePathAtCenter(pPath, Angle, MatrixOrder:=1, withinBounds:=0, withinBkeepRatio:=1, highAccuracy:=0)
  - Gdip_SetPathFillMode(pPath, FillMode)
  - Gdip_StartPathFigure(pPath, closePrev:=0)
  - Gdip_TransformPath(pPath, hMatrix)
+ - Gdip_TranslatePath(pPath, x, y)
+ - Gdip_ScalePath(pPath, x, y)
+ - Gdip_RotatePath(pPath, angle)
  - Gdip_WidenPath(pPath, pPen, hMatrix:=0, Flatness:=1)
 
 ## 43 Pen object functions

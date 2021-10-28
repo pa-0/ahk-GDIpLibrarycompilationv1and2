@@ -21,7 +21,7 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 
 # FUNCTIONS LIST
 
-- 39 GraphicsPath object functions
+- 42 GraphicsPath object functions
 - 43 Pen object functions
 - 29 PathGradient brush functions
 - 21 LinearGradient brush functions
@@ -35,7 +35,7 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 - 11 Clip functions
 - 17 Transformation Matrix functions
 - 41 Draw/Fill on pGraphics functions
-- 14 GDI functions [selection]; the repository now includes a GDI specialized library wrapper for AHK v1.1
+- 14 GDI functions [selection]; the repository includes a GDI specialized library wrapper for AHK v1.1 that covers over 100 GDI functions
 - 22 Other functions [selection]
 
 Please see functions-list.txt for the actual list of functions.
@@ -54,4 +54,4 @@ See functions-list.txt for more details and credits.
   - GetProperty() functions can yield incorrect results for some meta-data/properties.
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: lundi 11 octobre 2021 [ 11/10/2021 ], v1.91
+## Derniere mise à jour: jeudi 28 octobre 2021 [ 28/10/2021 ], v1.92
