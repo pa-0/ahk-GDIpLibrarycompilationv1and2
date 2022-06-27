@@ -54,4 +54,4 @@ See functions-list.txt for more details and credits.
   - GetProperty() functions can yield incorrect results for some meta-data/properties.
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: jeudi 28 octobre 2021 [ 28/10/2021 ], v1.92
+## Derniere mise à jour: lundi 27 juin 2022 [ 27/06/2022 ], v1.93
