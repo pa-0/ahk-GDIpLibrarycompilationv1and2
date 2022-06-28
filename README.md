@@ -1,4 +1,4 @@
-# AHK GDI+ LIBRARY EXTENDED COMPILATION v1.89
+# AHK GDI+ LIBRARY (extended compilation)
 
 This is a compilation of user contributed functions for the GDI+ library wrapper made by Tariq Porter [tic] that never made it into.
 
