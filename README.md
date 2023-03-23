@@ -27,7 +27,7 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 - 21 LinearGradient brush functions
 - 11 Texture brush functions
 - 10 SolidFill and hatch brush functions
-- 57 pBitmap functions
+- 61 pBitmap functions
 - 16 ImageAttributes and Effects functions
 - 46 Fonts and StringFormat functions
 - 44 pGraphics functions
@@ -36,7 +36,7 @@ The examples for the AHK v2 edition I provide here in the repository were tested
 - 17 Transformation Matrix functions
 - 41 Draw/Fill on pGraphics functions
 - 14 GDI functions [selection]; the repository includes a GDI specialized library wrapper for AHK v1.1 that covers over 100 GDI functions
-- 22 Other functions [selection]
+- 23 Other functions [selection]
 
 Please see functions-list.txt for the actual list of functions.
 
@@ -54,4 +54,4 @@ See functions-list.txt for more details and credits.
   - GetProperty() functions can yield incorrect results for some meta-data/properties.
   - awaiting pull requests for bug fixes
 
-## Derniere mise à jour: lundi 27 juin 2022 [ 27/06/2022 ], v1.93
+## Derniere mise à jour: jeudi 23 mars 2023 [ 23/03/2023 ], v1.93

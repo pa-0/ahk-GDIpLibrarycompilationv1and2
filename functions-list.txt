@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.93 - 27/06/2022]
+- Functions list [v1.94 - 23/03/2023]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
@@ -179,7 +179,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 59 pBitmap functions
+## 61 pBitmap functions
  - Gdip_BoxBlurBitmap(pBitmap, passes)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
@@ -233,6 +233,9 @@ Please note, this is not a complete list of all the functions.
  - Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, PixelFormat:=0)
  - Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64orStream:=0)
  - Gdip_SaveBitmapToStream(pBitmap, Format, Quality:=90)
+ - Gdip_SaveBitmapToStream(pBitmap, Format, Quality:=90)
+ - Gdip_SaveAddImage(multiBitmap, newBitmap, params)
+ - Gdip_SaveImagesInTIFF(filesListArray, destFilePath)
  - Gdip_SetAlphaChannel(pBitmap, pBitmapMask, invertAlphaMask:=0, replaceSourceAlphaChannel:=0, whichChannel:=1)
  - Gdip_BlendBitmaps(pBitmap, pBitmap2Blend, blendMode)
  - Gdip_SetBitmapToClipboard(pBitmap)
@@ -468,11 +471,12 @@ Please note, this is not a complete list of all the functions.
  - ReleaseDC(hdc, hwnd:=0)
  - DeleteDC(hdc)
 
-## 22 Other functions [selection]
+## 23 Other functions [selection]
  - Gdip_CreateCachedBitmap(pBitmap, pGraphics)
  - Gdip_DeleteCachedBitmap(pCachedBitmap)
  - Gdip_CreateHICONFromBitmap(pBitmap)
  - Gdip_GetAllPropertyItems(pImage)
+ - Gdip_GetImageEncodersList()
  - Gdip_GetPropertyCount(pImage)
  - Gdip_GetPropertyIdList(pImage)
  - Gdip_GetPropertyItem(pImage, PropID)
@@ -645,8 +649,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetPenBrushFill()
   - Gdip_CreateFontFromDC()
 
-- 228 by Marius Șucan [robodesign.ro]:
+- 229 by Marius Șucan [ https://marius.sucan.ro/ ]:
   - Gdip_GaussianBlur()
+  - Gdip_SaveImagesInTIFF()
   - Gdip_GetRotatedEllipseDimensions()
   - Gdip_NewPrivateFontCollection()
   - Gdip_DeletePrivateFontCollection()
@@ -874,7 +879,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 (*) mainly written by swagfag, but at my request and modified it further
     - https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
 
-# 112 GDI+ functions still missing
+# 110 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
@@ -958,8 +963,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipRecordMetafileFileName
  - GdipRecordMetafileStream
  - GdipRemovePropertyItem
- - GdipSaveAdd
- - GdipSaveAddImage
  - GdipSetCustomLineCapBaseCap
  - GdipSetCustomLineCapBaseInset
  - GdipSetCustomLineCapStrokeCaps
