@@ -4590,6 +4590,12 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
    if !(IWidth && IHeight) && ((xpos && xpos[2]) || (ypos && ypos[2]) || (Width && Width[2]) || (Height && Height[2]) || (Size && Size[2]))
       return -1
 
+   if (Colour && IsInteger(Colour[2]) && !userBrush)
+   {
+      If !Gdip_DeleteBrush(Gdip_CloneBrush(Colour[2]))
+         userBrush := Colour[2]
+   }
+
    fColor := (Colour && Colour[2]) ? Colour[2] : "ff000000"
    If (StrLen(fColor)=6)
       fColor := "ff" fColor
