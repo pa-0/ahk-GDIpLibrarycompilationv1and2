@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.94 - 23/03/2023]
+- Functions list [v1.95 - 21/04/2023]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
