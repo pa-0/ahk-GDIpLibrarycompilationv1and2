@@ -1,4 +1,4 @@
-2023-07-01 v1.57-59 - fixes
+2023-07-01 v1.57-60 - bug fixes
 2023-04-19 v1.56 - compatible with AHK v2.0.2, Gdip_DrawLines fixed, gdip_toolbox improved, separated changelog
 2021-12-19 v1.55 - compatibility with AHK v1 dropped, fixed compatibility with v2.0beta3 by buliasz
 2017-11-15 v1.54 - compatibility with both AHK v2 and v1, restored by nnnik
