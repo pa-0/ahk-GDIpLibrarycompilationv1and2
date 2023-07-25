@@ -728,7 +728,7 @@ Gdip_LibrarySubVersion()
 ;						-3 = The BRA has information missing
 ;						-4 = Could not find file inside the BRA
 
-Gdip_BitmapFromBRA(&BRAFromMemIn, File, Alternate := 0) {
+Gdip_BitmapFromBRA(BRAFromMemIn, File, Alternate := 0) {
 	if (!BRAFromMemIn) {
 		return -1
 	}
@@ -2372,7 +2372,7 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
 	}
 
 	if !Measure {
-		_E := Gdip_DrawString(pGraphics, Text, hFont, hFormat, pBrush, &RC)
+		ReturnRC := Gdip_DrawString(pGraphics, Text, hFont, hFormat, pBrush, &RC)
 	}
 
 	if !PassBrush {
@@ -2383,7 +2383,7 @@ Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:=
 	Gdip_DeleteFont(hFont)
 	Gdip_DeleteFontFamily(hFamily)
 
-	return _E ? _E : ReturnRC
+	return ReturnRC
 }
 
 ;#####################################################################################
@@ -2812,7 +2812,7 @@ Gdip_PixelateBitmap(pBitmap, &pBitmapOut, BlockSize)
 		nCount := StrLen(MCode_PixelateBitmap)//2
 		loop nCount
 			NumPut("UChar", "0x" SubStr(MCode_PixelateBitmap, (2*A_Index)-1, 2), PixelateBitmap, A_Index-1)
-		DllCall("VirtualProtect", "UPtr", PixelateBitmap.Ptr, "UPtr", PixelateBitmap, "UInt", 0x40, "UPtr*", 0)
+		DllCall("VirtualProtect", "UPtr", PixelateBitmap.Ptr, "UPtr", PixelateBitmap.Size, "UInt", 0x40, "UPtr*", 0)
 	}
 
 	Gdip_GetImageDimensions(pBitmap, &Width:="", &Height:="")
@@ -3087,7 +3087,7 @@ WinGetRect( hwnd, &x:="", &y:="", &w:="", &h:="" ) {
 	Ptr := A_PtrSize ? "UPtr" : "UInt"
 	CreateRect(&winRect, 0, 0, 0, 0) ;is 16 on both 32 and 64
 	;VarSetCapacity( winRect, 16, 0 )	; Alternative of above two lines
-	DllCall( "GetWindowRect", Ptr, hwnd, Ptr, &winRect )
+	DllCall( "GetWindowRect", "Ptr", hwnd, "Ptr", winRect )
 	x := NumGet(winRect,  0, "UInt")
 	y := NumGet(winRect,  4, "UInt")
 	w := NumGet(winRect,  8, "UInt") - x

@@ -62,6 +62,9 @@ Update()
 {
 global
 Update:
+
+static v := 0
+static dir := 0
 ; Some simple checks to see if we are increasing or decreasing the pixelation
 ; v is the block size of the pixelation and dir is the direction (inc/decreasing)
 if (v <= 1)
@@ -71,7 +74,7 @@ else if (v >= 30)
 
 ; Call Gdip_PixelateBitmap with the bitmap we retrieved earlier and the block size of the pixels
 ; The function returns the pixelated bitmap, and doesn't dispose of the original bitmap
-Gdip_PixelateBitmap(pBitmap, pBitmapOut, dir ? ++v : --v)
+Gdip_PixelateBitmap(pBitmap, &pBitmapOut, dir ? ++v : --v)
 
 ; We can optionally clear the graphics we will be drawing to, but if we know there will be no transparencies then
 ; it doesn't matter
@@ -96,9 +99,7 @@ WM_LBUTTONDOWN(wParam, lParam, msg, hwnd)
 ;#######################################################################
 
 ; On exit, dispose of everything created
-Esc::
-   ExitApp
-return
+Esc::ExitApp
 
 ExitFunc(ExitReason, ExitCode)
 {

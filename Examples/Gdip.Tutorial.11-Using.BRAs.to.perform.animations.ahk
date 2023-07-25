@@ -3,7 +3,7 @@
 ;
 ; Tutorial to demonstrate how to use BRA files, in this instance for animation
 
-; #SingleInstance Force
+#SingleInstance Force
 ; #NoEnv
 
 ; Uncomment if Gdip.ahk is not in your standard library
@@ -68,8 +68,8 @@ If !(FileObject := FileOpen("Gdip.tutorial.file-fish.bra", "r")) {
 	MsgBox "Error opening Gdip.tutorial.file-fish.bra for reading"
 	ExitApp
 }
-FileObjLength := (A_AhkVersion < "2") ? FileObject.Length() : FileObject.Length
-FileObject.RawRead(BRA, FileObjLength)
+BRA := Buffer(FileObject.Length)
+FileObject.RawRead(BRA)
 FileObject.Close()
 
 ; Get a count of the number of files contained in the BRA
@@ -97,7 +97,7 @@ If (pBitmap < 1)
 
 ; Calculate the dimensions of the gui. I advise you always work on fractions of the screen dimensions to ensure it will look similar on other screens
 ; If you feel like it, you could go further and change the dimensions based on 16:9 or 4:3
-WinWidth := WAWidth//2.5
+WinWidth := Floor(WAWidth/2.5)
 WinHeight := Round(WinWidth//4)
 
 ; Get the width and height of a single bitmap. This bitmap is the fish banner
@@ -105,7 +105,8 @@ Width := Gdip_GetImageWidth(pBitmap), Height := Gdip_GetImageHeight(pBitmap)
 
 ; Calculate the dimensions the fish banner will be resized to, to fit nicely on the gui
 NewWidth := 0.9*WinWidth
-NewHeight := Round((NewWidth/Width)*Height)
+NewHeight := (NewWidth/Width)*Height
+NewMargin := (WinWidth-NewWidth)/2
 
 ; This is standard for all guis. Create a gdi bitmap and get a graphics context to draw into
 ; The bitmap will be out entire drawing area, so will be the same size as the gui
@@ -189,14 +190,11 @@ return
 
 UpdateTime()
 {
-global
-UpdateTime:
+static OldTime := 0
 
 ; We should probably put critical here so that it isnt interrupted, but the subroutines are so quick that its very unlikely
 
 ; Get the time in the format of 16:05 06 January 2010 (oops...caught me commenting this at work!)
-;AHK v1
-;FormatTime, Time
 Time := FormatTime()
 
 if (Time = OldTime)
@@ -234,17 +232,15 @@ return
 
 ;######################################################################
 
-BRA_GetCount(&BRAFromMemIn) {
+BRA_GetCount(BRAFromMemIn) {
 	If !(BRAFromMemIn)
 		Return -1
-	Headers := StrSplit(StrGet(&BRAFromMemIn, 256, "CP0"), "`n")
+	Headers := StrSplit(StrGet(BRAFromMemIn, 256, "CP0"), "`n")
 	Header := StrSplit(Headers[1], "|")
-	HeaderLength := (A_AhkVersion < "2") ? Header.Length() : Header.Length
-	If (HeaderLength != 4) || (Header[2] != "BRA!")
+	If (Header.Length != 4) || (Header[2] != "BRA!")
 		Return -2
 	Info := StrSplit(Headers[2], "|")
-	InfoLength := (A_AhkVersion < "2") ? Info.Length() : Info.Length
-	If (InfoLength != 3)
+	If Info.Length != 3
 		Return -3
 	Return (Info[1] + 0)
 }
@@ -262,12 +258,12 @@ Fade(InOut)
 
 	; Loop the number of times until it is at the specified opacity
 	numLoops := 0.8/0.05
-	N := (A_AhkVersion < 2) ? numLoops : "numLoops"
+	N := "numLoops"
 	Loop %N%
 	{
 		; Clip to the area we are drawing for the fish, so that only this rectangle gets drawn to
 		; We could do this once at the top of this function, but it is safer to do it each loop so that nothing else can modify it during the sleep
-		Gdip_SetClipRect(G, (WinWidth-NewWidth)//2, (WinWidth-NewWidth)//2, NewWidth, NewHeight)
+		Gdip_SetClipRect(G, NewMargin, NewMargin, NewWidth, NewHeight)
 		; Gdip_SetCompositingMode to 1 so that it will erase anything that is currently there
 		Gdip_SetCompositingMode(G, 1)
 		; Fill the background
@@ -281,7 +277,7 @@ Fade(InOut)
 		pBitmap := Gdip_BitmapFromBRA(BRA, Index, 1)
 
 		; Draw this image onto our graphics context for the gui (this being our canvas) with the current transparency
-		Gdip_DrawImage(G, pBitmap, (WinWidth-NewWidth)//2, (WinWidth-NewWidth)//2, NewWidth, NewHeight, 0, 0, Width, Height, Trans)
+		Gdip_DrawImage(G, pBitmap, NewMargin, NewMargin, NewWidth, NewHeight, 0, 0, Width, Height, Trans)
 
 		; Now update the window with the dc as usual
 		UpdateLayeredWindow(hwnd1, hdc)
@@ -323,14 +319,14 @@ else
 	; We are setting a clipping area for just the fish, then filling the background in (overwiting anything that was there)
 	; We set Gdip_SetCompositingMode back to 0 and then get a bitmap for the next fish image and draw it over our background
 	; Dispose the image and reset the clipping region
-	Gdip_SetClipRect(G, (WinWidth-NewWidth)//2, (WinWidth-NewWidth)//2, NewWidth, NewHeight)
+	Gdip_SetClipRect(G, NewMargin, NewMargin, NewWidth, NewHeight)
 	Gdip_SetCompositingMode(G, 1)
 	Gdip_FillRectangle(G, pBrush, 0, 0, WinWidth, WinHeight)
 	Gdip_SetCompositingMode(G, 0)
 
 	Index++
 	pBitmap := Gdip_BitmapFromBRA(BRA, Index, 1)
-	Gdip_DrawImage(G, pBitmap, (WinWidth-NewWidth)//2, (WinWidth-NewWidth)//2, NewWidth, NewHeight, 0, 0, Width, Height, 0.8)
+	Gdip_DrawImage(G, pBitmap, NewMargin, NewMargin, NewWidth, NewHeight, 0, 0, Width, Height, 0.8)
 	UpdateLayeredWindow(hwnd1, hdc)
 	Gdip_DisposeImage(pBitmap)
 	Gdip_ResetClip(G)
