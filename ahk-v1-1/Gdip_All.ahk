@@ -16,6 +16,7 @@
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
+; - v1.96 [22/08/2023]
 ; - v1.95 [21/04/2023]
 ; - v1.94 [23/03/2023]
 ; - v1.93 [27/06/2022]
@@ -73,6 +74,7 @@
 ; - v1.01 [05/31/2008]
 ;
 ; Detailed history:
+; - 22/08/2023 = bug fix related to Gdip_SaveBitmapToFile() and other minor changes
 ; - 21/04/2023 = bug fixes related to Gdip_TextToGraphics() and private font collections
 ; - 23/03/2023 = added Gdip_SaveAddImage(), Gdip_SaveImagesInTIFF(), Gdip_GetFrameDelay(), Gdip_GetImageEncodersList(), and other fixes, and minor functions
 ; - 27/06/2022 = various minor fixes
@@ -877,7 +879,7 @@ Gdip_LibraryVersion() {
 ;                 Updated by Marius Șucan reflecting the work on Gdip_all extended compilation
 
 Gdip_LibrarySubVersion() {
-   return 1.95 ; 21/04/2023
+   return 1.96 ; 22/08/2023
 }
 
 ;#####################################################################################
@@ -2197,16 +2199,17 @@ Gdip_BlurBitmap(pBitmap, BlurAmount, usePARGB:=0, quality:=7, softEdges:=1) {
    return pBitmap2
 }
 
-Gdip_GetImageEncoder(Extension, ByRef pCodec) {
+Gdip_GetImageEncoder(Extension, ByRef pCodec, ByRef ci) {
 ; The function returns the handle to the GDI+ image encoder for the given file extension, if it is available
 ; on error, it returns -1
+; CI must be a ByRef to not have AHK destroy the struct needed by pCodec.
 
    Static mimeTypeOffset := 48
         , sizeImageCodecInfo := 76
 
    nCount := nSize := pCodec := 0
    DllCall("gdiplus\GdipGetImageEncodersSize", "uint*", nCount, "uint*", nSize)
-   VarSetCapacity(ci, nSize)
+   VarSetCapacity(ci, nSize, 0)
    DllCall("gdiplus\GdipGetImageEncoders", "uint", nCount, "uint", nSize, "UPtr", &ci)
 
    If !(nCount && nSize)
@@ -2242,8 +2245,6 @@ Gdip_GetImageEncoder(Extension, ByRef pCodec) {
          Break
       }
    }
-
-   Return
 }
 
 Gdip_GetImageEncodersList() {
@@ -2316,11 +2317,11 @@ Gdip_SaveImagesInTIFF(filesListArray, destFilePath) {
         , EncoderValueMultiFrame := 18
         , EncoderValueFlush := 20
 
-   rg := Gdip_GetImageEncoder(".tif", pCodec)
+   rg := Gdip_GetImageEncoder(".tif", pCodec, ci)
    If !pCodec
-      rg := Gdip_GetImageEncoder(".tif", pCodec)
+      rg := Gdip_GetImageEncoder(".tif", pCodec, ci)
    If !pCodec
-      rg := Gdip_GetImageEncoder(".tif", pCodec)
+      rg := Gdip_GetImageEncoder(".tif", pCodec, ci)
 
    If !pCodec
       Return -1
@@ -2399,6 +2400,7 @@ Gdip_SaveImagesInTIFF(filesListArray, destFilePath) {
 }
 
 Gdip_GetEncoderParameterList(pBitmap, pCodec, ByRef EncoderParameters) {
+   nSize := 0
    DllCall("gdiplus\GdipGetEncoderParameterListSize", "UPtr", pBitmap, "UPtr", pCodec, "uint*", nSize)
    VarSetCapacity(EncoderParameters, nSize, 0) ; struct size
    DllCall("gdiplus\GdipGetEncoderParameterList", "UPtr", pBitmap, "UPtr", pCodec, "uint", nSize, "UPtr", &EncoderParameters)
@@ -2442,7 +2444,7 @@ Gdip_GetEncoderParameterList(pBitmap, pCodec, ByRef EncoderParameters) {
 
 Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64orStream:=0) {
    nCount := nSize := 0
-   pStream := hData := 0
+   pStream := hData := ci := 0
    _p := pCodec := 0
 
    SplitPath sOutput,,, Extension
@@ -2450,11 +2452,11 @@ Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64orStream:=0) {
       Return -1
 
    Extension := "." Extension
-   r := Gdip_GetImageEncoder(Extension, pCodec)
+   r := Gdip_GetImageEncoder(Extension, pCodec, ci)
    If (r=-1)
       Return -2
    
-   If !pCodec
+   If (pCodec="" || pCodec=0)
       Return -3
 
    If (Quality!=75)
@@ -2466,7 +2468,7 @@ Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64orStream:=0) {
       If RegExMatch(Extension, "^\.(?i:JPG|JPEG|JPE|JFIF)$")
       {
          Static EncoderParameterValueTypeLongRange := 6
-         If !(nCount:= Gdip_GetEncoderParameterList(pBitmap, pCodec, EncoderParameters))
+         If !(nCount := Gdip_GetEncoderParameterList(pBitmap, pCodec, EncoderParameters))
             Return -8
 
          pad := (A_PtrSize = 8) ? 4 : 0
@@ -2519,6 +2521,7 @@ Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64orStream:=0) {
    }
 
    _E := DllCall("gdiplus\GdipSaveImageToFile", "UPtr", pBitmap, "WStr", sOutput, "UPtr", pCodec, "uint", _p ? _p : 0)
+   ; msgbox, % "lol`nr=" r "`npC=" pCodec "`n" extension "`n" sOutput "`nerr=" _E
    gdipLastError := _E
    Return _E ? -5 : 0
 }
@@ -8339,7 +8342,8 @@ GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRd
 ;
 ; function written by Marius Șucan
 ; infos from http://www.graficaobscura.com/matrix/index.html
-; NTSC RGB weights: r := 0.29970, g := 0.587130, b := 0.114180
+; NTSC // CCIR 601 luma RGB weights:
+; r := 0.29970, g := 0.587130, b := 0.114180
 
     Static NTSCr := 0.308, NTSCg := 0.650, NTSCb := 0.095   ; personalized values
     matrix := ""
@@ -8676,7 +8680,7 @@ Gdip_RenderPixelsOpaque(pBitmap, pBrush:=0, alphaLevel:=0, PixelFormat:=0) {
     Return newBitmap
 }
 
-Gdip_TestBitmapUniformity(pBitmap, HistogramFormat:=3, ByRef maxLevelIndex:=0, ByRef maxLevelPixels:=0) {
+Gdip_TestBitmapUniformity(pBitmap, HistogramFormat:=3, ByRef maxLevelIndex:=0, ByRef maxLevelPixels:=0, ByRef avgLevel:=0) {
 ; This function tests whether the given pBitmap 
 ; is in a single shade [color] or not.
 
@@ -8705,20 +8709,27 @@ Gdip_TestBitmapUniformity(pBitmap, HistogramFormat:=3, ByRef maxLevelIndex:=0, B
       Return -2
 
    histoList := ""
+   counter := sum := 0
    Loop 256
    {
        nrPixels := Round(LevelsArray[A_Index - 1])
        If (nrPixels>0)
+       {
+          counter++
           histoList .= nrPixels "." A_Index - 1 "|"
+          sum += A_Index - 1
+       }
    }
+
+   avgLevel := Round(sum/counter, 1)
    Sort histoList, NURD|
    histoList := Trim(histoList, "|")
    histoListSortedArray := StrSplit(histoList, "|")
    maxLevel := StrSplit(histoListSortedArray[1], ".")
    maxLevelIndex := maxLevel[2]
    maxLevelPixels := maxLevel[1]
-   ; ToolTip, % maxLevelIndex " -- " maxLevelPixels " | " histoListSortedArray[1] "`n" histoList, , , 3
-   pixelsThreshold := Round((Width * Height) * 0.0005) + 1
+   pixelsThreshold := Round((Width * Height) * 0.0065) + 1
+   ; ToolTip, % pixelsThreshold "|" maxLevelIndex " -- " maxLevelPixels " | " histoListSortedArray[1] "`n" histoList, , , 3
    If (Floor(histoListSortedArray[2])<pixelsThreshold)
       Return 1
    Else 
@@ -9400,7 +9411,6 @@ ConvertRGBtoHSL(R, G, B) {
    del_Max := Max - Min
 
    L := (Max + Min) / 2
-
    if (del_Max = 0)
    {
       H := S := 0
