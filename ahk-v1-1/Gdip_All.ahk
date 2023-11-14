@@ -7,12 +7,16 @@
 ;
 ; AHK forums: https://www.autohotkey.com/boards/viewtopic.php?f=6&t=6517
 ;
-; NOTES: The drawing of GDI+ Bitmaps is limited to a size
-; of 32767 pixels in either direction (width, height).
+; NOTES: The drawing of GDI+ Bitmaps is limited to a size of 32767 pixels
+; in either direction (width, height). This limit applies only if the
+; interpolation mode is set to NearestNeighbor for the Graphics Object.
 ; To calculate the largest bitmap you can create:
 ;    The maximum object size is 2GB = 2,147,483,648 bytes
 ;    Default bitmap is 32bpp (4 bytes), the largest area we can have is 2GB / 4 = 536,870,912 bytes
-;    If we want a square, the largest we can get is sqrt(2GB/4) = 23,170 pixels
+;    If we want a square, the largest we can get is sqrt(2GB/4) = 23,170 pixels (536 mgpx)
+;    For 24-bits: sqrt(2GB/3) = 26,755 pixels (715 mgpx)
+;    Gdip_DrawImage() will fail with images above 536 mgpx,
+;    even if these are below 32 bits.
 ;
 ; Gdip standard library versions:
 ; by Marius Șucan - gathered user-contributed functions and implemented hundreds of new functions
@@ -1645,6 +1649,7 @@ Gdip_DrawImagePointsRect(pGraphics, pBitmap, Points, sx:="", sy:="", sw:="", sh:
 
 ; Function        Gdip_DrawImage
 ; Description     This function draws a bitmap into the Graphics of another bitmap
+; Note            The function will fail with images above 536 mgpx, even if these are below 32 bits.
 ;
 ; pGraphics       Pointer to the Graphics of a bitmap
 ; pBitmap         Pointer to a bitmap to be drawn
@@ -1938,9 +1943,13 @@ Gdip_ResetImageAttributes(ImageAttr, ColorAdjustType) {
 ;
 ; pBitmap            Pointer to a bitmap to get the pointer to its graphics
 ;
-; return             returns a pointer to the graphics of a bitmap
+; return             Returns a pointer to the graphics of a bitmap
 ;
-; notes              a bitmap can be drawn into the graphics of another bitmap
+; remarks            A bitmap can be drawn into the graphics of another bitmap.
+;                    This function will fail with these bitmap pixel formats:
+;                    PXF01INDEXED, PXF04INDEXED, PXF16GRAYSCALE
+;                    PXF16ARGB1555, PXF64PARGB, PXF32CMYK
+;                    See Gdip_GetImagePixelFormat() for more details.
 
 Gdip_GraphicsFromImage(pBitmap, InterpolationMode:="", SmoothingMode:="", PageUnit:="", CompositingQuality:="") {
    pGraphics := 0
@@ -2739,21 +2748,24 @@ Gdip_GetImagePixelFormat(pBitmap, mode:=0) {
 ; 1 - in hex
 ; 2 - in human readable format
 ;
-; PXF01INDEXED = 0x00030101  ; 1 bpp, indexed
-; PXF04INDEXED = 0x00030402  ; 4 bpp, indexed
-; PXF08INDEXED = 0x00030803  ; 8 bpp, indexed
-; PXF16GRAYSCALE = 0x00101004; 16 bpp, grayscale
-; PXF16RGB555 = 0x00021005   ; 16 bpp; 5 bits for each RGB
-; PXF16RGB565 = 0x00021006   ; 16 bpp; 5 bits red, 6 bits green, and 5 bits blue
-; PXF16ARGB1555 = 0x00061007 ; 16 bpp; 1 bit for alpha and 5 bits for each RGB component
-; PXF24RGB = 0x00021808   ; 24 bpp; 8 bits for each RGB
-; PXF32RGB = 0x00022009   ; 32 bpp; 8 bits for each RGB, no alpha.
-; PXF32ARGB = 0x0026200A  ; 32 bpp; 8 bits for each RGB and alpha
-; PXF32PARGB = 0x000E200B ; 32 bpp; 8 bits for each RGB and alpha, pre-mulitiplied
-; PXF48RGB = 0x0010300C   ; 48 bpp; 16 bits for each RGB
-; PXF64ARGB = 0x0034400D  ; 64 bpp; 16 bits for each RGB and alpha
-; PXF64PARGB = 0x001A400E ; 64 bpp; 16 bits for each RGB and alpha, pre-multiplied
-; PXF32CMYK = 0x200F      ; 32 bpp; CMYK
+; *PXF01INDEXED = 0x00030101  ; 1 bpp, indexed
+; *PXF04INDEXED = 0x00030402  ; 4 bpp, indexed
+; PXF08INDEXED = 0x00030803   ; 8 bpp, indexed
+; *PXF16GRAYSCALE = 0x00101004; 16 bpp, grayscale
+; PXF16RGB555 = 0x00021005    ; 16 bpp; 5 bits for each RGB
+; PXF16RGB565 = 0x00021006    ; 16 bpp; 5 bits red, 6 bits green, and 5 bits blue
+; *PXF16ARGB1555 = 0x00061007 ; 16 bpp; 1 bit for alpha and 5 bits for each RGB component
+; PXF24RGB = 0x00021808       ; 24 bpp; 8 bits for each RGB
+; PXF32RGB = 0x00022009       ; 32 bpp; 8 bits for each RGB, no alpha.
+; PXF32ARGB = 0x0026200A      ; 32 bpp; 8 bits for each RGB and alpha
+; PXF32PARGB = 0x000E200B     ; 32 bpp; 8 bits for each RGB and alpha, pre-mulitiplied
+; PXF48RGB = 0x0010300C       ; 48 bpp; 16 bits for each RGB
+; PXF64ARGB = 0x0034400D      ; 64 bpp; 16 bits for each RGB and alpha
+; *PXF64PARGB = 0x001A400E    ; 64 bpp; 16 bits for each RGB and alpha, pre-multiplied
+; *PXF32CMYK = 0x200F         ; 32 bpp; CMYK
+
+; NOTE: GDI+ does not fully support the formats marked with an asterisk (*).
+; Gdip_GraphicsFromImage() will fail on bitmaps with these pixel formats.
 
 ; INDEXED [1-bits, 4-bits and 8-bits] pixel formats rely on color palettes.
 ; The color information for the pixels is stored in palettes.
@@ -3076,8 +3088,8 @@ Gdip_CreateARGBHBITMAPFromBitmap(ByRef pBitmap) {
   E := DllCall("gdiplus\GdipBitmapLockBits"
         ,    "uptr", pBitmap
         ,    "uptr", &Rect
-        ,   "uint", 5            ; ImageLockMode.UserInputBuffer | ImageLockMode.ReadOnly
-        ,    "int", 0xE200B      ; Format32bppPArgb
+        ,    "uint", 5            ; ImageLockMode.UserInputBuffer | ImageLockMode.ReadOnly
+        ,     "int", 0xE200B      ; Format32bppPArgb
         ,    "uptr", &BitmapData) ; Contains the pointer (pBits) to the hbm.
   If !E
      DllCall("gdiplus\GdipBitmapUnlockBits", "uptr", pBitmap, "uptr", &BitmapData)
@@ -3230,7 +3242,7 @@ Gdip_CloneBitmapArea(pBitmap, x:="", y:="", w:=0, h:=0, PixelFormat:=0, KeepPixe
 ;
 ; If the specified coordinates exceed the boundaries of pBitmap
 ; the resulted pBitmap is erroneuous / defective.
-   If !pBitmap
+   If (pBitmap="")
    {
       gdipLastError := 2
       Return
@@ -3383,8 +3395,7 @@ Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, Pixel
     Gdip_GetImageDimensions(pBitmap, Width, Height)
     Gdip_GetRotatedDimensions(Width, Height, Angle, RWidth, RHeight)
     Gdip_GetRotatedTranslation(Width, Height, Angle, xTranslation, yTranslation)
-
-    If (RWidth*RHeight>536848912) || (Rwidth>32100) || (RHeight>32100)
+    If (RWidth*RHeight>536847512) || (Rwidth>32750) || (RHeight>32750)
        Return
 
     PixelFormatReadable := Gdip_GetImagePixelFormat(pBitmap, 2)
@@ -3476,9 +3487,8 @@ Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:="", Kee
        ResizedH := givenH
     }
 
-    If (((ResizedW*ResizedH>536848912) || (ResizedW>32100) || (ResizedH>32100)) && checkTooLarge=1)
-       Return
 
+    mpx := Round((ResizedW * ResizedH)/1000000, 1)
     PixelFormatReadable := Gdip_GetImagePixelFormat(pBitmap, 2)
     If (KeepPixelFormat=1)
        PixelFormat := Gdip_GetImagePixelFormat(pBitmap, 1)
@@ -3486,6 +3496,9 @@ Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:="", Kee
        PixelFormat := "0xE200B"
     Else If Strlen(KeepPixelFormat)>3
        PixelFormat := KeepPixelFormat
+
+    If ((mpx>536.4 && (!PixelFormat || PixelFormat=0x22009 || PixelFormat=0xE200B)) || (mpx>715.3 && PixelFormat=0x21808) || max(ResizedW, ResizedH)>32750 && checkTooLarge=1)
+       Return
 
     If (ResizedW=Width && ResizedH=Height)
        InterpolationMode := 5
@@ -5899,7 +5912,7 @@ Gdip_IsVisiblePathRectEntirely(pGraphics, pPath, X, Y, Width, Height) {
 }
 
 Gdip_DeletePath(pPath) {
-   If pPath
+   If (pPath!="")
       return DllCall("gdiplus\GdipDeletePath", "UPtr", pPath)
 }
 
@@ -5926,10 +5939,15 @@ Gdip_SetInterpolationMode(pGraphics, InterpolationMode) {
 ; LowQuality = 1
 ; HighQuality = 2
 ; Bilinear = 3
-; Bicubic = 4
-; NearestNeighbor = 5
+; Bicubic = 4 [very slow]
+; NearestNeighbor = 5 [fastest]
 ; HighQualityBilinear = 6
-; HighQualityBicubic = 7
+; HighQualityBicubic = 7 [fast]
+
+; NOTES: The drawing of GDI+ Bitmaps is limited to a size of 32767 pixels
+; in either direction (width, height). This limit applies only if the
+; interpolation mode is set to NearestNeighbor for the Graphics Object.
+
    If !pGraphics
       Return 2
    Return DllCall("gdiplus\GdipSetInterpolationMode", "UPtr", pGraphics, "int", InterpolationMode)
@@ -7605,10 +7623,11 @@ Gdip_GetMatrixLastStatus(hMatrix) {
 ; pPath:  Pointer to the GraphicsPath.
 ; Points: The coordinates of all the points passed as x1,y1|x2,y2|x3,y3... This can also be a flat array object
 
-
 ; Return: Status enumeration. 0 = success.
-;
-; Notes: The first spline is constructed from the first point through the fourth point in the array and uses the second and third points as control points. Each subsequent spline in the sequence needs exactly three more points: the ending point of the previous spline is used as the starting point, the next two points in the sequence are control points, and the third point is the ending point.
+; Notes: The first spline is constructed from the first point through the fourth point in the array and 
+; uses the second and third points as control points. Each subsequent spline in the sequence needs 
+; exactly three more points: the ending point of the previous spline is used as the starting point,
+; the next two points in the sequence are control points, and the third point is the ending point.
 
 Gdip_AddPathBeziers(pPath, Points) {
   iCount := CreatePointsF(PointsF, Points)
@@ -9195,8 +9214,8 @@ calcIMGdimensions(imgW, imgH, givenW, givenH, ByRef ResizedW, ByRef ResizedH) {
 ;                      by keeping the aspect ratio
 ; function initially written by SBC; modified by Marius Șucan
 
-   PicRatio := Round(imgW/imgH, 5)
-   givenRatio := Round(givenW/givenH, 5)
+   PicRatio := Round(imgW/imgH, 8)
+   givenRatio := Round(givenW/givenH, 8)
    If (imgW<=givenW && imgH<=givenH)
    {
       ResizedW := givenW
@@ -9311,6 +9330,8 @@ Gdip_BitmapSetColorDepth(pBitmap, bitsDepth, useDithering:=1) {
       E := Gdip_BitmapConvertFormat(pBitmap, 0x21808, 2, 1, 0, 0, 0, 0, 0)
    Else If (bitsDepth=32)
       E := Gdip_BitmapConvertFormat(pBitmap, 0x26200A, 2, 1, 0, 0, 0, 0, 0)
+   Else If (bitsDepth=48)
+      E := Gdip_BitmapConvertFormat(pBitmap, 0x10300C, 2, 1, 0, 0, 0, 0, 0)
    Else If (bitsDepth=64)
       E := Gdip_BitmapConvertFormat(pBitmap, 0x34400D, 2, 1, 0, 0, 0, 0, 0)
    Else

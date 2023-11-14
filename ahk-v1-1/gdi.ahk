@@ -13,6 +13,11 @@
 ; Other functions added by Marius Șucan.
 ; Last update on: mercredi samedi 21 janvier 2023; 21/01/2023
 ; version: 1.31
+;
+; The maximum object size is 2GB = 2,147,483,648 bytes
+; The largest bitmap allowed is based on its color depth.
+; If we want a square, 32-bits, the largest we can get is sqrt(2GB/4) = 23,170 pixels (536.4 mgpx)
+; For 24-bits: sqrt(2GB/3) = 26,745 pixels (715.3 mgpx)
 
 Gdi_DrawTextHelper(hDC, hFont, Text, x, y, txtColor, bgrColor:="") {
       ; Transparent background, no color needed
@@ -194,16 +199,16 @@ Gdi_DrawText(hDC, Text, x, y, w, h, flags:=0) {
 }
 
 Gdi_CreateRectRegion(x, y, x2, y2) {
-   Return DllCall("gdi32\CreateRectRgn", "Int", x, "Int", y, "Int", x2, "Int", y2, "Ptr")
+   Return DllCall("gdi32\CreateRectRgn", "Int", x, "Int", y, "Int", x2, "Int", y2, "UPtr")
 }
 
 Gdi_CreateRoundRectRegion(x, y, x2, y2, w, h) {
    ; w, h - width and height of the ellipse used to create the rounded corners in device units.
-   Return DllCall("gdi32\CreateRoundRectRgn", "Int", x, "Int", y, "Int", x2, "Int", y2, "Int", w, "Int", h, "Ptr")
+   Return DllCall("gdi32\CreateRoundRectRgn", "Int", x, "Int", y, "Int", x2, "Int", y2, "Int", w, "Int", h, "UPtr")
 }
 
 Gdi_CreateEllipticRegion(x, y, x2, y2) {
-   Return DllCall("gdi32\CreateEllipticRgn", "Int", x, "Int", y, "Int", x2, "Int", y2, "Ptr")
+   Return DllCall("gdi32\CreateEllipticRgn", "Int", x, "Int", y, "Int", x2, "Int", y2, "UPtr")
 }
 
 Gdi_CombineRegion(hRgnDst, hRgn1, hRgn2, mode) {
@@ -218,7 +223,7 @@ Gdi_CombineRegion(hRgnDst, hRgn1, hRgn2, mode) {
    ; RGN_DIFF = 4
    ; RGN_COPY = 5
 
-   Return DllCall("gdi32\CombineRgn", "Ptr", hRgnDst, "Ptr", hRgn1, "Ptr", hRgn2, "UInt", mode)
+   Return DllCall("gdi32\CombineRgn", "UPtr", hRgnDst, "UPtr", hRgn1, "UPtr", hRgn2, "UInt", mode)
 }
 
 Gdi_EqualRegions(hRgn1, hRgn2) {
@@ -232,7 +237,7 @@ Gdi_EqualRegions(hRgn1, hRgn2) {
    ; A return value of ERROR means at least one of the region
    ; handles is invalid.
 
-   Return DllCall("gdi32\EqualRgn", "Ptr", hRgn1, "Ptr", hRgn2)
+   Return DllCall("gdi32\EqualRgn", "UPtr", hRgn1, "UPtr", hRgn2)
 }
 
 Gdi_FillRegion(hDC, hRgn, hBrush) {
@@ -510,10 +515,11 @@ Gdi_GetTextExtentPoint32(hDC, string, ByRef w, ByRef h) {
             ,"UPtr", hDC                                ;-- hDC
             ,"Str", string                             ;-- lpString
             ,"Int", StrLen(string)                     ;-- c (string length)
-            ,"Ptr", &SIZE)                             ;-- lpSize
+            ,"UPtr", &SIZE)                             ;-- lpSize
 
   w := NumGet(SIZE, 0, "Int")
   h := NumGet(SIZE, 4, "Int")
+  SIZE := ""
   Return E
 }
 
@@ -1185,18 +1191,19 @@ Gdi_GetImageDimensions(hBitmap, ByRef width, ByRef height, ByRef BPP) {
      If (Gdi_GetObjectType(hBitmap)!="BITMAP")
         Return -1
 
-     size := VarSetCapacity(dib, 76+2*(A_PtrSize=8?4:0)+2*A_PtrSize) ; sizeof(DIBSECTION) = x86:84, x64:104
-     E := DllCall("gdi32\GetObject", "ptr", hBitmap, "int", size, "ptr", &dib)
+     size := VarSetCapacity(dib, 76+2*(A_PtrSize=8?4:0)+2*A_PtrSize, 0) ; sizeof(DIBSECTION) = x86:84, x64:104
+     E := DllCall("gdi32\GetObject", "UPtr", hBitmap, "int", size, "UPtr", &dib)
      width := NumGet(dib, 4, "uint")
      height := NumGet(dib, 8, "uint")
      BPP := NumGet(dib, 18, "ushort")
+     dib := ""
      Return E
 }
 
 Gdi_GetObjectType(obj) {
    Static objTypes := {1:"PEN", 2:"BRUSH", 3:"DC", 4:"METADC", 5:"PAL", 6:"FONT", 7:"BITMAP", 8:"REGION", 9:"METAFILE", 10:"MEMDC", 11:"EXTPEN", 12:"ENHMETADC", 13:"ENHMETAFILE", 14:"COLORSPACE"}
 
-   E := DllCall("gdi32\GetObjectType", "Ptr", obj)
+   E := DllCall("gdi32\GetObjectType", "UPtr", obj)
    R := objTypes[E]
    Return R ? R : E
 }
@@ -1207,7 +1214,7 @@ Gdi_CreateBitmap(w, h, BitCount:=32, Planes:=1, pBits:=0) {
   ; the Gdi_SelectObject function. However, the bitmap can only be selected into
   ; a DC if the bitmap and the DC have the same format.
 
-   Return DllCall("gdi32\CreateBitmap", "Int", w, "Int", h, "UInt", Planes, "UInt", BitCount, "Ptr", pBits, "UPtr")
+   Return DllCall("gdi32\CreateBitmap", "Int", w, "Int", h, "UInt", Planes, "UInt", BitCount, "UPtr", pBits, "UPtr")
 }
 
 Gdi_CreateDIBitmap(hDC, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) {
@@ -1229,14 +1236,14 @@ Gdi_CreateDIBitmap(hDC, bmpInfoHeader, CBM_INIT, pBits, BITMAPINFO, DIB_COLORS) 
             , "uint", CBM_INIT    ; = 4
             , "UPtr", pBits
             , "UPtr", BITMAPINFO
-            , "uint", DIB_COLORS, Ptr)    ; PAL=1 ; RGB=2
+            , "uint", DIB_COLORS, "UPtr")    ; PAL=1 ; RGB=2
 
    Return hBitmap
 }
 
 Gdi_StretchDIBits(hDestDC, dX, dY, dW, dH, sX, sY, sW, sH, tBITMAPINFO, DIB_COLORS, pBits, RasterOper) {
    ; The StretchDIBits function copies the color data for a rectangle of pixels
-   ; in a DIB, JPEG, or PNG image to the specified destination rectangle.
+   ; in a DIB, BMP, JPEG, or PNG image to the specified destination rectangle.
    ; If the destination rectangle is larger than the source rectangle, this
    ; function stretches the rows and columns of color data to fit the
    ; destination rectangle. If the destination rectangle is smaller than the
@@ -1266,7 +1273,8 @@ Gdi_StretchDIBits(hDestDC, dX, dY, dW, dH, sX, sY, sW, sH, tBITMAPINFO, DIB_COLO
    ; codes, see BitBlt.
 
    ; Return value
-   ; If the function succeeds, the return value is the number of scan lines copied. Note that this value can be negative for mirrored content.
+   ; If the function succeeds, the return value is the number of scan lines copied. 
+   ; Note that this value can be negative for mirrored content.
    ; If the function fails, or no scan lines are copied, the return value is 0.
 
    ; If the driver cannot support the JPEG or PNG file image passed to
@@ -1350,7 +1358,7 @@ Gdi_GetDIBits(hDC, hBitmap, start, cLines, pBits, BITMAPINFO, DIB_COLORS) {
             , "UPtr", hBitmap
             , "uint", start
             , "uint", cLines
-            , "Ptr", pBits
+            , "UPtr", pBits
             , "UPtr", BITMAPINFO
             , "uint", DIB_COLORS, "UPtr")    ; PAL=1 ; RGB=2
 }
@@ -1469,9 +1477,8 @@ Gdi_SetDIBcolorTable(hDC, iStart, entries, RGBQUADs) {
     ; This function should be called to set the color table for DIBs that use 1, 4, or 8 bpp. The BitCoun
     ; member of a bitmap's associated bitmap information header structure.
 
-   Return DllCall("SetDIBColorTable", "Ptr",hDC, "Int", iStart, "Int", entries, "Ptr",&RGBQUADs)
+   Return DllCall("SetDIBColorTable", "UPtr",hDC, "Int", iStart, "Int", entries, "UPtr",&RGBQUADs)
 }
-
 
 Gdi_CreateCompatibleBitmap(hDC, w, h) {
   ; The CreateCompatibleBitmap function creates a DDB bitmap compatible
@@ -2210,15 +2217,15 @@ Gdi_SetStretchBltMode(hDC, iStretchMode:=4) {
 
 Gdi_BitmapFromHWND(hwnd, clientOnly:=0) {
    ; Restore the window if minimized! Must be visible for capture.
-   if DllCall("IsIconic", "ptr", hwnd)
-      DllCall("ShowWindow", "ptr", hwnd, "int", 4)
+   if DllCall("IsIconic", "UPtr", hwnd)
+      DllCall("ShowWindow", "UPtr", hwnd, "int", 4)
 
    Static Ptr := "UPtr"
    thisFlag := 0
    If (clientOnly=1)
    {
       VarSetCapacity(rc, 16, 0)
-      DllCall("GetClientRect", "ptr", hwnd, "ptr", &rc)
+      DllCall("GetClientRect", "UPtr", hwnd, "ptr", &rc)
       Width := NumGet(rc, 8, "int")
       Height := NumGet(rc, 12, "int")
       thisFlag := 1
@@ -2629,9 +2636,9 @@ Gdi_CreateFont(height:="",width:=0,escapmnt:=0,orient:=0,weight:=0,italica:=0,un
 }
 
 Gdi_CloneFont(hFont) {
-   VarSetCapacity(LOGFONT,A_IsUnicode ? 92:60,0)
-   DllCall("GetObject","Ptr",hFont,"Int",A_IsUnicode ? 92:60,"Ptr",&LOGFONT)
-   Return DllCall("gdi32\CreateFontIndirect","Ptr",&LOGFONT,"Ptr")
+   VarSetCapacity(LOGFONT,A_IsUnicode ? 92:60, 0)
+   DllCall("GetObject", "UPtr", hFont, "Int", A_IsUnicode ? 92:60, "UPtr",&LOGFONT)
+   Return DllCall("gdi32\CreateFontIndirect","UPtr",&LOGFONT, "UPtr")
 }
 
 Gdi_GetFontMetrics(hFont) {
@@ -2681,7 +2688,7 @@ Gdi_GetTextMetrics(hFont) {
     old_hFont := Gdi_SelectObject(hDC, hFont)
 
     VarSetCapacity(TEXTMETRIC,A_IsUnicode ? 60:56,0)
-    DllCall("gdi32\GetTextMetrics","UPtr", hDC, "Ptr", &TEXTMETRIC)
+    DllCall("gdi32\GetTextMetrics","UPtr", hDC, "UPtr", &TEXTMETRIC)
 
     Gdi_SelectObject(hDC, old_hFont)
     Gdi_ReleaseDC(hDC, 0)
@@ -2761,7 +2768,7 @@ Gdi_GetTextExtentExPoint(hDC, p_String, p_MaxW, ByRef l_Fit, ByRef W, ByRef H) {
     VarSetCapacity(a_Fit, 4, 0)
     VarSetCapacity(lpSize, 8, 0)
     E := DllCall("gdi32\GetTextExtentExPoint"
-                  ,"Ptr",hDC                                      ;-- hdc
+                  ,"UPtr",hDC                                      ;-- hdc
                   ,"Str",p_String                                 ;-- lpszStr
                   ,"Int",StrLen(p_String)                         ;-- cchString
                   ,"Int",p_MaxW                                   ;-- nMaxExtent
@@ -2953,11 +2960,10 @@ Gdi_ScreenToClient(hWnd, vPosX, vPosY, ByRef vPosX2, ByRef vPosY2) {
   VarSetCapacity(POINT, 8, 0)
   NumPut(vPosX, &POINT, 0, "Int")
   NumPut(vPosY, &POINT, 4, "Int")
-  DllCall("user32\ScreenToClient", "Ptr", hWnd, "Ptr", &POINT)
+  DllCall("user32\ScreenToClient", "UPtr", hWnd, "UPtr", &POINT)
   vPosX2 := NumGet(&POINT, 0, "Int")
   vPosY2 := NumGet(&POINT, 4, "Int")
 }
-
 
 Gdi_ClientToScreen(hWnd, vPosX, vPosY, ByRef vPosX2, ByRef vPosY2) {
 ; function by jeeswg found on:
@@ -2966,11 +2972,10 @@ Gdi_ClientToScreen(hWnd, vPosX, vPosY, ByRef vPosX2, ByRef vPosY2) {
   VarSetCapacity(POINT, 8, 0)
   NumPut(vPosX, &POINT, 0, "Int")
   NumPut(vPosY, &POINT, 4, "Int")
-  DllCall("user32\ClientToScreen", "Ptr", hWnd, "Ptr", &POINT)
+  DllCall("user32\ClientToScreen", "UPtr", hWnd, "UPtr", &POINT)
   vPosX2 := NumGet(&POINT, 0, "Int")
   vPosY2 := NumGet(&POINT, 4, "Int")
 }
-
 
 rgb2bgr(rgbHex) {
    ; input must be like AA00FF
@@ -3131,7 +3136,7 @@ A selection of API functions left to implement from GDI.
   GetDCOrgEx
   GetDCPenColor
   GetLayout
-  GetObject
+  *GetObject
   ResetDC
   SetLayout
 
@@ -3185,9 +3190,7 @@ A selection of API functions left to implement from GDI.
   SetBoundsRect
   GetBoundsRect
   GetUpdateRect
-  
-
-              
+                
 
   https://docs.microsoft.com/en-us/windows/win32/gdi/about-bitmaps
 */
