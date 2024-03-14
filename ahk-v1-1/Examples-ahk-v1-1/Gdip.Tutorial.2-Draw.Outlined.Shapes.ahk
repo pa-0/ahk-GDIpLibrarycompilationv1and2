@@ -84,10 +84,13 @@ Return
 
 ;#######################################################################
 
-ExitFunc(ExitReason, ExitCode)
-{
+ExitFunc(ExitReason, ExitCode) {
    global
    ; gdi+ may now be shutdown on exiting the program
    Gdip_Shutdown(pToken)
 }
+
+~Esc::
+   ExitApp
+Return
 

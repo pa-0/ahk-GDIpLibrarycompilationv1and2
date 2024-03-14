@@ -1,5 +1,5 @@
 # CONTENTS SUMMARY
-- Functions list [v1.85 - 24/08/2020]
+- Functions list [v1.96 - 22/08/2023]
 - What is new (a comparision with the original version of GDI+ library wrapper by Tic)
 - Credits [who made what]
 - What is still left to implement
@@ -11,41 +11,48 @@ of what is available in the Gdip_all.ahk extended compilation.
 
 Please note, this is not a complete list of all the functions.
 
-## 35 GraphicsPath object functions
+## 42 GraphicsPath object functions
  - Gdip_AddPathArc(pPath, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_AddPathBezier(pPath, x1, y1, x2, y2, x3, y3, x4, y4)
  - Gdip_AddPathBeziers(pPath, Points)
  - Gdip_AddPathClosedCurve(pPath, Points, Tension:="")
  - Gdip_AddPathCurve(pPath, Points, Tension:="")
- - Gdip_AddPathEllipse(pPath, x, y, w, h)
+ - Gdip_AddPathEllipse(pPath, x, y, w, h:=0)
+ - Gdip_AddPathEllipseC(pPath, cx, cy, rx, ry := "")
  - Gdip_AddPathLine(pPath, x1, y1, x2, y2)
  - Gdip_AddPathLines(pPath, Points)
  - Gdip_AddPathPie(pPath, x, y, w, h, StartAngle, SweepAngle)
+ - Gdip_AddPathPieC(pPath, cx, cy, rx, ry, StartAngle, SweepAngle)
  - Gdip_AddPathPolygon(pPath, Points)
- - Gdip_AddPathRectangle(pPath, x, y, w, h)
- - Gdip_AddPathRoundedRectangle(pPath, x, y, w, h, r)
+ - Gdip_AddPathRectangle(pPath, x, y, w, h:=0)
+ - Gdip_AddPathRectangleC(pPath, cx, cy, rx, ry := "")
+ - Gdip_AddPathRoundedRectangle(pPath, x, y, w, h, r, angle:=0)
  - Gdip_AddPathString(pPath, String, hFontFamily, Style, Size, hStringFormat, X, Y, W, H)
  - Gdip_AddPathStringSimplified(pPath, String, FontName, Size, Style, X, Y, Width, Height, Align:=0, NoWrap:=0)
  - Gdip_AddPathToPath(pPathA, pPathB, fConnect)
  - Gdip_ClonePath(pPath)
- - Gdip_ClosePathFigure(pPath)
- - Gdip_CreatePath(BrushMode:=0)
+ - Gdip_ClosePathFigure(pPath, all:=0)
+ - Gdip_CreatePath(fillMode:=0, Points:=0, PointTypes:=0)
  - Gdip_DeletePath(pPath)
  - Gdip_FlattenPath(pPath, flatness, hMatrix:=0)
  - Gdip_GetPathFillMode(pPath)
  - Gdip_GetPathLastPoint(pPath, ByRef X, ByRef Y)
- - Gdip_GetPathPoints(pPath)
+ - Gdip_GetPathPoints(pPath, returnArray:=0)
  - Gdip_GetPathPointsCount(pPath)
  - Gdip_GetPathWorldBounds(pPath, hMatrix:=0, pPen:=0)
  - Gdip_IsOutlineVisiblePathPoint(pGraphics, pPath, pPen, X, Y)
  - Gdip_IsVisiblePathPoint(pPath, x, y, pGraphics)
+ - Gdip_IsVisiblePathRectEntirely(pGraphics, pPath, X, Y, Width, Height)
  - Gdip_PathOutline(pPath, flatness:=1, hMatrix:=0)
  - Gdip_ResetPath(pPath)
  - Gdip_ReversePath(pPath)
- - Gdip_RotatePathAtCenter(pPath, Angle, MatrixOrder:=1, withinBounds:=0, withinBkeepRatio:=1)
+ - Gdip_RotatePathAtCenter(pPath, Angle, MatrixOrder:=1, withinBounds:=0, withinBkeepRatio:=1, highAccuracy:=0)
  - Gdip_SetPathFillMode(pPath, FillMode)
- - Gdip_StartPathFigure(pPath)
+ - Gdip_StartPathFigure(pPath, closePrev:=0)
  - Gdip_TransformPath(pPath, hMatrix)
+ - Gdip_TranslatePath(pPath, x, y)
+ - Gdip_ScalePath(pPath, x, y)
+ - Gdip_RotatePath(pPath, angle)
  - Gdip_WidenPath(pPath, pPen, hMatrix:=0, Flatness:=1)
 
 ## 43 Pen object functions
@@ -93,7 +100,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetPenWidth(pPen, width)
  - Gdip_TranslatePenTransform(pPen, X, Y, matrixOrder:=0)
 
-## 28 PathGradient brush functions
+## 29 PathGradient brush functions
  - Gdip_AddPathGradient(pGraphics, x, y, w, h, cX, cY, cClr, sClr, BlendFocus, ScaleX, ScaleY, Shape, Angle:=0)
  - Gdip_CreatePathGradient(Points, WrapMode)
  - Gdip_GetPathGradientSurroundColors(pPathGradientBrush)
@@ -122,6 +129,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_PathGradientSetWrapMode(pPathGradientBrush, WrapMode)
  - Gdip_PathGradientTranslateTransform(pPathGradientBrush, X, Y, matrixOrder:=0)
  - Gdip_RotatePathGradientAtCenter(pPathGradientBrush, Angle, MatrixOrder:=1)
+ - Gdip_SetPathGradientPresetBlend(pBrush, _positions, _colors)
 
 ## 21 LinearGradient brush functions
  - Gdip_CreateLinearGrBrush(x1, y1, x2, y2, ARGB1, ARGB2, WrapMode:=1)
@@ -140,7 +148,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetLinearGrBrushColors(pLinearGradientBrush, ARGB1, ARGB2)
  - Gdip_SetLinearGrBrushGammaCorrection(pLinearGradientBrush, UseGammaCorrection)
  - Gdip_SetLinearGrBrushLinearBlend(pLinearGradientBrush, nFocus, nScale)
- - Gdip_SetLinearGrBrushPresetBlend(pBrush, pA, pB, pC, pD, clr1, clr2, clr3, clr4)
+ - Gdip_SetLinearGrBrushPresetBlend(pBrush, _positions, _colors, pathBrush:=0)
  - Gdip_SetLinearGrBrushSigmaBlend(pLinearGradientBrush, nFocus, nScale)
  - Gdip_SetLinearGrBrushTransform(pLinearGradientBrush, pMatrix)
  - Gdip_SetLinearGrBrushWrapMode(pLinearGradientBrush, WrapMode)
@@ -171,7 +179,7 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetHatchForegroundColor(pHatchBrush)
  - Gdip_GetHatchStyle(pHatchBrush)
 
-## 53 pBitmap functions
+## 61 pBitmap functions
  - Gdip_BoxBlurBitmap(pBitmap, passes)
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - Gdip_BitmapConvertFormat(pBitmap, PixelFormat, DitherType, DitherPaletteType, PaletteEntries, PaletteType, OptimalColors, UseTransparentColor:=0, AlphaThresholdPercent:=0)
@@ -180,16 +188,19 @@ Please note, this is not a complete list of all the functions.
  - Gdip_BitmapFromBRA(ByRef BRAFromMemIn, File, Alternate := 0)
  - Gdip_BitmapFromHWND(hwnd, clientOnly:=0)
  - Gdip_BitmapFromScreen(Screen:=0, Raster:="")
+ - Gdip_BitmapToBase64(pBitmap, Format, Quality:=90)
  - Gdip_BitmapSelectActiveFrame(pBitmap, FrameIndex)
  - Gdip_BitmapSetColorDepth(pBitmap, bitsDepth, useDithering:=1)
  - Gdip_BitmapSetResolution(pBitmap, dpix, dpiy)
  - Gdip_BlurBitmap(pBitmap, BlurAmount, usePARGB:=0, quality:=6)
+ - Gdip_GaussianBlur(pBitmap, radius, fastMode:=0)
  - Gdip_CloneBitmap(pBitmap)
  - Gdip_CloneBitmapArea(pBitmap, x:="", y:="", w:=0, h:=0, PixelFormat:=0, KeepPixelFormat:=0)
  - Gdip_CompareBitmaps(pBitmapA, pBitmapB, accuracy:=25)
  - Gdip_CreateBitmap(Width, Height, PixelFormat:=0, Stride:=0, Scan0:=0)
  - Gdip_CreateBitmapFromClipboard()
  - Gdip_CreateBitmapFromFile(sFile, IconNumber:=1, IconSize:="", useICM:=0)
+ - Gdip_CreateBitmapFromDirectDrawSurface(IDirectDrawSurface)
  - Gdip_CreateBitmapFromGdiDib(BITMAPINFO, BitmapData)
  - Gdip_CreateBitmapFromGraphics(pGraphics, Width, Height)
  - Gdip_CreateBitmapFromHBITMAP(hBitmap, Palette:=0)
@@ -214,12 +225,17 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetImageThumbnail(pBitmap, W, H)
  - Gdip_ImageRotateFlip(pBitmap, RotateFlipType:=1)
  - Gdip_LoadImageFromFile(sFile, useICM:=0)
+ - Gdip_LoadImageFromStream(stream, useICM:=0)
  - Gdip_PixelateBitmap(pBitmap, ByRef pBitmapOut, BlockSize)
  - Gdip_RenderPixelsOpaque(pBitmap, pBrush:=0, alphaLevel:=0)
  - Gdip_ResizeBitmap(pBitmap, givenW, givenH, KeepRatio, InterpolationMode:=7, KeepPixelFormat:=0)
  - Gdip_RetrieveBitmapChannel(pBitmap, channel)
  - Gdip_RotateBitmapAtCenter(pBitmap, Angle, pBrush:=0, InterpolationMode:=7, PixelFormat:=0)
- - Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64:=0)
+ - Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75, toBase64orStream:=0)
+ - Gdip_SaveBitmapToStream(pBitmap, Format, Quality:=90)
+ - Gdip_SaveBitmapToStream(pBitmap, Format, Quality:=90)
+ - Gdip_SaveAddImage(multiBitmap, newBitmap, params)
+ - Gdip_SaveImagesInTIFF(filesListArray, destFilePath)
  - Gdip_SetAlphaChannel(pBitmap, pBitmapMask, invertAlphaMask:=0, replaceSourceAlphaChannel:=0, whichChannel:=1)
  - Gdip_BlendBitmaps(pBitmap, pBitmap2Blend, blendMode)
  - Gdip_SetBitmapToClipboard(pBitmap)
@@ -244,13 +260,13 @@ Please note, this is not a complete list of all the functions.
  - Gdip_BitmapApplyEffect(pBitmap, pEffect, x:="", y:="", w:="", h:=0)
  - GenerateColorMatrix(modus, bright:=1, contrast:=0, saturation:=1, alph:=1, chnRdec:=0, chnGdec:=0, chnBdec:=0)
 
-## 41 Fonts and StringFormat functions
+## 46 Fonts and StringFormat functions
  - Gdip_CloneFont(hFont)
  - Gdip_CloneFontFamily(hFontFamily)
  - Gdip_CloneStringFormat(hStringFormat)
  - Gdip_CreateFontFamilyFromFile(FontFile, hFontCollection, FontName:="")
  - Gdip_CreateFontFromDC(hDC)
- - Gdip_CreateFontFromLogfontW(hDC, LogFont)
+ - Gdip_CreateFontFromLogfont(hDC, LogFont, type:="W")
  - Gdip_DeleteFont(hFont)
  - Gdip_DeleteFontFamily(hFontFamily)
  - Gdip_DeletePrivateFontCollection(hFontCollection)
@@ -268,7 +284,9 @@ Please note, this is not a complete list of all the functions.
  - Gdip_GetFontSize(hFont)
  - Gdip_GetFontStyle(hFont)
  - Gdip_GetFontUnit(hFont)
+ - Gdip_GetLOGFONT(ByRef LOGFONT, hFont, oGraphics:=0)
  - Gdip_GetStringFormatAlign(hStringFormat)
+ - Gdip_GetInstalledFontFamilies(nameRegex := "")
  - Gdip_GetStringFormatDigitSubstitution(hStringFormat)
  - Gdip_GetStringFormatHotkeyPrefix(hStringFormat)
  - Gdip_GetStringFormatLineAlign(hStringFormat)
@@ -286,9 +304,14 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetTextRenderingHint(pGraphics, RenderingHint)
  - Gdip_StringFormatCreate(FormatFlags:=0, LangID:=0)
  - Gdip_StringFormatGetGeneric(whichFormat:=0)
+ - Gdip_SetStringFormatTabStops(hStringFormat, aTabStops)
+ - Gdip_GetStringFormatTabStopCount(hStringFormat)
+ - Gdip_GetStringFormatTabStops(hStringFormat)
 
-## 42 pGraphics functions
+## 44 pGraphics functions
+ - Gdip_BeginGraphicsContainer(pGraphics)
  - Gdip_DeleteGraphics(pGraphics)
+ - Gdip_EndGraphicsContainer(pGraphics, containerID)
  - Gdip_GetCompositingMode(pGraphics)
  - Gdip_GetCompositingQuality(pGraphics)
  - Gdip_GetDC(pGraphics)
@@ -331,30 +354,33 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetWorldTransform(pGraphics, hMatrix)
  - Gdip_TranslateWorldTransform(pGraphics, x, y, MatrixOrder:=0)
 
-## 21 Region functions
- - Gdip_CloneRegion(Region)
- - Gdip_CombineRegionPath(Region, pPath, CombineMode)
- - Gdip_CombineRegionRect(Region, x, y, w, h, CombineMode)
- - Gdip_CombineRegionRegion(Region, Region2, CombineMode)
+## 24 hRegion functions
+ - Gdip_CloneRegion(hRegion)
+ - Gdip_CombineRegionPath(hRegion, pPath, CombineMode)
+ - Gdip_CombineRegionRect(hRegion, x, y, w, h, CombineMode)
+ - Gdip_CombineRegionRegion(hRegion, hRegion2, CombineMode)
  - Gdip_CreateRegion()
  - Gdip_CreateRegionPath(pPath)
+ - Gdip_CreateRegionHRGN(pHRGN)
  - Gdip_CreateRegionRect(x, y, w, h)
+ - Gdip_CreateRegionRgnData(regionData, dataSize)
  - Gdip_DeleteRegion(Region)
  - Gdip_GetClipRegion(pGraphics)
- - Gdip_GetRegionBounds(pGraphics, Region)
- - Gdip_IsEmptyRegion(pGraphics, Region)
- - Gdip_IsEqualRegion(pGraphics, Region1, Region2)
- - Gdip_IsInfiniteRegion(pGraphics, Region)
- - Gdip_IsVisibleRegionPoint(pGraphics, Region, x, y)
- - Gdip_IsVisibleRegionRect(pGraphics, Region, x, y, width, height)
- - Gdip_IsVisibleRegionRectEntirely(pGraphics, Region, x, y, width, height)
- - Gdip_RotateRegionAtCenter(pGraphics, Region, Angle, MatrixOrder:=1)
- - Gdip_SetEmptyRegion(Region)
- - Gdip_SetInfiniteRegion(Region)
- - Gdip_TransformRegion(Region, pMatrix)
- - Gdip_TranslateRegion(Region, X, Y)
+ - Gdip_GetRegionBounds(pGraphics, hRegion)
+ - Gdip_GetRegionData(hRegion, ByRef rgnData, ByRef rgnDataSize)
+ - Gdip_IsEmptyRegion(pGraphics, hRegion)
+ - Gdip_IsEqualRegion(pGraphics, hRegion1, hRegion2)
+ - Gdip_IsInfiniteRegion(pGraphics, hRegion)
+ - Gdip_IsVisibleRegionPoint(pGraphics, hRegion, x, y)
+ - Gdip_IsVisibleRegionRect(pGraphics, hRegion, x, y, width, height)
+ - Gdip_IsVisibleRegionRectEntirely(pGraphics, hRegion, x, y, width, height)
+ - Gdip_RotateRegionAtCenter(pGraphics, hRegion, Angle, MatrixOrder:=1)
+ - Gdip_SetEmptyRegion(hRegion)
+ - Gdip_SetInfiniteRegion(hRegion)
+ - Gdip_TransformRegion(hRegion, pMatrix)
+ - Gdip_TranslateRegion(hRegion, X, Y)
 
-## 10 Clip functions
+## 11 Clip functions
  - Gdip_GetClipBounds(pGraphics)
  - Gdip_GetVisibleClipBounds(pGraphics)
  - Gdip_IsClipEmpty(pGraphics)
@@ -363,26 +389,30 @@ Please note, this is not a complete list of all the functions.
  - Gdip_SetClipFromGraphics(pGraphics, pGraphicsSrc, CombineMode:=0)
  - Gdip_SetClipPath(pGraphics, pPath, CombineMode:=0)
  - Gdip_SetClipRect(pGraphics, x, y, w, h, CombineMode:=0)
- - Gdip_SetClipRegion(pGraphics, Region, CombineMode:=0)
+ - Gdip_SetClipRegion(pGraphics, hRegion, CombineMode:=0)
+ - Gdip_SetClipHRGN(pGraphics, pHRGN, CombineMode:=0)
  - Gdip_TranslateClip(pGraphics, dX, dY)
 
-## 14 Transformation Matrix functions
+## 17 Transformation Matrix functions
  - Gdip_CloneMatrix(hMatrix)
- - Gdip_CreateAffineMatrix(m11, m12, m21, m22, x, y)
- - Gdip_CreateMatrix()
+ - Gdip_CreateAffineMatrix(m11, m12, m21, m22, dx, dy)
+ - Gdip_CreateMatrix(mXel:=0)
  - Gdip_DeleteMatrix(hMatrix)
  - Gdip_InvertMatrix(hMatrix)
  - Gdip_IsMatrixEqual(hMatrixA, hMatrixB)
  - Gdip_IsMatrixIdentity(hMatrix)
  - Gdip_IsMatrixInvertible(hMatrix)
- - Gdip_MultiplyMatrix(hMatrixA, hMatrixB, matrixOrder)
+ - Gdip_MultiplyMatrix(hMatrixA, hMatrixB, MatrixOrder)
  - Gdip_ResetMatrix(hMatrix)
  - Gdip_RotateMatrix(hMatrix, Angle, MatrixOrder:=0)
  - Gdip_ScaleMatrix(hMatrix, ScaleX, ScaleY, MatrixOrder:=0)
- - Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, x, y)
+ - Gdip_ShearMatrix(hMatrix, hx, hy, MatrixOrder:=0)
+ - Gdip_SetMatrixElements(hMatrix, m11, m12, m21, m22, dx, dy)
+ - Gdip_GetMatrixElements(hMatrix)
  - Gdip_TranslateMatrix(hMatrix, offsetX, offsetY, MatrixOrder:=0)
+ - Gdip_TransformMatrixPoints(hMatrix, Points, vectors:=0)
 
-## 35 Draw/Fill on pGraphics functions
+## 41 Draw/Fill on pGraphics functions
  - Gdip_DrawArc(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
  - Gdip_DrawBezier(pGraphics, pPen, x1, y1, x2, y2, x3, y3, x4, y4)
  - Gdip_DrawBezierCurve(pGraphics, pPen, Points)
@@ -390,7 +420,8 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DrawClosedCurve(pGraphics, pPen, Points, Tension:=1)
  - Gdip_DrawCurve(pGraphics, pPen, Points, Tension:="")
  - Gdip_DrawDrivenString(pGraphics, String, hFont, pBrush, DriverPoints, Flags:=1, hMatrix:=0)
- - Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h)
+ - Gdip_DrawEllipse(pGraphics, pPen, x, y, w, h:=0)
+ - Gdip_DrawEllipseC(pGraphics, pPen, cx, cy, rx, ry := "")
  - Gdip_DrawImage(pGraphics, pBitmap, dx:="", dy:="", dw:="", dh:="", sx:="", sy:="", sw:="", sh:="", Matrix:=1, Unit:=2, ImageAttr:=0)
  - Gdip_DrawImageFast(pGraphics, pBitmap, X:=0, Y:=0)
  - Gdip_DrawImageFX(pGraphics, pBitmap, dX:="", dY:="", sX:="", sY:="", sW:="", sH:="", matrix:="", pEffect:="", ImageAttr:=0, hMatrix:=0, Unit:=2)
@@ -401,22 +432,27 @@ Please note, this is not a complete list of all the functions.
  - Gdip_DrawOrientedString(pGraphics, String, FontName, Size, Style, X, Y, Width, Height, Angle:=0, pBrush:=0, pPen:=0, Align:=0, ScaleX:=1)
  - Gdip_DrawPath(pGraphics, pPen, pPath)
  - Gdip_DrawPie(pGraphics, pPen, x, y, w, h, StartAngle, SweepAngle)
+ - Gdip_DrawPieC(pGraphics, pPen, cx, cy, rx, ry, StartAngle, SweepAngle)
  - Gdip_DrawPolygon(pGraphics, pPen, Points)
- - Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h)
+ - Gdip_DrawRectangle(pGraphics, pPen, x, y, w, h:=0)
+ - Gdip_DrawRectangleC(pGraphics, pPen, cx, cy, rx, ry := "")
  - Gdip_DrawRoundedLine(G, x1, y1, x2, y2, LineWidth, LineColor)
  - Gdip_DrawRoundedRectangle(pGraphics, pPen, x, y, w, h, r)
- - Gdip_DrawRoundedRectangle2(pGraphics, pPen, x, y, w, h, r, angle:=0)
+ - Gdip_DrawRoundedRectanglePath(pGraphics, pPen, x, y, w, h, r, angle:=0)
  - Gdip_DrawString(pGraphics, sString, hFont, hStringFormat, pBrush, ByRef RectF)
  - Gdip_DrawStringAlongPolygon(pGraphics, String, FontName, FontSize, Style, pBrush, DriverPoints:=0, pPath:=0, minDist:=0, flatness:=4, hMatrix:=0, Unit:=0)
  - Gdip_FillClosedCurve(pGraphics, pBrush, Points, Tension:="", FillMode:=0)
- - Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h)
+ - Gdip_FillEllipse(pGraphics, pBrush, x, y, w, h:=0)
+ - Gdip_FillEllipseC(pGraphics, pBrush, cx, cy, rx, ry := "")
  - Gdip_FillPath(pGraphics, pBrush, pPath)
  - Gdip_FillPie(pGraphics, pBrush, x, y, w, h, StartAngle, SweepAngle)
+ - Gdip_FillPieC(pGraphics, pBrush, cx, cy, rx, ry, StartAngle, SweepAngle)
  - Gdip_FillPolygon(pGraphics, pBrush, Points, FillMode:=0)
- - Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h)
+ - Gdip_FillRectangle(pGraphics, pBrush, x, y, w, h:=0)
+ - Gdip_FillRectangleC(pGraphics, pBrush, cx, cy, rx, ry := "")
  - Gdip_FillRegion(pGraphics, pBrush, Region)
  - Gdip_FillRoundedRectangle(pGraphics, pBrush, x, y, w, h, r)
- - Gdip_FillRoundedRectangle2(pGraphics, pBrush, x, y, w, h, r)
+ - Gdip_FillRoundedRectanglePath(pGraphics, pBrush, x, y, w, h, r, angle:=0)
  - Gdip_TextToGraphics(pGraphics, Text, Options, Font:="Arial", Width:="", Height:="", Measure:=0, userBrush:=0, Unit:=0)
 
 ## 14 GDI functions [selection]
@@ -435,11 +471,12 @@ Please note, this is not a complete list of all the functions.
  - ReleaseDC(hdc, hwnd:=0)
  - DeleteDC(hdc)
 
-## 22 Other functions [selection]
+## 23 Other functions [selection]
  - Gdip_CreateCachedBitmap(pBitmap, pGraphics)
  - Gdip_DeleteCachedBitmap(pCachedBitmap)
  - Gdip_CreateHICONFromBitmap(pBitmap)
  - Gdip_GetAllPropertyItems(pImage)
+ - Gdip_GetImageEncodersList()
  - Gdip_GetPropertyCount(pImage)
  - Gdip_GetPropertyIdList(pImage)
  - Gdip_GetPropertyItem(pImage, PropID)
@@ -463,7 +500,7 @@ Please note, this is not a complete list of all the functions.
 
 The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modifications with this new version.
 
-## 23 MODIFIED FUNCTIONS:
+## ~24 MODIFIED FUNCTIONS:
  - Gdip_BitmapFromBRA()
  - Gdip_BitmapFromHWND()
  - Gdip_BitmapFromScreen()
@@ -472,6 +509,7 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
  - Gdip_CreateBitmapFromClipboard()
  - Gdip_CreateBitmapFromFile()
  - Gdip_CreateTextureBrush()
+ - Gdip_CreatePath()
  - Gdip_DrawImage()
  - Gdip_DrawImagePointsRect()
  - Gdip_DrawLines()
@@ -501,9 +539,12 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 - by Tariq Porter [tic]:
   - Source:A: https://github.com/tariqporter/Gdip2/blob/master/lib/Object.ahk
   - Source B: https://autohotkey.com/board/topic/29449-gdi-standard-library-145-by-tic/page-11
-  - Gdip_FillRoundedRectangle2()
-  - Gdip_DrawRoundedRectangle2()
   - Gdip_CompareBitmaps()
+
+- by MCL:
+  - Gdip_GetInstalledFontFamilies()
+  - Gdip_CreateStreamOnFile()
+  - Gdip_GetLOGFONT()
 
 - by iseahound:
   - Gdip_CreateARGBBitmapFromHBITMAP()
@@ -608,8 +649,9 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
   - Gdip_SetPenBrushFill()
   - Gdip_CreateFontFromDC()
 
-- 228 by Marius Șucan [robodesign.ro]:
-  - Gdip_AddPathRoundedRectangle()
+- 229 by Marius Șucan [ https://marius.sucan.ro/ ]:
+  - Gdip_GaussianBlur()
+  - Gdip_SaveImagesInTIFF()
   - Gdip_GetRotatedEllipseDimensions()
   - Gdip_NewPrivateFontCollection()
   - Gdip_DeletePrivateFontCollection()
@@ -837,18 +879,16 @@ The following list is comparing Gdip_All.ahk by Tariq Porter and Rseding91 modif
 (*) mainly written by swagfag, but at my request and modified it further
     - https://www.autohotkey.com/boards/viewtopic.php?f=6&t=62550
 
-# 147 GDI+ functions still missing
+# 110 GDI+ functions still missing
 In short, functions related to Custom Line Caps for lines, ImagePalette management, PathIterator objects and Metafiles... are entirely omitted.
 
  - GdipAddPathCurve3
  - GdipAddPathRectangles
  - GdipBeginContainer
- - GdipBeginContainer2
  - GdipClearPathMarkers
  - GdipCloneCustomLineCap
  - GdipCreateBitmapFromResource
  - GdipCreateCustomLineCap
- - GdipCreateFontFromLogfontA
  - GdipCreateHalftonePalette
  - GdipCreateLineBrushFromRectWithAngle
  - GdipCreateMatrix3
@@ -857,16 +897,11 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipCreateMetafileFromStream
  - GdipCreateMetafileFromWmf
  - GdipCreateMetafileFromWmfFile
- - GdipCreatePath2
  - GdipCreatePathIter
- - GdipCreateRegionHrgn
- - GdipCreateRegionRgnData
- - GdipCreateStreamOnFile
  - GdipDeletePathIter
  - GdipDrawCurve3
  - GdipDrawRectangles
  - GdipEmfToWmfBits
- - GdipEndContainer
  - GdipEnumerateMetafileDestPoint
  - GdipEnumerateMetafileDestPoints
  - GdipEnumerateMetafileDestRect
@@ -880,8 +915,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetCustomLineCapStrokeJoin
  - GdipGetCustomLineCapType
  - GdipGetCustomLineCapWidthScale
- - GdipGetFontCollectionFamilyCount
- - GdipGetFontCollectionFamilyList
  - GdipGetHemfFromMetafile
  - GdipGetImageAttributesAdjustedPalette
  - GdipGetImagePalette
@@ -889,9 +922,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetLineBlend
  - GdipGetLinePresetBlend
  - GdipGetLinePresetBlendCount
- - GdipGetLogFontA
- - GdipGetLogFontW
- - GdipGetMatrixElements
  - GdipGetMetafileDownLevelRasterizationLimit
  - GdipGetMetafileHeaderFromEmf
  - GdipGetMetafileHeaderFromFile
@@ -905,21 +935,13 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipGetPathGradientCenterPointI
  - GdipGetPathGradientPresetBlend
  - GdipGetPathGradientPresetBlendCount
- - GdipGetPathPointsI
  - GdipGetPathTypes
  - GdipGetPenCustomStartCap
- - GdipGetRegionData
- - GdipGetRegionDataSize
- - GdipGetRegionHRgn
  - GdipGetRegionScans
  - GdipGetRegionScansCount
  - GdipGetStringFormatFlags
  - GdipGetStringFormatMeasurableCharacterRangeCount
- - GdipGetStringFormatTabStopCount
- - GdipGetStringFormatTabStops
  - GdipImageForceValidation
- - GdipLoadImageFromStream
- - GdipLoadImageFromStreamICM
  - GdipMeasureCharacterRanges
  - GdipMeasureDriverString
  - GdipNewInstalledFontCollection
@@ -941,10 +963,6 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipRecordMetafileFileName
  - GdipRecordMetafileStream
  - GdipRemovePropertyItem
- - GdipSaveAdd
- - GdipSaveAddImage
- - GdipSaveImageToStream
- - GdipSetClipHrgn
  - GdipSetCustomLineCapBaseCap
  - GdipSetCustomLineCapBaseInset
  - GdipSetCustomLineCapStrokeCaps
@@ -953,35 +971,22 @@ In short, functions related to Custom Line Caps for lines, ImagePalette manageme
  - GdipSetImageAttributesOutputChannelColorProfile
  - GdipSetImageAttributesRemapTable
  - GdipSetImagePalette
- - GdipSetLineBlend
  - GdipSetMetafileDownLevelRasterizationLimit
  - GdipSetPathGradientBlend
- - GdipSetPathGradientPresetBlend
  - GdipSetPathMarker
  - GdipSetPenCustomStartCap
  - GdipSetPropertyItem
  - GdipSetStringFormatMeasurableCharacterRanges
- - GdipSetStringFormatTabStops
- - GdipShearMatrix
- - GdipTransformMatrixPoints
- - GdipTransformMatrixPointsI
  - GdipTransformPoints
- - GdipTransformPointsI
- - GdipVectorTransformMatrixPoints
- - GdipVectorTransformMatrixPointsI
  - GdipWarpPath
  - =======================================
  - GdipBitmapCreateApplyEffect
  - GdipCreateAdjustableArrowCap
  - GdipDeleteCustomLineCap
- - GdipDrawImagePoints
  - GdipGetAdjustableArrowCapFillState
  - GdipGetAdjustableArrowCapHeight
  - GdipGetAdjustableArrowCapMiddleInset
  - GdipGetAdjustableArrowCapWidth
- - GdipGetEffectParameters
- - GdipGetImageDecoders
- - GdipGetImageDecodersSize
  - GdipGetPenCustomEndCap
  - GdipSetAdjustableArrowCapFillState
  - GdipSetAdjustableArrowCapHeight

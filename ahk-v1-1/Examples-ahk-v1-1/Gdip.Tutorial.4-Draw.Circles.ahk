@@ -6,6 +6,7 @@
 #SingleInstance Force
 #NoEnv
 SetBatchLines -1
+global hbm, hdc, obm, G, pToken
 
 ; Uncomment if Gdip.ahk is not in your standard library
 #Include ../Gdip_All.ahk
@@ -88,9 +89,8 @@ Return
 
 ;#######################################################################
 
-ExitFunc(ExitReason, ExitCode)
-{
-   global
+ExitFunc(ExitReason, ExitCode) {
+   ; global
    ; Select the object back into the hdc
    SelectObject(hdc, obm)
 
@@ -106,4 +106,10 @@ ExitFunc(ExitReason, ExitCode)
    ; ...and gdi+ may now be shutdown
    Gdip_Shutdown(pToken)
 }
+
+~Esc::
+   SetTimer, DrawCircle, Off
+   ; ExitFunc(1, 1)
+   ExitApp
+Return
 
