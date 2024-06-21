@@ -1,4 +1,4 @@
-; v1.61
+; v1.62
 ;
 ;#####################################################################################
 ;#####################################################################################
@@ -6,27 +6,27 @@
 ; Return values for functions specified to have status enumerated return type
 ;#####################################################################################
 ;
-; Ok =						= 0
+; Ok					= 0
 ; GenericError				= 1
 ; InvalidParameter			= 2
 ; OutOfMemory				= 3
 ; ObjectBusy				= 4
-; InsufficientBuffer		= 5
+; InsufficientBuffer			= 5
 ; NotImplemented			= 6
 ; Win32Error				= 7
 ; WrongState				= 8
-; Aborted					= 9
+; Aborted				= 9
 ; FileNotFound				= 10
 ; ValueOverflow				= 11
 ; AccessDenied				= 12
-; UnknownImageFormat		= 13
-; FontFamilyNotFound		= 14
+; UnknownImageFormat			= 13
+; FontFamilyNotFound			= 14
 ; FontStyleNotFound			= 15
 ; NotTrueTypeFont			= 16
-; UnsupportedGdiplusVersion	= 17
-; GdiplusNotInitialized		= 18
+; UnsupportedGdiplusVersion		= 17
+; GdiplusNotInitialized			= 18
 ; PropertyNotFound			= 19
-; PropertyNotSupported		= 20
+; PropertyNotSupported			= 20
 ; ProfileNotFound			= 21
 ;
 ;#####################################################################################
@@ -45,21 +45,21 @@
 ;
 ;#####################################################################################
 
-; Function:					UpdateLayeredWindow
+; Function:				UpdateLayeredWindow
 ; Description:				Updates a layered window with the handle to the DC of a gdi bitmap
 ;
-; hwnd						Handle of the layered window to update
-; hdc						Handle to the DC of the GDI bitmap to update the window with
-; Layeredx					x position to place the window
-; Layeredy					y position to place the window
-; Layeredw					Width of the window
-; Layeredh					Height of the window
-; Alpha						Default = 255 : The transparency (0-255) to set the window transparency
+; hwnd					Handle of the layered window to update
+; hdc					Handle to the DC of the GDI bitmap to update the window with
+; Layeredx				x position to place the window
+; Layeredy				y position to place the window
+; Layeredw				Width of the window
+; Layeredh				Height of the window
+; Alpha					Default = 255 : The transparency (0-255) to set the window transparency
 ;
-; return					if the function succeeds, the return value is nonzero
+; return				if the function succeeds, the return value is nonzero
 ;
-; notes						if x or y omitted, then layered window will use its current coordinates
-;							if w or h omitted then current width and height will be used
+; notes					if x or y omitted, then layered window will use its current coordinates
+;					if w or h omitted then current width and height will be used
 
 UpdateLayeredWindow(hwnd, hdc, x:="", y:="", w:="", h:="", Alpha:=255)
 {
@@ -2592,7 +2592,7 @@ Gdip_Startup()
 	si := Buffer(A_PtrSize = 4 ? 20:32, 0) ; sizeof(GdiplusStartupInputEx) = 20, 32
 	NumPut("uint", 0x2, si)
 	NumPut("uint", 0x4, si, A_PtrSize = 4 ? 16:24)
-	DllCall("gdiplus\GdiplusStartup", "UPtr*", &pToken:=0, "UPtr", si, "UPtr", 0)
+	DllCall("gdiplus\GdiplusStartup", "UPtr*", &pToken:=0, "Ptr", si, "UPtr", 0)
 	if (!pToken) {
 		throw Error("Gdiplus failed to start. Please ensure you have gdiplus on your system")
 	}
